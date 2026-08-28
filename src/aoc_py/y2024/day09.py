@@ -1,12 +1,12 @@
-import time
-from pathlib import Path
+"""
+2024 day 9 - Disk Fragmenter
+"""
 
-
-class Disk:
+class InputData:
     def __init__(self, rawstr: str) -> None:
         self.__diskmap = [int(c) for c in rawstr]
 
-    def get_fragmented_checksum(self) -> int:
+    def get_p1(self) -> int:
         left_idx = 0
         right_idx = len(self.__diskmap) - 1
         if right_idx % 2 == 1:
@@ -34,8 +34,8 @@ class Disk:
                 buffer = right_counter if left_idx == right_idx else self.__diskmap[left_idx]
         return checksum
 
-    def get_defragmented_checksum(self) -> int:
-        emptyblocks = []
+    def get_p2(self) -> int:
+        emptyblocks: list[tuple[int, int]] = []
         mempos = 0
         for i, v in enumerate(self.__diskmap):
             if i % 2 == 1 and v > 0:
@@ -55,7 +55,7 @@ class Disk:
                         if e_len - memlen > 0:
                             emptyblocks[eidx] = e_start + memlen, e_len - memlen
                         else:
-                            emptyblocks.pop(eidx)
+                            _ = emptyblocks.pop(eidx)
                         moved = True
                         break
                 if not moved:
@@ -63,18 +63,12 @@ class Disk:
         return checksum
 
 
-def main(aoc_input: str) -> None:
-    p = Disk(aoc_input)
-    print(f"Part 1: {p.get_fragmented_checksum()}")
-    print(f"Part 2: {p.get_defragmented_checksum()}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+        p1, p2 = "-1"
+        p = InputData(inputdata)
+        if part in (None, 1):
+            p1 = str(p.get_p1())
+        if part in (None, 2):
+            p2 = str(p.get_p2())
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2024/day09.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+        return p1, p2
