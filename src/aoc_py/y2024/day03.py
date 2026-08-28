@@ -1,3 +1,7 @@
+"""
+2024 day 3 - Mull It Over
+"""
+
 def calculate(block: str) -> int:
     total = 0
     for part in block.split("mul("):
