@@ -1,10 +1,17 @@
 """
 2025 day 6 - Trash Compactor
+
+A parsing exercise.
+Group the input in column groups, separated by empty column so each group gets one
+operation ('+' or '*') connected to it.
+
+The difference between part 1 and part 2 is how to then parse the numbers; horizontally or
+vertically. Parsing horizontally is done with trivial whitespace splitting. The vertical
+numbers are derived by first transposing the input and then treating the empty lines as
+separators for the column groups.
 """
 
-import time
 from math import prod
-from pathlib import Path
 
 
 class InputData:
@@ -26,16 +33,16 @@ class InputData:
         return total
 
     def get_p2(self) -> int:
-        numbers_chars_transposed = [
+        numbers_chars_transposed: list[list[str]] = [
             list(z) for z in zip(*[list(line) for line in self.__lines])
         ]
         # Extra padding added for the next step
         numbers_chars_transposed.append([" ", " ", " ", " "])
         total = 0
         op_idx = 0
-        number_buffer = []
+        number_buffer: list[int] = []
         for col in numbers_chars_transposed:
-            if all([c == " " for c in col]):
+            if all(c == " " for c in col):
                 if self.__operations[op_idx] == "+":
                     total += sum(number_buffer)
                 else:
@@ -47,18 +54,12 @@ class InputData:
         return total
 
 
-def main(aoc_input: str) -> None:
-    p = InputData(aoc_input)
-    print(f"Part 1: {p.get_p1()}")
-    print(f"Part 2: {p.get_p2()}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_p1())
+    if part in (None, 2):
+        p2 = str(p.get_p2())
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], "AdventOfCode-Input")
-    INPUT_FILE = Path(ROOT_DIR, "2025/day06.txt")
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, "r") as file:
-        main(file.read().strip("\n"))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
