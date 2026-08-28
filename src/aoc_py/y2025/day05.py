@@ -1,10 +1,24 @@
 """
 2025 day 5 - Cafeteria
+
+Part 1
+
+Trivial - for every available ID, iterate over the ID ranges and if any range contains
+the available ID, increment the total and skip to the next available ID.
+
+## Part 2
+
+First merge all the overlapping ranges:
+1. Put all the input ranges on a queue, and create a list of processed ranges.
+2. Pull a range from the queue and check if it overlaps with any of the already
+   processed ranges. If it does, pull that processed range out of the list and push
+   the combined range back to the queue.
+3. Repeat 2 until the queue is empty.
+
+Once the new list of combined ranges is completed, take the total sum of ID:s contained
+by each range. Note that the ranges are inclusive, so the number of ID:s for a range
+is 1 + upper_range - lower range.
 """
-
-import time
-from pathlib import Path
-
 
 class InputData:
     def __init__(self, s: str) -> None:
@@ -25,7 +39,7 @@ class InputData:
         return total
 
     def get_p2(self) -> int:
-        processed = []
+        processed: list[tuple[int, int]] = []
         queue = self.__fresh_id_ranges.copy()
         while queue:
             r0, r1 = queue.pop(0)
@@ -35,26 +49,19 @@ class InputData:
                     or r1 in range(p0, p1 + 1)
                     or p0 in range(r0, r1 + 1)
                 ):
-                    processed.pop(i)
+                    _ = processed.pop(i)
                     queue.append((min(p0, r0), max(p1, r1)))
                     break
             else:
                 processed.append((r0, r1))
         return sum([1 + p1 - p0 for p0, p1 in processed])
 
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_p1())
+    if part in (None, 2):
+        p2 = str(p.get_p2())
 
-def main(aoc_input: str) -> None:
-    p = InputData(aoc_input)
-    print(f"Part 1: {p.get_p1()}")
-    print(f"Part 2: {p.get_p2()}")
-
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], "AdventOfCode-Input")
-    INPUT_FILE = Path(ROOT_DIR, "2025/day05.txt")
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, "r") as file:
-        main(file.read().strip("\n"))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
