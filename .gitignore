@@ -1,7 +1,12 @@
-# Byte-compiled / optimized / DLL files
+# Python generated / Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
 
 # C extensions
 *.so
@@ -47,5 +52,4 @@ venv.bak/
 .idea/
 
 # Advent of code input files
-AdventOfCode-Input*
-
+AdventOfCode-Input/

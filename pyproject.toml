@@ -1,0 +1,33 @@
+[project]
+name = "aoc-py"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "MagnusKarlssonMK", email = "magnus.karlsson.mk@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "argparse>=1.4.0",
+    "importlib>=1.0.4",
+    "pathlib>=1.0.1",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+]
+
+[project.scripts]
+aoc-py = "aoc_py:main"
+
+[build-system]
+requires = ["uv_build>=0.12.7,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.coverage.run]
+omit = [
+  "src/**/__init__.py",
+  "src/aoc_py/runner.py",
+  "src/aoc_py/**/tests/**",
+]
+
+[tool.pytest.ini_options]
+addopts = "--cov=src/aoc_py --cov-report=term-missing"
