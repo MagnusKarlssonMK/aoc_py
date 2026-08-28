@@ -1,6 +1,8 @@
-import time
-from pathlib import Path
+"""
+2024 day 2 - Red-Nosed Reports
+"""
 from enum import Enum
+from itertools import pairwise
 
 
 class SafetyLevels(Enum):
@@ -15,10 +17,8 @@ class Report:
 
     def get_safety_level(self) -> SafetyLevels:
         def is_safe(levels: list[int]) -> bool:
-            diffs = [(abs(j - i), 1 if j - i > 0 else -1) for i, j in zip(levels[:-1], levels[1:])]
-            if all([1 <= v <= 3 and o == diffs[0][1] for v, o in diffs]):
-                return True
-            return False
+            diffs = [(abs(j - i), 1 if j - i > 0 else -1) for i, j in pairwise(levels)]
+            return all(1 <= v <= 3 and o == diffs[0][1] for v, o in diffs)
         if is_safe(self.__levels):
             return SafetyLevels.SAFE
         else:
@@ -28,7 +28,7 @@ class Report:
         return SafetyLevels.UNSAFE
 
 
-class Reports:
+class InputData:
     def __init__(self, rawstr: str) -> None:
         self.__reports = [Report(line) for line in rawstr.splitlines()]
 
@@ -38,19 +38,14 @@ class Reports:
         almost_safe = safety.count(SafetyLevels.DAMPENER_SAFE)
         return safe, safe + almost_safe
 
-def main(aoc_input: str) -> None:
-    reports = Reports(aoc_input)
-    p1, p2 = reports.get_safe_reports()
-    print(f"Part 1: {p1}")
-    print(f"Part 2: {p2}")
 
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+        p1, p2 = "-1"
+        p = InputData(inputdata)
+        part1, part2 = p.get_safe_reports()
+        if part in (None, 1):
+            p1 = str(part1)
+        if part in (None, 2):
+            p2 = str(part2)
 
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2024/day02.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+        return p1, p2
