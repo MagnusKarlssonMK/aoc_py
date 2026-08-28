@@ -1,19 +1,30 @@
-import time
-from pathlib import Path
+"""
+2024 day 4 - Ceres Search
 
+Part 1
 
-class WordSearch:
+Scan the grid and investigate all nodes containing an 'X', and look in all
+eight directions and see if XMAS is created.
+
+Part 2
+
+This time, scan for nodes containing an 'A' instead, form words from the
+combination with the diagonal nodes to form the X, and see if the generated
+word is eithes MAS or SAM.
+"""
+
+class InputData:
     def __init__(self, rawstr: str) -> None:
         self.__grid = [[c for c in line] for line in rawstr.splitlines()]
         self.__height = len(self.__grid)
         self.__width = len(self.__grid[0])
 
-    def __get_grid_value(self, row:int, col: int) -> chr:
-        if row in range(0, self.__height) and col in range(0, self.__width):
+    def __get_grid_value(self, row:int, col: int) -> str:
+        if row in range(self.__height) and col in range(self.__width):
             return self.__grid[row][col]
         return "."
 
-    def get_xmas(self) -> int:
+    def get_p1(self) -> int:
         DIRECTIONS = ((1, 0), (1, -1), (0, -1), (-1, -1),
                       (-1, 0), (-1, 1), (0, 1), (1, 1))
         total = 0
@@ -28,7 +39,7 @@ class WordSearch:
                             total += 1
         return total
 
-    def get_x_mas(self) -> int:
+    def get_p2(self) -> int:
         total = 0
         for row, line in enumerate(self.__grid):
             for col, c in enumerate(line):
@@ -41,18 +52,12 @@ class WordSearch:
         return total
 
 
-def main(aoc_input: str) -> None:
-    p = WordSearch(aoc_input)
-    print(f"Part 1: {p.get_xmas()}")
-    print(f"Part 2: {p.get_x_mas()}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+        p1, p2 = "-1"
+        p = InputData(inputdata)
+        if part in (None, 1):
+            p1 = str(p.get_p1())
+        if part in (None, 2):
+            p2 = str(p.get_p2())
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2024/day04.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+        return p1, p2
