@@ -1,8 +1,27 @@
 """
-Direct translation of Rust solution
+2025 day 2 - Gift Shop
+
+Part 1
+
+For each range,
+1) If the first number in the range is evenly divisible by 2, split it in two and take the first part (1234 -> 12).
+   If not, start with the next number where it would increase the number of digits (e.g. 972 -> 1000).
+2) Create a new candidate id by combining the number from 1) with itself (12 -> 1212).
+3) If that candidate id is bigger than the second value in the range, stop.
+4) If that candidate id is bigger than the first value in the range, an invalid value has been found; add it to the total.
+5) Increment the candidate id (12 -> 13) and go back to 2).
+
+## Part 2
+
+Pretty much same as part 1, except,
+* Instead of just splitting in 2 parts, loop over splits in different part sizes, from 2 up to the number of digits in
+  the second value in the range.
+* The same number can be found with different part lengths, but should only be counted once. So the identified invalid
+  numbers are stored in a set and then summarized at the end to get rid of duplicates.
 """
 
 import math
+from typing import cast
 
 
 def get_invalid(v1: str, v2: str) -> int:
@@ -21,7 +40,8 @@ def get_invalid(v1: str, v2: str) -> int:
 
     while True:
         nbrof_part_digits: int = int(1 + int(math.log10(abs(next_part))))
-        p: int = 10**nbrof_part_digits
+        # Using cast as temporary fix for basedpyright issue with pow
+        p = cast(int, 10**nbrof_part_digits)
         candidate_id: int = next_part + (next_part * p)
         if candidate_id > stop_id:
             break
