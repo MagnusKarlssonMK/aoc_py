@@ -1,5 +1,12 @@
-import time
-from pathlib import Path
+"""
+2024 day 7 - Bridge Repair
+
+Solves both parts in one go through a recursive function, which attempts to
+fully validate each equation, and only resorts to use the concatenation
+operation if it's the only way to succeed at the validation. The state of
+whether or not concatenation has been used combined with the calculated value
+is carried up through the recursion chain through the return value.
+"""
 from enum import Enum
 
 
@@ -17,7 +24,7 @@ def concatinate(right: int) -> int:
 
 
 class Equation:
-    def __init__(self, rawstr: str):
+    def __init__(self, rawstr: str) -> None:
         tv, nbrs = rawstr.split(": ")
         self.__testvalue = int(tv)
         self.__numbers = [int(nbr) for nbr in nbrs.split()]
@@ -25,7 +32,7 @@ class Equation:
     def calibrate(self) -> tuple[CalibrationResult, int]:
         return self.__validate(self.__numbers[0], self.__numbers[1:])
 
-    def __validate(self, total, nbrs) -> tuple[CalibrationResult, int]:
+    def __validate(self, total: int, nbrs: list[int]) -> tuple[CalibrationResult, int]:
         if len(nbrs) == 0:
             return (CalibrationResult.OK, total) if total == self.__testvalue else (CalibrationResult.NOT_OK, 0)
         elif total > self.__testvalue:
@@ -47,7 +54,7 @@ class Equation:
         return CalibrationResult.NOT_OK, 0
 
 
-class CalibrationData:
+class InputData:
     def __init__(self, rawstr: str) -> None:
         self.__equations = [Equation(line) for line in rawstr.splitlines()]
 
@@ -63,19 +70,13 @@ class CalibrationData:
         return p1, p2
 
 
-def main(aoc_input: str) -> None:
-    data = CalibrationData(aoc_input)
-    p1, p2 = data.get_calibration_result()
-    print(f"Part 1: {p1}")
-    print(f"Part 2: {p2}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+        p1, p2 = "-1"
+        p = InputData(inputdata)
+        part1, part2 = p.get_calibration_result()
+        if part in (None, 1):
+            p1 = str(part1)
+        if part in (None, 2):
+            p2 = str(part2)
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2024/day07.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+        return p1, p2
