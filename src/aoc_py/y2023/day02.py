@@ -1,9 +1,6 @@
 """
 2023 day 2 - Cube Conundrum
 """
-
-import time
-from pathlib import Path
 from enum import Enum
 
 
@@ -15,12 +12,12 @@ class Color(Enum):
 
 class Hand:
     def __init__(self, r: int, b: int, g: int) -> None:
-        self.red = r
-        self.blue = b
-        self.green = g
+        self.red: int = r
+        self.blue: int = b
+        self.green: int = g
 
     @classmethod
-    def parse(cls, s: str) -> "Hand":
+    def parse(cls, s: str) -> Hand:
         newhand = {color: 0 for color in Color}
         for n in s.split(", "):
             nbr, colorstr = n.split()
@@ -33,7 +30,7 @@ class Hand:
     def get_hand_power(self) -> int:
         return self.red * self.blue * self.green
 
-    def get_max(self, other: "Hand") -> "Hand":
+    def get_max(self, other: Hand) -> Hand:
         return Hand(
             max(self.red, other.red),
             max(self.blue, other.blue),
@@ -44,11 +41,11 @@ class Hand:
 class Game:
     def __init__(self, inputstr: str) -> None:
         gameidstring, handstring = inputstr.split(": ")
-        self.gameid = int(gameidstring.split()[1])
+        self.gameid: int = int(gameidstring.split()[1])
         self.__hands = [Hand.parse(h) for h in handstring.split("; ")]
 
     def is_valid(self) -> bool:
-        return all([hand.is_valid() for hand in self.__hands])
+        return all(hand.is_valid() for hand in self.__hands)
 
     def get_power(self) -> int:
         minimum_required = Hand(0, 0, 0)
@@ -61,25 +58,19 @@ class InputData:
     def __init__(self, s: str) -> None:
         self.__games = [Game(line) for line in s.splitlines()]
 
-    def solve_part1(self) -> int:
+    def get_p1(self) -> int:
         return sum([game.gameid for game in self.__games if game.is_valid()])
 
-    def solve_part2(self) -> int:
+    def get_p2(self) -> int:
         return sum([game.get_power() for game in self.__games])
 
 
-def main(aoc_input: str) -> None:
-    record = InputData(aoc_input)
-    print(f"Part 1: {record.solve_part1()}")
-    print(f"Part 2: {record.solve_part2()}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+        p1, p2 = "-1"
+        p = InputData(inputdata)
+        if part in (None, 1):
+            p1 = str(p.get_p1())
+        if part in (None, 2):
+            p2 = str(p.get_p2())
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], "AdventOfCode-Input")
-    INPUT_FILE = Path(ROOT_DIR, "2023/day02.txt")
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, "r") as file:
-        main(file.read().strip("\n"))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+        return p1, p2
