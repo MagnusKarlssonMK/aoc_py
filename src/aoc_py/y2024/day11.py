@@ -1,3 +1,13 @@
+"""
+2024 day 11 - Plutonian Pebbles
+
+Solves both parts in the same loop, since part 2 simply requires way more
+iterations of the same method. Since the number of stones will quickly become
+enormous but many will have the same value, the stones are stored in a hash-map
+rather than a vector, with the stone's number as key and number of stones with
+that number as value. Despite the desceptive description, the order of the stones
+is actually not important!
+"""
 from collections import defaultdict
 from math import log10
 
