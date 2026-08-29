@@ -1,13 +1,13 @@
 """
+2023 day 12 - Hot Springs
+
 Memoized recursive solution, using the functools cache.
 """
-import time
-from pathlib import Path
 from functools import lru_cache
 
 
-@lru_cache()
-def calculatecombinations(springstring: str, inputkeys: tuple[int]) -> int:
+@lru_cache
+def calculatecombinations(springstring: str, inputkeys: tuple[int] | None) -> int:
     if not inputkeys:  # empty list
         return int("#" not in springstring)  # return 1 if there are no '#' in the string, 0 otherwise
     springlength = len(springstring)
@@ -26,7 +26,7 @@ def calculatecombinations(springstring: str, inputkeys: tuple[int]) -> int:
     return skip + calculatecombinations(springstring[keylength + 1:].lstrip("."), tuple(inputkeys[1:]))
 
 
-class SpringRecord:
+class InputData:
     def __init__(self, rawstr: str) -> None:
         self.__rows: list[tuple[str, list[int]]] = []
         for line in rawstr.splitlines():
@@ -43,18 +43,12 @@ class SpringRecord:
         return retval
 
 
-def main(aoc_input: str) -> None:
-    myrecord = SpringRecord(aoc_input)
-    print(f"Part 1: {myrecord.get_arrangement_sum()}")
-    print(f"Part 2: {myrecord.get_arrangement_sum(5)}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+        p1, p2 = "-1"
+        p = InputData(inputdata)
+        if part in (None, 1):
+            p1 = str(p.get_arrangement_sum())
+        if part in (None, 2):
+            p2 = str(p.get_arrangement_sum(5))
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2023/day12.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+        return p1, p2
