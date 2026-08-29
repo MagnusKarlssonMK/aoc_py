@@ -1,13 +1,13 @@
 """
+2023 day 7 - Camel Cards
+
 Create Hand class to store the cards and bid, and provides methods to calculate a power value that can be used to
 sort the hands. The power value is generated as a hex value with the hand result in the MSB and card values in LSB,
 this way the different hands can be sorted according to the rules. The power calculation method is done in two variants,
 one basic for Part 1 and one using jokers for Part 2.
 """
-import time
-from pathlib import Path
-from enum import Enum
 from collections import Counter
+from enum import Enum
 
 
 class HandResults(Enum):
@@ -20,12 +20,13 @@ class HandResults(Enum):
     FIVE_OF_A_KIND = 7
 
 
-class Hand:
-    __CARDLIST = {"2": '2', "3": '3', "4": '4', "5": '5', "6": '6', "7": '7', "8": '8', "9": '9',
-                  "T": 'A', "J": 'B', "Q": 'C', "K": 'D', "A": 'E'}
+CARDLIST = {"2": '2', "3": '3', "4": '4', "5": '5', "6": '6', "7": '7', "8": '8', "9": '9',
+                "T": 'A', "J": 'B', "Q": 'C', "K": 'D', "A": 'E'}
 
+
+class Hand:
     def __init__(self, newcardstring: str, newbid: int):
-        self.bid = newbid
+        self.bid: int = newbid
         self.__cards = [c for c in newcardstring]
 
     def gethandpower(self) -> int:
@@ -51,7 +52,7 @@ class Hand:
                 result = HandResults.HIGH_CARD
             case _:
                 pass
-        cardstring = ''.join([Hand.__CARDLIST[c] for c in self.__cards])
+        cardstring = ''.join([CARDLIST[c] for c in self.__cards])
         return int(str(result.value) + cardstring, 16)
 
     def gethandpower_jokers(self) -> int:
@@ -87,11 +88,11 @@ class Hand:
             if card == 'J':
                 cardstring += '1'
             else:
-                cardstring += Hand.__CARDLIST[card]
+                cardstring += CARDLIST[card]
         return int(str(result.value) + cardstring, 16)
 
 
-class CamelCards:
+class InputData:
     def __init__(self, rawstr: str) -> None:
         self.__hands: list[Hand] = []
         for line in rawstr.splitlines():
@@ -106,18 +107,12 @@ class CamelCards:
         return sum([hand.bid * (rank + 1) for rank, hand in enumerate(self.__hands)])
 
 
-def main(aoc_input: str) -> None:
-    mygame = CamelCards(aoc_input)
-    print(f"Part 1: {mygame.get_winnings()}")
-    print(f"Part 2: {mygame.get_winnings(True)}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+        p1, p2 = "-1"
+        p = InputData(inputdata)
+        if part in (None, 1):
+            p1 = str(p.get_winnings())
+        if part in (None, 2):
+            p2 = str(p.get_winnings(True))
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2023/day07.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+        return p1, p2
