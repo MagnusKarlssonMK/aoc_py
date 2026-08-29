@@ -1,5 +1,14 @@
-import time
-from pathlib import Path
+"""
+2024 day 14 - Restroom Redoubt
+
+Part 1
+
+No need to run the simulation for 100 steps, just directly calculate the positions.
+
+Part 2
+
+Run the simulation until all robots are in unique positions with no overlap.
+"""
 from math import prod
 
 
@@ -8,17 +17,17 @@ class Robot:
         left, right = rawstr.split()
         left_x, left_y = left.split(',')
         right_x, right_y = right.split(',')
-        self.pos = int(left_x.strip('p=')), int(left_y)
-        self.vel = int(right_x.strip('v=')), int(right_y)
+        self.pos: tuple[int, int] = int(left_x.strip('p=')), int(left_y)
+        self.vel: tuple[int, int] = int(right_x.strip('v=')), int(right_y)
 
 
-class Security:
+class InputData:
     def __init__(self, rawstr: str, x_max: int, y_max: int) -> None:
         self.__robots = [Robot(r) for r in rawstr.splitlines()]
         self.__x_max = x_max
         self.__y_max = y_max
 
-    def get_safety_factor(self) -> int:
+    def get_p1(self) -> int:
         middle_x = (self.__x_max - 1) // 2
         middle_y = (self.__y_max - 1) // 2
         quadrants = [0, 0, 0, 0]
@@ -29,7 +38,7 @@ class Security:
                 quadrants[x_100 // (middle_x + 1) + 2 * (y_100 // (middle_y + 1))] += 1
         return prod(quadrants)
 
-    def get_egg_seconds(self) -> int:
+    def get_p2(self) -> int:
         points: set[tuple[int, int]] = set()
         time = 0
         overlap = True
@@ -48,18 +57,12 @@ class Security:
         return time
 
 
-def main(aoc_input: str) -> None:
-    sec = Security(aoc_input, 101, 103)
-    print(f"Part 1: {sec.get_safety_factor()}")
-    print(f"Part 2: {sec.get_egg_seconds()}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+        p1, p2 = "-1"
+        p = InputData(inputdata, 101, 103)
+        if part in (None, 1):
+            p1 = str(p.get_p1())
+        if part in (None, 2):
+            p2 = str(p.get_p2())
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2024/day14.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+        return p1, p2
