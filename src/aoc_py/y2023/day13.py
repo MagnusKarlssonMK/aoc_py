@@ -1,23 +1,22 @@
-import time
-from pathlib import Path
-
-
-def ismirror(patternlist: list[int], candidate: int, wildcardused: bool) -> bool:
+"""
+2023 day 13 - Point of Incidence
+"""
+def ismirror(patternlist: list[int], candidate: int, wildcard: bool) -> bool:
+    """If wildcard == True, the wild card for part 2 has not yet been used."""
     if candidate >= (len(patternlist) - 1) or candidate < 0:
-        return True if wildcardused else False
+        return not wildcard
     elif patternlist[candidate] == patternlist[candidate + 1]:
         newlist = [item for z, item in enumerate(patternlist) if (z < candidate) or z > (candidate + 1)]
-        return ismirror(newlist, candidate - 1, wildcardused)
-    elif not wildcardused:
-        if bin(patternlist[candidate] ^ patternlist[candidate + 1]).count("1") == 1:
+        return ismirror(newlist, candidate - 1, wildcard)
+    elif wildcard and (patternlist[candidate] ^ patternlist[candidate + 1]).bit_count() == 1:#bin(patternlist[candidate] ^ patternlist[candidate + 1]).count("1") == 1:
             newlist = [item for z, item in enumerate(patternlist) if (z < candidate) or z > (candidate + 1)]
-            return ismirror(newlist, candidate - 1, True)
+            return ismirror(newlist, candidate - 1, False)
     return False
 
 
-def getmirrorscore(patternlist: list[int], usewildcard: bool) -> int:
-    for index in range(0, len(patternlist) - 1):
-        if ismirror(patternlist, index, usewildcard):
+def getmirrorscore(patternlist: list[int], wildcard: bool) -> int:
+    for index in range(len(patternlist) - 1):
+        if ismirror(patternlist, index, wildcard):
             return index + 1
     return 0
 
@@ -44,26 +43,20 @@ class Pattern:
         return retval
 
 
-class PatternList:
+class InputData:
     def __init__(self, rawstr: str) -> None:
         self.__patterns = [Pattern(block) for block in rawstr.split('\n\n')]
 
-    def get_totalscore(self, wildcardused: bool = True) -> int:
-        return sum([p.getscore(wildcardused) for p in self.__patterns])
+    def get_totalscore(self, wildcard: bool = False) -> int:
+        return sum([p.getscore(wildcard) for p in self.__patterns])
 
 
-def main(aoc_input: str) -> None:
-    patterns = PatternList(aoc_input)
-    print(f"Part 1: {patterns.get_totalscore()}")
-    print(f"Part 2: {patterns.get_totalscore(False)}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+        p1, p2 = "-1"
+        p = InputData(inputdata)
+        if part in (None, 1):
+            p1 = str(p.get_totalscore())
+        if part in (None, 2):
+            p2 = str(p.get_totalscore(True))
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2023/day13.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+        return p1, p2
