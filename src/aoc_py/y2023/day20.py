@@ -2,11 +2,10 @@
 Uses classes and inheritance to implement the different module types, and an overall system class to hold them all
 and provide an interface for pushing the button.
 """
-import time
-from pathlib import Path
 import math
-from enum import Enum
 from dataclasses import dataclass
+from enum import Enum
+from typing import override
 
 
 class Pulse(Enum):
@@ -23,7 +22,7 @@ class Message:
 
 class Module:
     def __init__(self, outputs: list[str]) -> None:
-        self.outputs = set(outputs)
+        self.outputs: set[str] = set(outputs)
 
     def process_signal(self, inmsg: Message) -> list[Message]:
         """Broadcaster behavior as default"""
@@ -32,7 +31,7 @@ class Module:
     def reset(self) -> None:
         pass
 
-    def add_input(self, newinput: str) -> None:
+    def add_input(self, _newinput: str) -> None:
         pass
 
 
@@ -41,6 +40,7 @@ class Flipflop(Module):
         super().__init__(outputs)
         self.is_on: bool = False
 
+    @override
     def process_signal(self, inmsg: Message) -> list[Message]:
         if inmsg.pulse == Pulse.HIGH:
             return []
@@ -52,6 +52,7 @@ class Flipflop(Module):
                 self.is_on = True
                 return [Message(to, inmsg.receiver, Pulse.HIGH) for to in self.outputs]
 
+    @override
     def reset(self) -> None:
         self.is_on = False
 
@@ -61,9 +62,11 @@ class Conjunction(Module):
         super().__init__(outputs)
         self.inputs: dict[str, Pulse] = {}
 
+    @override
     def add_input(self, newinput: str) -> None:
         self.inputs[newinput] = Pulse.LOW
 
+    @override
     def process_signal(self, inmsg: Message) -> list[Message]:
         self.inputs[inmsg.sender] = inmsg.pulse
         if any(instate != Pulse.HIGH for instate in list(self.inputs.values())):
@@ -71,6 +74,7 @@ class Conjunction(Module):
         else:
             return [Message(to, inmsg.receiver, Pulse.LOW) for to in self.outputs]
 
+    @override
     def reset(self) -> None:
         for i in self.inputs:
             self.inputs[i] = Pulse.LOW
@@ -138,18 +142,12 @@ class CommunicationSystem:
         return math.lcm(*list(rxcon_inputs.values()))
 
 
-def main(aoc_input: str) -> None:
-    comsys = CommunicationSystem(aoc_input)
-    print(f"Part 1: {comsys.get_push_1000()}")
-    print(f"Part 2: {comsys.get_rx_mincount()}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+        p1, p2 = "-1"
+        p = CommunicationSystem(inputdata)
+        if part in (None, 1):
+            p1 = str(p.get_push_1000())
+        if part in (None, 2):
+            p2 = str(p.get_rx_mincount())
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2023/day20.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+        return p1, p2
