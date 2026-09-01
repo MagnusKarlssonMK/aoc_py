@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Final
 
 
 @dataclass(frozen=True)
@@ -51,16 +52,17 @@ class Point:
         return self.y < other.y if self.y != other.y else self.x < other.x
 
 
-ORIGIN: Point = Point(0, 0)
-LEFT: Point = Point(-1, 0)
-RIGHT: Point = Point(1, 0)
-UP: Point = Point(0, -1)
-DOWN: Point = Point(0, 1)
+class Directions:
+    ORIGIN: Final = Point(0, 0)
+    LEFT: Final = Point(-1, 0)
+    RIGHT: Final = Point(1, 0)
+    UP: Final = Point(0, -1)
+    DOWN: Final = Point(0, 1)
 
-DIAG_R_D: Point = Point(1, 1)
-DIAG_L_D: Point = Point(-1, 1)
-DIAG_L_U: Point = Point(-1, -1)
-DIAG_R_U: Point = Point(1, -1)
+    DIAG_R_D: Final = Point(1, 1)
+    DIAG_L_D: Final = Point(-1, 1)
+    DIAG_L_U: Final = Point(-1, -1)
+    DIAG_R_U: Final = Point(1, -1)
 
-NEIGHBORS_STRAIGHT: list[Point] = [RIGHT, DOWN, LEFT, UP]
-NEIGHBORS_ALL: list[Point] = [RIGHT, DIAG_R_D, DOWN, DIAG_L_D, LEFT, DIAG_L_U, UP, DIAG_R_U]
+    NEIGHBORS_STRAIGHT: Final = [RIGHT, DOWN, LEFT, UP]
+    NEIGHBORS_ALL: Final = [RIGHT, DIAG_R_D, DOWN, DIAG_L_D, LEFT, DIAG_L_U, UP, DIAG_R_U]

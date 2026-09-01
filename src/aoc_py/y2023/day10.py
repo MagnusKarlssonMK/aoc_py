@@ -1,34 +1,24 @@
 """
+2023 day 10 - Pipe Maze
+
 Store the data in a grid, then for Part 1 simply walk through the system until returning to the start, then calculating
 the answer by dividing the number of steps taken by 2. For part 2, calculate the answer by first determining the area
 with the shoelace formula and then use that with Pick's theorem.
 """
+from typing import Final
 
-import time
-from pathlib import Path
-from dataclasses import dataclass
-
-
-@dataclass(frozen=True)
-class Point:
-    x: int
-    y: int
-
-    def __add__(self, other: "Point") -> "Point":
-        return Point(self.x + other.x, self.y + other.y)
-
-    def get_reverse(self) -> "Point":
-        return Point(self.x * -1, self.y * -1)
+from aoc_py.util.point import Directions, Point
 
 
-class Maze:
-    __DIRECTIONS: dict[str, Point] = {
-        "u": Point(0, -1),
-        "r": Point(1, 0),
-        "d": Point(0, 1),
-        "l": Point(-1, 0),
+class InputData:
+    __DIRECTIONS: Final = {
+        "u": Directions.UP,
+        "r": Directions.RIGHT,
+        "d": Directions.DOWN,
+        "l": Directions.LEFT,
     }
-    __PIPES: dict[str, tuple[str, str]] = {
+    #@typing.ClassVar
+    __PIPES: Final = {
         "|": ("u", "d"),
         "-": ("l", "r"),
         "L": ("u", "r"),
@@ -44,12 +34,12 @@ class Maze:
             if (x := row.find("S")) >= 0:
                 self.__startpoint = Point(x, y)
         # Note: when starting at 'S', take whatever direction we find first, it doesn't matter which way we walk
-        for direction in Maze.__DIRECTIONS.values():
+        for direction in InputData.__DIRECTIONS.values():
             v = self.__get_value(self.__startpoint + direction)
             if v == ".":
                 continue
-            if direction.get_reverse() in [
-                Maze.__DIRECTIONS[p] for p in Maze.__PIPES[v]
+            if direction.reverse() in [
+                InputData.__DIRECTIONS[p] for p in InputData.__PIPES[v]
             ]:
                 self.__startdirection = direction
                 break
@@ -59,9 +49,9 @@ class Maze:
         return self.__grid[pos.y][pos.x]
 
     def __get_nextstepdir(self, pos: Point, indir: Point) -> Point:
-        for outdir in Maze.__PIPES[self.__get_value(pos)]:
-            if Maze.__DIRECTIONS[outdir] != indir.get_reverse():
-                return Maze.__DIRECTIONS[outdir]
+        for outdir in InputData.__PIPES[self.__get_value(pos)]:
+            if InputData.__DIRECTIONS[outdir] != indir.reverse():
+                return InputData.__DIRECTIONS[outdir]
         return indir  # Should never happen, there should always be one out...
 
     def __traverse(self) -> None:
@@ -75,12 +65,12 @@ class Maze:
             currentdir = self.__get_nextstepdir(currentpos, currentdir)
             currentpos += currentdir
 
-    def get_farpoint_length(self) -> int:
+    def get_p1(self) -> int:
         if not self.__pipepath:
             self.__traverse()
         return len(self.__pipepath) // 2
 
-    def get_enclosed_count(self) -> int:
+    def get_p2(self) -> int:
         if not self.__pipepath:
             self.__traverse()
         # Calculate shoelace area
@@ -100,18 +90,12 @@ class Maze:
         return area + 1 - (len(self.__pipepath) // 2)
 
 
-def main(aoc_input: str) -> None:
-    mymaze = Maze(aoc_input)
-    print(f"Part 1: {mymaze.get_farpoint_length()}")
-    print(f"Part 2: {mymaze.get_enclosed_count()}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+        p1, p2 = "-1"
+        p = InputData(inputdata)
+        if part in (None, 1):
+            p1 = str(p.get_p1())
+        if part in (None, 2):
+            p2 = str(p.get_p2())
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], "AdventOfCode-Input")
-    INPUT_FILE = Path(ROOT_DIR, "2023/day10.txt")
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, "r") as file:
-        main(file.read().strip("\n"))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+        return p1, p2
