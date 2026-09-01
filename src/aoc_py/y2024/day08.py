@@ -1,24 +1,24 @@
-import time
-from pathlib import Path
+"""
+2024 day 8 - Resonant Collinearity
+"""
 from dataclasses import dataclass
 from itertools import combinations
 
+from aoc_py.util.point import Point
+
 
 @dataclass(frozen=True)
-class Point:
-    x: int
-    y: int
-
-    def get_anti_points(self, other: "Point", harmonic: int) -> tuple["Point", "Point"]:
-        return (Point(self.x + harmonic * (self.x - other.x), self.y + harmonic * (self.y - other.y)),
-                Point(other.x + harmonic * (other.x - self.x), other.y + harmonic * (other.y - self.y)))
+class PointX(Point):
+    def get_anti_points(self, other: PointX, harmonic: int) -> tuple[PointX, PointX]:
+        return (PointX(self.x + harmonic * (self.x - other.x), self.y + harmonic * (self.y - other.y)),
+                PointX(other.x + harmonic * (other.x - self.x), other.y + harmonic * (other.y - self.y)))
 
 
-class Antennas:
+class InputData:
     def __init__(self, rawstr: str) -> None:
         self.__height = 0
         self.__width = 0
-        self.__antennas: dict[str: list[Point]] = {}
+        self.__antennas: dict[str, list[PointX]] = {}
         for y, line in enumerate(rawstr.splitlines()):
             self.__height += 1
             if y == 0:
@@ -26,13 +26,13 @@ class Antennas:
             for x, c in enumerate(line):
                 if c != '.':
                     if c in self.__antennas:
-                        self.__antennas[c].append(Point(x, y))
+                        self.__antennas[c].append(PointX(x, y))
                     else:
-                        self.__antennas[c] = [Point(x, y)]
+                        self.__antennas[c] = [PointX(x, y)]
 
     def get_antinode_counts(self) -> tuple[int, int]:
-        antinodes: set[Point] = set()
-        antinodes_w_harmonics: set[Point] = set()
+        antinodes: set[PointX] = set()
+        antinodes_w_harmonics: set[PointX] = set()
         for antennas in self.__antennas.values():
             for a1, a2 in combinations(antennas, 2):
                 inside = True
@@ -54,19 +54,13 @@ class Antennas:
         return len(antinodes), len(antinodes_w_harmonics)
 
 
-def main(aoc_input: str) -> None:
-    ant = Antennas(aoc_input)
-    p1, p2 = ant.get_antinode_counts()
-    print(f"Part 1: {p1}")
-    print(f"Part 2: {p2}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+        p1, p2 = "-1"
+        p = InputData(inputdata)
+        r1, r2 = p.get_antinode_counts()
+        if part in (None, 1):
+            p1 = str(r1)
+        if part in (None, 2):
+            p2 = str(r2)
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2024/day08.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+        return p1, p2
