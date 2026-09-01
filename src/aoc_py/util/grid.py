@@ -27,9 +27,14 @@ class Grid:
                 return Point(i % self.x_max, i // self.x_max)
         return Point(-1, -1)
 
+    def find_all(self, item: str) -> list[Point]:
+        '''Searches the Grid for all elements matching item, and returns a list
+        of Point.'''
+        return [Point(i % self.x_max, i // self.x_max) for i, e in enumerate(self.elements) if e == item]
+
     def get_index(self, p: Point) -> int:
-        '''Returns the Point corresponding to an index in the Grid element array.
-        Will return -1 if the input is out-of-bounds.'''
+        '''Returns the index corresponding to a Point in the Grid element array.
+        Will return -1 if the input Point is out-of-bounds.'''
         if 0 <= p.x < self.x_max and 0 <= p.y < self.y_max:
             return self.x_max * p.y + p.x
         else:
