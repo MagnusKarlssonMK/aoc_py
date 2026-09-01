@@ -8,17 +8,10 @@ symbol in its adjacent list.
 For part 2, instead iterate over the symbols and find the gears, and then iterate over the parts to see how many parts
 that are adjacent for each gear.
 """
-
-import time
-from pathlib import Path
-from dataclasses import dataclass
 from collections.abc import Generator
+from dataclasses import dataclass
 
-
-@dataclass(frozen=True)
-class Point:
-    x: int
-    y: int
+from aoc_py.util.point import Point
 
 
 @dataclass(frozen=True)
@@ -64,10 +57,10 @@ class InputData:
                     adj.add(p)
             self.__parts[part] = adj
 
-    def solve_part1(self) -> int:
+    def get_p1(self) -> int:
         return sum([part.value for part in self.__parts if len(self.__parts[part]) > 0])
 
-    def solve_part2(self) -> int:
+    def get_p2(self) -> int:
         result = 0
         for symbol, symbtype in self.__symbols.items():
             if symbtype == "*":
@@ -79,18 +72,12 @@ class InputData:
         return result
 
 
-def main(aoc_input: str) -> None:
-    myschematic = InputData(aoc_input)
-    print(f"Part 1: {myschematic.solve_part1()}")
-    print(f"Part 2: {myschematic.solve_part2()}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+        p1, p2 = "-1"
+        p = InputData(inputdata)
+        if part in (None, 1):
+            p1 = str(p.get_p1())
+        if part in (None, 2):
+            p2 = str(p.get_p2())
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], "AdventOfCode-Input")
-    INPUT_FILE = Path(ROOT_DIR, "2023/day03.txt")
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, "r") as file:
-        main(file.read().strip("\n"))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+        return p1, p2
