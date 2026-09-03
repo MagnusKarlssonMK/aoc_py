@@ -13,62 +13,48 @@ combination with the diagonal nodes to form the X, and see if the generated
 word is eithes MAS or SAM.
 """
 
+from aoc_py.util.grid import Grid
+from aoc_py.util.point import Directions
+
 
 class InputData:
-    def __init__(self, rawstr: str) -> None:
-        self.__grid = [[c for c in line] for line in rawstr.splitlines()]
-        self.__height = len(self.__grid)
-        self.__width = len(self.__grid[0])
-
-    def __get_grid_value(self, row: int, col: int) -> str:
-        if row in range(self.__height) and col in range(self.__width):
-            return self.__grid[row][col]
-        return "."
+    def __init__(self, s: str) -> None:
+        self.__grid = Grid(s)
 
     def get_p1(self) -> int:
-        DIRECTIONS = (
-            (1, 0),
-            (1, -1),
-            (0, -1),
-            (-1, -1),
-            (-1, 0),
-            (-1, 1),
-            (0, 1),
-            (1, 1),
-        )
         total = 0
-        for row, line in enumerate(self.__grid):
-            for col, c in enumerate(line):
-                if c == "X":
-                    for d_row, d_col in DIRECTIONS:
-                        if (
-                            "X"
-                            + self.__get_grid_value(row + d_row, col + d_col)
-                            + self.__get_grid_value(row + 2 * d_row, col + 2 * d_col)
-                            + self.__get_grid_value(row + 3 * d_row, col + 3 * d_col)
-                            == "XMAS"
-                        ):
-                            total += 1
+        for i, c in enumerate(self.__grid.elements):
+            p = self.__grid.get_point(i)
+            if c == "X":
+                for d in Directions.NEIGHBORS_ALL:
+                    if (
+                        "X"
+                        + self.__grid.get_element(p + d)
+                        + self.__grid.get_element(p + d * 2)
+                        + self.__grid.get_element(p + d * 3)
+                        == "XMAS"
+                    ):
+                        total += 1
         return total
 
     def get_p2(self) -> int:
         total = 0
-        for row, line in enumerate(self.__grid):
-            for col, c in enumerate(line):
-                if c == "A":
-                    word1 = (
-                        self.__get_grid_value(row - 1, col - 1)
+        for i, c in enumerate(self.__grid.elements):
+            p = self.__grid.get_point(i)
+            if c == "A":
+                word1 = (
+                    self.__grid.get_element(p - Directions.DIAG_R_D)
+                    + "A"
+                    + self.__grid.get_element(p + Directions.DIAG_R_D)
+                )
+                if word1 in ("MAS", "SAM"):
+                    word2 = (
+                        self.__grid.get_element(p - Directions.DIAG_L_D)
                         + "A"
-                        + self.__get_grid_value(row + 1, col + 1)
+                        + self.__grid.get_element(p + Directions.DIAG_L_D)
                     )
-                    if word1 in ("MAS", "SAM"):
-                        word2 = (
-                            self.__get_grid_value(row + 1, col - 1)
-                            + "A"
-                            + self.__get_grid_value(row - 1, col + 1)
-                        )
-                        if word2 in ("MAS", "SAM"):
-                            total += 1
+                    if word2 in ("MAS", "SAM"):
+                        total += 1
         return total
 
 
