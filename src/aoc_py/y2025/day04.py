@@ -7,7 +7,6 @@ from typing import Final
 from aoc_py.util.grid import Grid
 from aoc_py.util.point import Directions, Point
 
-
 PAPER: Final = "@"
 NOT_PAPER: Final = "."
 
