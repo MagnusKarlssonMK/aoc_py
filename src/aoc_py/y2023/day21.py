@@ -1,52 +1,45 @@
 """
+2023 day 21 - Step Counter
+
 Part 1: Stores the grid in a new class, and finds reachable tiles within the step count limit using BFS, then count
 only the ones that have odd/even number of steps (depending on whether the count limit is odd/even).
 Part 2: Solves it with three-point-formula to determine the coefficients in a quadratic formula, and calculate the
 answer from that.
 """
-import time
-from pathlib import Path
-from dataclasses import dataclass
+
 from collections.abc import Generator
 
-
-@dataclass(frozen=True)
-class Point:
-    x: int
-    y: int
-
-    def get_neighbors(self) -> Generator["Point"]:
-        for d in ((0, -1), (1, 0), (0, 1), (-1, 0)):
-            yield self + Point(*d)
-
-    def __add__(self, other: "Point") -> "Point":
-        return Point(self.x + other.x, self.y + other.y)
+from aoc_py.util.point import Directions, Point
 
 
-class Grid:
-    def __init__(self, rawstr: str):
-        lines = rawstr.splitlines()
+class InputData:
+    def __init__(self, s: str):
+        lines = s.splitlines()
         self.__height = len(lines)
         self.__width = len(lines[0])
         self.__start = Point(-1, -1)
         self.__rocks: set[Point] = set()
-        for y, line in enumerate(rawstr.splitlines()):
+        for y, line in enumerate(s.splitlines()):
             for x, c in enumerate(line):
-                if c == 'S':
+                if c == "S":
                     self.__start = Point(x, y)
-                elif c == '#':
+                elif c == "#":
                     self.__rocks.add(Point(x, y))
 
     def __get_neighbors(self, coord: Point, expand: bool) -> Generator[Point]:
-        for neighbor in coord.get_neighbors():
+        for d in Directions.NEIGHBORS_STRAIGHT:
+            neighbor = coord + d
             if expand:
-                if Point(neighbor.x % self.__width, neighbor.y % self.__height) not in self.__rocks:
+                if (
+                    Point(neighbor.x % self.__width, neighbor.y % self.__height)
+                    not in self.__rocks
+                ):
                     yield neighbor
             else:
                 if Point(neighbor.x, neighbor.y) not in self.__rocks:
                     yield neighbor
 
-    def get_reachablecount(self, steps: int, expand: bool = False) -> int:
+    def get_p1(self, steps: int, expand: bool = False) -> int:
         seen: set[Point] = set()
         reachable: set[Point] = set()
         bfs_queue = [(self.__start, 0)]
@@ -61,30 +54,24 @@ class Grid:
                         seen.add(v)
         return len(reachable)
 
-    def get_reachablecount_infinite(self, maxstep: int) -> int:
+    def get_p2(self, maxstep: int) -> int:
         n = (self.__height - 1) // 2
         three_vec = [n + (self.__height * i) for i in range(3)]
         # y = a*x^2 + b*x + c
-        y = [self.get_reachablecount(i, True) for i in three_vec]
+        y = [self.get_p1(i, True) for i in three_vec]
         c = y[0]
         b = ((4 * y[1]) - (3 * y[0]) - y[2]) // 2
         a = y[1] - y[0] - b
         x = (maxstep - n) // self.__height
-        return (a * x ** 2) + (b * x) + c
+        return (a * x**2) + (b * x) + c
 
 
-def main(aoc_input: str) -> None:
-    mygrid = Grid(aoc_input)
-    print(f"Part 1: {mygrid.get_reachablecount(64)}")
-    print(f"Part 2: {mygrid.get_reachablecount_infinite(26501365)}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_p1(64))
+    if part in (None, 2):
+        p2 = str(p.get_p2(26501365))
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2023/day21.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
