@@ -1,40 +1,44 @@
 """
+Day 22 - Sand Slabs
+
 Sort of 3d tetris in the start to let the bricks fall down as far as possible. To speed this up, bricks are dropped in
 order of original height, and the highest point for any XY coordinate is stored as a sort 'ground zero' and updated
 after every dropped brick.
 """
-import time
-from pathlib import Path
+
 from dataclasses import dataclass
 
 
 @dataclass
-class Coord3D:
+class Point3D:
     x: int
     y: int
     z: int
 
-    def __add__(self, other: "Coord3D") -> "Coord3D":
-        return Coord3D(self.x + other.x, self.y + other.y, self.z + other.z)
+    def __add__(self, other: Point3D) -> Point3D:
+        return Point3D(self.x + other.x, self.y + other.y, self.z + other.z)
 
 
 class Brick:
     """A simple coordinate holder for a brick. The representation is one [X,Y,Z] list and one [dX,dY,dZ] list"""
-    def __init__(self, xyz1: Coord3D, xyz2: Coord3D):
-        self.pos: Coord3D = Coord3D(min(xyz1.x, xyz2.x), min(xyz1.y, xyz2.y), min(xyz1.z, xyz2.z))
-        self.dpos: Coord3D = Coord3D(abs(xyz1.x - xyz2.x), abs(xyz1.y - xyz2.y), abs(xyz1.z - xyz2.z))
-        self.id: str = str(self.pos.x) + "-" + str(self.pos.y) + "-" + str(self.pos.z)
 
-    def __str__(self):
-        return f"XYZ: {self.pos} - dXYZ: {self.dpos}"
+    def __init__(self, xyz1: Point3D, xyz2: Point3D):
+        self.pos: Point3D = Point3D(
+            min(xyz1.x, xyz2.x), min(xyz1.y, xyz2.y), min(xyz1.z, xyz2.z)
+        )
+        self.dpos: Point3D = Point3D(
+            abs(xyz1.x - xyz2.x), abs(xyz1.y - xyz2.y), abs(xyz1.z - xyz2.z)
+        )
+        self.id: str = str(self.pos.x) + "-" + str(self.pos.y) + "-" + str(self.pos.z)
 
 
 class GroundZero:
     """Class used to create a 3d grid of the highest Z position for each XY tile along with the ID of the brick
     that added that tile."""
+
     def __init__(self, x_size: int, y_size: int) -> None:
         self.__count = 0
-        self.__grid = [[(0, '') for _ in range(y_size)] for _ in range(x_size)]
+        self.__grid = [[(0, "") for _ in range(y_size)] for _ in range(x_size)]
 
     def drop_newbrick(self, brick: Brick) -> tuple[int, set[str]]:
         """Finds the lowest available Z-coordinate for brick with ID 'uid' and updates the grid with the new brick.
@@ -57,17 +61,19 @@ class GroundZero:
         return new_z, filtered_ret_idlist
 
 
-class Grid:
+class InputData:
     def __init__(self, rawstr: str) -> None:
         self.__moving_bricks: list[Brick] = []
-        self.__resting_bricks: dict[str, tuple[Brick, set[str], list[str]]] = {}  # {id: Brick, down-ids, up-ids}
+        self.__resting_bricks: dict[
+            str, tuple[Brick, set[str], list[str]]
+        ] = {}  # {id: Brick, down-ids, up-ids}
         for line in rawstr.splitlines():
             left, right = line.split("~")
-            x1, y1, z1 = [int(nbr) for nbr in left.split(',')]
-            x2, y2, z2 = [int(nbr) for nbr in right.split(',')]
-            self.__moving_bricks.append(Brick(Coord3D(x1, y1, z1), Coord3D(x2, y2, z2)))
+            x1, y1, z1 = [int(nbr) for nbr in left.split(",")]
+            x2, y2, z2 = [int(nbr) for nbr in right.split(",")]
+            self.__moving_bricks.append(Brick(Point3D(x1, y1, z1), Point3D(x2, y2, z2)))
 
-    def get_safebricks_count(self) -> int:
+    def get_p1(self) -> int:
         """Drops the bricks to rest state and returns the number of bricks that can safely be removed from the resting
         grid without causing any other brick to fall."""
         x_max = 0
@@ -82,10 +88,18 @@ class Grid:
         while self.__moving_bricks:
             nextbrick: Brick = self.__moving_bricks.pop(0)
             newz = groundzero.drop_newbrick(nextbrick)
-            self.__resting_bricks[nextbrick.id] = \
-                (Brick(Coord3D(nextbrick.pos.x, nextbrick.pos.y, newz[0]),
-                       Coord3D(nextbrick.pos.x + nextbrick.dpos.x, nextbrick.pos.y + nextbrick.dpos.y, newz[0] +
-                               nextbrick.dpos.z)), newz[1], [])
+            self.__resting_bricks[nextbrick.id] = (
+                Brick(
+                    Point3D(nextbrick.pos.x, nextbrick.pos.y, newz[0]),
+                    Point3D(
+                        nextbrick.pos.x + nextbrick.dpos.x,
+                        nextbrick.pos.y + nextbrick.dpos.y,
+                        newz[0] + nextbrick.dpos.z,
+                    ),
+                ),
+                newz[1],
+                [],
+            )
             for uplink in newz[1]:
                 self.__resting_bricks[uplink][2].append(nextbrick.id)
         # Find number of bricks that can be safely removed
@@ -96,34 +110,35 @@ class Grid:
                 retval += 1
         return retval
 
-    def get_disintegrated_count(self) -> int:
+    def get_p2(self) -> int:
         """Solves the second part of calculating the total sum number of bricks that would disintegrate as chain
-        reaction when disintegrating each individual brick."""
+        reaction when disintegrating each individual brick. Assumes that get_p1 has been run first."""
         retval = 0
         for brick in self.__resting_bricks:
             queue: list[str] = self.__resting_bricks[brick][2]
             disintegrated = {brick}
             while queue:
                 poof = queue.pop(0)
-                if all(down in disintegrated for down in self.__resting_bricks[poof][1]):
+                if all(
+                    down in disintegrated for down in self.__resting_bricks[poof][1]
+                ):
                     disintegrated.update({poof})
-                    [queue.append(up) for up in self.__resting_bricks[poof][2] if up not in queue]
+                    [
+                        queue.append(up)
+                        for up in self.__resting_bricks[poof][2]
+                        if up not in queue
+                    ]
             retval += len(disintegrated) - 1
         return retval
 
 
-def main(aoc_input: str) -> None:
-    mygrid = Grid(aoc_input)
-    print(f"Part 1: {mygrid.get_safebricks_count()}")
-    print(f"Part 2: {mygrid.get_disintegrated_count()}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    r1 = p.get_p1()
+    if part in (None, 1):
+        p1 = str(r1)
+    if part in (None, 2):
+        p2 = str(p.get_p2())
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2023/day22.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
