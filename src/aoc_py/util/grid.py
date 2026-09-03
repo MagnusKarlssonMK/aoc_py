@@ -40,6 +40,13 @@ class Grid:
         else:
             return -1
 
+    def get_point(self, index: int) -> Point:
+        '''Returns the Point corresponding to a certain index. Typically used when iterating
+        through elements in the grid.'''
+        x = index % self.x_max
+        y = index // self.x_max
+        return Point(x, y)
+
     def set_point(self, p: Point, v: str):
         '''Sets the Point p to the value v. Will do nothing if p is out-of-bounds.'''
         if 0 <= p.x < self.x_max and 0 <= p.y < self.y_max:
