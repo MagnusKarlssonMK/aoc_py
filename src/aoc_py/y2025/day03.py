@@ -14,6 +14,7 @@ Part 2
 
 Same as part 1, except repeat the search for digits 12 times instead of just 2.
 """
+
 from typing import cast
 
 

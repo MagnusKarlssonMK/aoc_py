@@ -1,6 +1,7 @@
 """
 2023 day 14 - Parabolic Reflector Dish
 """
+
 from aoc_py.util.grid import Grid
 from aoc_py.util.point import Point
 
@@ -72,7 +73,13 @@ class InputData:
         self.tilt_east()
 
     def get_load(self):
-        return sum([self.grid.y_max - (i // self.grid.x_max) for i, e in enumerate(self.grid.elements) if e == "O"])
+        return sum(
+            [
+                self.grid.y_max - (i // self.grid.x_max)
+                for i, e in enumerate(self.grid.elements)
+                if e == "O"
+            ]
+        )
 
     def get_p1(self) -> int:
         self.tilt_north()
@@ -97,11 +104,11 @@ class InputData:
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
-        p1, p2 = "-1"
-        p = InputData(inputdata)
-        if part in (None, 1):
-            p1 = str(p.get_p1())
-        if part in (None, 2):
-            p2 = str(p.get_p2())
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_p1())
+    if part in (None, 2):
+        p2 = str(p.get_p2())
 
-        return p1, p2
+    return p1, p2

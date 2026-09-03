@@ -4,6 +4,8 @@
 Just a simple recursive function to generate the lines until a line of zeroes shows up.
 Surprisingly simple part 2, basically just to reverse the input data and run the same function.
 """
+
+
 def findnextnumber(nbrs: list[int]) -> int:
     if all(nbr == 0 for nbr in nbrs):
         return 0
@@ -23,11 +25,11 @@ def get_numbers(s: str) -> tuple[int, int]:
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
-        p1, p2 = "-1"
-        p = get_numbers(inputdata)
-        if part in (None, 1):
-            p1 = str(p[0])
-        if part in (None, 2):
-            p2 = str(p[1])
+    p1, p2 = "-1"
+    p = get_numbers(inputdata)
+    if part in (None, 1):
+        p1 = str(p[0])
+    if part in (None, 2):
+        p2 = str(p[1])
 
-        return p1, p2
+    return p1, p2

@@ -5,6 +5,7 @@ Store the data in a grid, then for Part 1 simply walk through the system until r
 the answer by dividing the number of steps taken by 2. For part 2, calculate the answer by first determining the area
 with the shoelace formula and then use that with Pick's theorem.
 """
+
 from typing import Final
 
 from aoc_py.util.point import Directions, Point
@@ -17,7 +18,7 @@ class InputData:
         "d": Directions.DOWN,
         "l": Directions.LEFT,
     }
-    #@typing.ClassVar
+    # @typing.ClassVar
     __PIPES: Final = {
         "|": ("u", "d"),
         "-": ("l", "r"),
@@ -91,11 +92,11 @@ class InputData:
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
-        p1, p2 = "-1"
-        p = InputData(inputdata)
-        if part in (None, 1):
-            p1 = str(p.get_p1())
-        if part in (None, 2):
-            p2 = str(p.get_p2())
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_p1())
+    if part in (None, 2):
+        p2 = str(p.get_p2())
 
-        return p1, p2
+    return p1, p2

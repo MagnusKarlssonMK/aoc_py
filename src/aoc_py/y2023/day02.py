@@ -1,6 +1,7 @@
 """
 2023 day 2 - Cube Conundrum
 """
+
 from enum import Enum
 
 
@@ -66,11 +67,11 @@ class InputData:
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
-        p1, p2 = "-1"
-        p = InputData(inputdata)
-        if part in (None, 1):
-            p1 = str(p.get_p1())
-        if part in (None, 2):
-            p2 = str(p.get_p2())
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_p1())
+    if part in (None, 2):
+        p2 = str(p.get_p2())
 
-        return p1, p2
+    return p1, p2

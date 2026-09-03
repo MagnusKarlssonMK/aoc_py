@@ -4,6 +4,7 @@
 Uses classes and inheritance to implement the different module types, and an overall system class to hold them all
 and provide an interface for pushing the button.
 """
+
 import math
 from dataclasses import dataclass
 from enum import Enum
@@ -88,11 +89,11 @@ class CommunicationSystem:
         conjunction_ids: list[str] = []
         rxcon = ""
         for line in rawstr.splitlines():
-            name, out = line.split(' -> ')
-            out = out.split(', ')
-            if name[0] == '%':
+            name, out = line.split(" -> ")
+            out = out.split(", ")
+            if name[0] == "%":
                 self.__modules[name[1:]] = Flipflop(out)
-            elif name[0] == '&':
+            elif name[0] == "&":
                 self.__modules[name[1:]] = Conjunction(out)
                 conjunction_ids.append(name[1:])
             else:
@@ -107,7 +108,9 @@ class CommunicationSystem:
                     self.__modules[cid].add_input(m)
 
         # Find the modules connecting to the module connecting to 'rx'
-        self.__rxcon_inputs: list[str] = [m for m in self.__modules if rxcon in self.__modules[m].outputs]
+        self.__rxcon_inputs: list[str] = [
+            m for m in self.__modules if rxcon in self.__modules[m].outputs
+        ]
 
     def get_push_1000(self) -> int:
         pulsecount: dict[Pulse, int] = {Pulse.LOW: 0, Pulse.HIGH: 0}
@@ -135,8 +138,11 @@ class CommunicationSystem:
                 if newmsg.receiver in self.__modules:
                     for m in self.__modules[newmsg.receiver].process_signal(newmsg):
                         msgqueue.append(m)
-                        if (newmsg.receiver in self.__rxcon_inputs and m.pulse == Pulse.HIGH and
-                                rxcon_inputs[newmsg.receiver] == 0):
+                        if (
+                            newmsg.receiver in self.__rxcon_inputs
+                            and m.pulse == Pulse.HIGH
+                            and rxcon_inputs[newmsg.receiver] == 0
+                        ):
                             rxcon_inputs[newmsg.receiver] = pushcount
         # Reset module states before exiting
         for m in self.__modules:
@@ -145,11 +151,11 @@ class CommunicationSystem:
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
-        p1, p2 = "-1"
-        p = CommunicationSystem(inputdata)
-        if part in (None, 1):
-            p1 = str(p.get_push_1000())
-        if part in (None, 2):
-            p2 = str(p.get_rx_mincount())
+    p1, p2 = "-1"
+    p = CommunicationSystem(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_push_1000())
+    if part in (None, 2):
+        p2 = str(p.get_rx_mincount())
 
-        return p1, p2
+    return p1, p2

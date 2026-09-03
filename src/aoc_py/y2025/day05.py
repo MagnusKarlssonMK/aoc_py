@@ -20,6 +20,7 @@ by each range. Note that the ranges are inclusive, so the number of ID:s for a r
 is 1 + upper_range - lower range.
 """
 
+
 class InputData:
     def __init__(self, s: str) -> None:
         blocks = s.split("\n\n")
@@ -55,6 +56,7 @@ class InputData:
             else:
                 processed.append((r0, r1))
         return sum([1 + p1 - p0 for p0, p1 in processed])
+
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1, p2 = "-1"

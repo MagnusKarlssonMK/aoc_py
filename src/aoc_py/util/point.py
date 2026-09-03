@@ -8,8 +8,8 @@ class Point:
     y: int
 
     def from_str(self, s: str) -> Point:
-        '''Creates a new point based on a string. Supports separators [',', '-'].
-        Returns x=y=-1 and prints a warning if parsing fails.'''
+        """Creates a new point based on a string. Supports separators [',', '-'].
+        Returns x=y=-1 and prints a warning if parsing fails."""
         v = s.split(",")
         if len(v) == 2:
             return Point(int(v[0]), int(v[1]))
@@ -20,23 +20,23 @@ class Point:
         return Point(-1, -1)
 
     def rotate_left(self) -> Point:
-        '''Rotates the point left.'''
+        """Rotates the point left."""
         return Point(self.y, -self.x)
 
     def rotate_right(self) -> Point:
-        '''Rotates the point right.'''
+        """Rotates the point right."""
         return Point(-self.y, self.x)
 
     def manhattan(self, other: Point) -> int:
-        '''Calculates the manhattan distance between two points.'''
+        """Calculates the manhattan distance between two points."""
         return abs(self.x - other.x) + abs(self.y - other.y)
 
     def determinant(self, other: Point) -> int:
-        '''Calculates the determinant of two points.'''
+        """Calculates the determinant of two points."""
         return (self.x * other.y) - (self.y * other.x)
 
     def reverse(self) -> Point:
-        '''Creates the reversed point.'''
+        """Creates the reversed point."""
         return Point(self.x * -1, self.y * -1)
 
     def __add__(self, other: Point) -> Point:
@@ -65,4 +65,13 @@ class Directions:
     DIAG_R_U: Final = Point(1, -1)
 
     NEIGHBORS_STRAIGHT: Final = [RIGHT, DOWN, LEFT, UP]
-    NEIGHBORS_ALL: Final = [RIGHT, DIAG_R_D, DOWN, DIAG_L_D, LEFT, DIAG_L_U, UP, DIAG_R_U]
+    NEIGHBORS_ALL: Final = [
+        RIGHT,
+        DIAG_R_D,
+        DOWN,
+        DIAG_L_D,
+        LEFT,
+        DIAG_L_U,
+        UP,
+        DIAG_R_U,
+    ]

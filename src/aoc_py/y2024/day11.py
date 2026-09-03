@@ -8,6 +8,7 @@ rather than a vector, with the stone's number as key and number of stones with
 that number as value. Despite the desceptive description, the order of the stones
 is actually not important!
 """
+
 from collections import defaultdict
 from math import log10
 
@@ -19,7 +20,7 @@ def blink(stones: dict[int, int]) -> dict[int, int]:
             newstones[1] += amount
         else:
             if int(digits := 1 + log10(stone)) % 2 == 0:
-                power = int(10**(digits // 2))
+                power = int(10 ** (digits // 2))
                 newstones[stone // power] += amount
                 newstones[stone % power] += amount
             else:
@@ -44,12 +45,12 @@ class InputData:
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
-        p1, p2 = "-1"
-        p = InputData(inputdata)
-        part1, part2 = p.get_stone_count(25, 75)
-        if part in (None, 1):
-            p1 = str(part1)
-        if part in (None, 2):
-            p2 = str(part2)
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    part1, part2 = p.get_stone_count(25, 75)
+    if part in (None, 1):
+        p1 = str(part1)
+    if part in (None, 2):
+        p2 = str(part2)
 
-        return p1, p2
+    return p1, p2

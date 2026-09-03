@@ -9,16 +9,17 @@ Part 2
 
 Run the simulation until all robots are in unique positions with no overlap.
 """
+
 from math import prod
 
 
 class Robot:
     def __init__(self, rawstr: str) -> None:
         left, right = rawstr.split()
-        left_x, left_y = left.split(',')
-        right_x, right_y = right.split(',')
-        self.pos: tuple[int, int] = int(left_x.strip('p=')), int(left_y)
-        self.vel: tuple[int, int] = int(right_x.strip('v=')), int(right_y)
+        left_x, left_y = left.split(",")
+        right_x, right_y = right.split(",")
+        self.pos: tuple[int, int] = int(left_x.strip("p=")), int(left_y)
+        self.vel: tuple[int, int] = int(right_x.strip("v=")), int(right_y)
 
 
 class InputData:
@@ -58,11 +59,11 @@ class InputData:
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
-        p1, p2 = "-1"
-        p = InputData(inputdata, 101, 103)
-        if part in (None, 1):
-            p1 = str(p.get_p1())
-        if part in (None, 2):
-            p2 = str(p.get_p2())
+    p1, p2 = "-1"
+    p = InputData(inputdata, 101, 103)
+    if part in (None, 1):
+        p1 = str(p.get_p1())
+    if part in (None, 2):
+        p2 = str(p.get_p2())
 
-        return p1, p2
+    return p1, p2

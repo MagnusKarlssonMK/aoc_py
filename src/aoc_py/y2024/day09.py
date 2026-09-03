@@ -2,6 +2,7 @@
 2024 day 9 - Disk Fragmenter
 """
 
+
 class InputData:
     def __init__(self, rawstr: str) -> None:
         self.__diskmap = [int(c) for c in rawstr]
@@ -31,7 +32,9 @@ class InputData:
                     right_counter = self.__diskmap[right_idx]
             else:
                 left_idx += 1
-                buffer = right_counter if left_idx == right_idx else self.__diskmap[left_idx]
+                buffer = (
+                    right_counter if left_idx == right_idx else self.__diskmap[left_idx]
+                )
         return checksum
 
     def get_p2(self) -> int:
@@ -51,7 +54,9 @@ class InputData:
                     if e_start >= mempos:
                         break
                     if e_len >= memlen:
-                        checksum += sum([i * memid // 2 for i in range(e_start, e_start + memlen)])
+                        checksum += sum(
+                            [i * memid // 2 for i in range(e_start, e_start + memlen)]
+                        )
                         if e_len - memlen > 0:
                             emptyblocks[eidx] = e_start + memlen, e_len - memlen
                         else:
@@ -59,16 +64,18 @@ class InputData:
                         moved = True
                         break
                 if not moved:
-                    checksum += sum([i * memid // 2 for i in range(mempos, mempos + memlen)])
+                    checksum += sum(
+                        [i * memid // 2 for i in range(mempos, mempos + memlen)]
+                    )
         return checksum
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
-        p1, p2 = "-1"
-        p = InputData(inputdata)
-        if part in (None, 1):
-            p1 = str(p.get_p1())
-        if part in (None, 2):
-            p2 = str(p.get_p2())
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_p1())
+    if part in (None, 2):
+        p2 = str(p.get_p2())
 
-        return p1, p2
+    return p1, p2

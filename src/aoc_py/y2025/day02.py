@@ -32,11 +32,7 @@ def get_invalid(v1: str, v2: str) -> int:
     invalid = 0
     d: int = len(v1) // nbrof_parts
     m: int = len(v1) % nbrof_parts
-    next_part: int = (
-        int(v1[0 : d])
-        if m == 0
-        else 10**d
-    )
+    next_part: int = int(v1[0:d]) if m == 0 else 10**d
 
     while True:
         nbrof_part_digits: int = int(1 + int(math.log10(abs(next_part))))
@@ -51,6 +47,7 @@ def get_invalid(v1: str, v2: str) -> int:
 
     return invalid
 
+
 def get_multiple_invalid(v1: str, v2: str) -> int:
     start_id = int(v1)
     stop_id = int(v2)
@@ -60,19 +57,12 @@ def get_multiple_invalid(v1: str, v2: str) -> int:
     while nbrof_parts <= len(v2):
         d: int = len(v1) // nbrof_parts
         m: int = len(v1) % nbrof_parts
-        next_part = (
-            int(v1[0 : d])
-            if m == 0
-            else 10**d
-        )
+        next_part = int(v1[0:d]) if m == 0 else 10**d
 
         while True:
             nbrof_part_digits = 1 + int(math.log10(abs(next_part)))
             candidate_id = sum(
-                [
-                    next_part * 10**(p * nbrof_part_digits)
-                    for p in range(nbrof_parts)
-                ]
+                [next_part * 10 ** (p * nbrof_part_digits) for p in range(nbrof_parts)]
             )
             if candidate_id > stop_id:
                 break

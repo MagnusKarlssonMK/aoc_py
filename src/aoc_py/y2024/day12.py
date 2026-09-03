@@ -1,6 +1,7 @@
 """
 2024 day 12 - Garden Groups
 """
+
 from itertools import combinations
 
 from aoc_py.util.grid import Grid
@@ -45,8 +46,12 @@ class InputData:
                     for (n1, v1), (n2, v2) in combinations(neighbor_states, 2):
                         if (n1.x == 0 and n2.x == 0) or (n1.y == 0 and n2.y == 0):
                             continue
-                        if ((v1 == 0 and v2 == 0) or
-                            (v1 == 1 and v2 == 1 and self.__map.get_element(current + n1 + n2) != value_current)):
+                        if (v1 == 0 and v2 == 0) or (
+                            v1 == 1
+                            and v2 == 1
+                            and self.__map.get_element(current + n1 + n2)
+                            != value_current
+                        ):
                             sides += 1
                     neighbor_states.clear()
                 total_perimeter += area * perimeter
@@ -55,12 +60,12 @@ class InputData:
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
-        p1, p2 = "-1"
-        p = InputData(inputdata)
-        r1, r2 = p.get_costs()
-        if part in (None, 1):
-            p1 = str(r1)
-        if part in (None, 2):
-            p2 = str(r2)
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    r1, r2 = p.get_costs()
+    if part in (None, 1):
+        p1 = str(r1)
+    if part in (None, 2):
+        p2 = str(r2)
 
-        return p1, p2
+    return p1, p2

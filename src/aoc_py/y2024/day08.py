@@ -1,6 +1,7 @@
 """
 2024 day 8 - Resonant Collinearity
 """
+
 from dataclasses import dataclass
 from itertools import combinations
 
@@ -10,8 +11,16 @@ from aoc_py.util.point import Point
 @dataclass(frozen=True)
 class PointX(Point):
     def get_anti_points(self, other: PointX, harmonic: int) -> tuple[PointX, PointX]:
-        return (PointX(self.x + harmonic * (self.x - other.x), self.y + harmonic * (self.y - other.y)),
-                PointX(other.x + harmonic * (other.x - self.x), other.y + harmonic * (other.y - self.y)))
+        return (
+            PointX(
+                self.x + harmonic * (self.x - other.x),
+                self.y + harmonic * (self.y - other.y),
+            ),
+            PointX(
+                other.x + harmonic * (other.x - self.x),
+                other.y + harmonic * (other.y - self.y),
+            ),
+        )
 
 
 class InputData:
@@ -24,7 +33,7 @@ class InputData:
             if y == 0:
                 self.__width = len(line)
             for x, c in enumerate(line):
-                if c != '.':
+                if c != ".":
                     if c in self.__antennas:
                         self.__antennas[c].append(PointX(x, y))
                     else:
@@ -55,12 +64,12 @@ class InputData:
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
-        p1, p2 = "-1"
-        p = InputData(inputdata)
-        r1, r2 = p.get_antinode_counts()
-        if part in (None, 1):
-            p1 = str(r1)
-        if part in (None, 2):
-            p2 = str(r2)
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    r1, r2 = p.get_antinode_counts()
+    if part in (None, 1):
+        p1 = str(r1)
+    if part in (None, 2):
+        p2 = str(r2)
 
-        return p1, p2
+    return p1, p2

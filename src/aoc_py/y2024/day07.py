@@ -7,12 +7,13 @@ operation if it's the only way to succeed at the validation. The state of
 whether or not concatenation has been used combined with the calculated value
 is carried up through the recursion chain through the return value.
 """
+
 from enum import Enum
 
 
 class CalibrationResult(Enum):
-    OK = 0,
-    CONCATINATED_OK = 1,
+    OK = (0,)
+    CONCATINATED_OK = (1,)
     NOT_OK = 2
 
 
@@ -34,7 +35,11 @@ class Equation:
 
     def __validate(self, total: int, nbrs: list[int]) -> tuple[CalibrationResult, int]:
         if len(nbrs) == 0:
-            return (CalibrationResult.OK, total) if total == self.__testvalue else (CalibrationResult.NOT_OK, 0)
+            return (
+                (CalibrationResult.OK, total)
+                if total == self.__testvalue
+                else (CalibrationResult.NOT_OK, 0)
+            )
         elif total > self.__testvalue:
             return CalibrationResult.NOT_OK, 0
         else:
@@ -48,7 +53,9 @@ class Equation:
                 return add_result, add_value
             if mul_result == CalibrationResult.CONCATINATED_OK:
                 return mul_result, mul_value
-            conc_result, conc_value = self.__validate(total * concatinate(nbrs[0]) + nbrs[0], nbrs[1:])
+            conc_result, conc_value = self.__validate(
+                total * concatinate(nbrs[0]) + nbrs[0], nbrs[1:]
+            )
             if conc_result != CalibrationResult.NOT_OK:
                 return CalibrationResult.CONCATINATED_OK, conc_value
         return CalibrationResult.NOT_OK, 0
@@ -71,12 +78,12 @@ class InputData:
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
-        p1, p2 = "-1"
-        p = InputData(inputdata)
-        part1, part2 = p.get_calibration_result()
-        if part in (None, 1):
-            p1 = str(part1)
-        if part in (None, 2):
-            p2 = str(part2)
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    part1, part2 = p.get_calibration_result()
+    if part in (None, 1):
+        p1 = str(part1)
+    if part in (None, 2):
+        p2 = str(part2)
 
-        return p1, p2
+    return p1, p2

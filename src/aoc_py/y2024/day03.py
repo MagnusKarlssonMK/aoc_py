@@ -2,6 +2,7 @@
 2024 day 3 - Mull It Over
 """
 
+
 def calculate(block: str) -> int:
     total = 0
     for part in block.split("mul("):
@@ -21,7 +22,12 @@ class InputData:
         return calculate(self.__program)
 
     def get_p2(self) -> int:
-        return sum([calculate(block.split("don't()")[0]) for block in self.__program.split("do()")])
+        return sum(
+            [
+                calculate(block.split("don't()")[0])
+                for block in self.__program.split("do()")
+            ]
+        )
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:

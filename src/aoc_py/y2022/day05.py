@@ -5,6 +5,7 @@ Stores the input data in a crateship class, containing the crates and procedures
 method running the procedures. This is done on a local copy of the crate data to avoid having to create a copy
 of the entire class for Part 2.
 """
+
 from copy import deepcopy
 
 
@@ -38,15 +39,15 @@ class InputData:
                 else:
                     movecrate = crates[proc_from].pop()
                 crates[proc_to].append(movecrate)
-        return ''.join([crates[key][-1] for key in list(crates.keys())])
+        return "".join([crates[key][-1] for key in list(crates.keys())])
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
-        p1, p2 = "-1"
-        p = InputData(inputdata)
-        if part in (None, 1):
-            p1 = p.run_procedures()
-        if part in (None, 2):
-            p2 = p.run_procedures(True)
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = p.run_procedures()
+    if part in (None, 2):
+        p2 = p.run_procedures(True)
 
-        return p1, p2
+    return p1, p2

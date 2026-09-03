@@ -25,6 +25,7 @@ changes to the dial will be in the positive direction, i.e. there would be no ne
 "left" (negative) values separately.
 """
 
+
 class InputData:
     def __init__(self, s: str) -> None:
         self.__rotations = [

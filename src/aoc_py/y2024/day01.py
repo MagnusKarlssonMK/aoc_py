@@ -12,6 +12,8 @@ Make use of the already sorted lists, and iterate over the left side.
 Keep track of the index of the last element used on the right side
 to minimize the amount of looping on the right side.
 """
+
+
 class InputData:
     def __init__(self, rawstr: str) -> None:
         self.__left: list[int] = []
@@ -43,11 +45,11 @@ class InputData:
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
-        p1, p2 = "-1"
-        p = InputData(inputdata)
-        if part in (None, 1):
-            p1 = str(p.get_p1())
-        if part in (None, 2):
-            p2 = str(p.get_p2())
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_p1())
+    if part in (None, 2):
+        p2 = str(p.get_p2())
 
-        return p1, p2
+    return p1, p2
