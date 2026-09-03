@@ -46,9 +46,11 @@ from aoc_py.y2023.day10 import solve_parts
 
 # ----------- Part 1 ------------
 
+
 def test_part1_1() -> None:
     p1, _ = solve_parts(TEST_STRING_1, 1)
     assert p1 == "4"
+
 
 def test_part1_2() -> None:
     p1, _ = solve_parts(TEST_STRING_2, 1)
@@ -57,13 +59,16 @@ def test_part1_2() -> None:
 
 # ----------- Part 2 ------------
 
+
 def test_part2_1() -> None:
     _, p2 = solve_parts(TEST_STRING_3, 2)
     assert p2 == "4"
 
+
 def test_part2_2() -> None:
     _, p2 = solve_parts(TEST_STRING_4, 2)
     assert p2 == "8"
+
 
 def test_part2_3() -> None:
     _, p2 = solve_parts(TEST_STRING_5, 2)

@@ -15,6 +15,7 @@ from aoc_py.y2024.day14 import InputData, solve_parts
 
 # ----------- Part 1 ------------
 
+
 def test_part1_1() -> None:
     p = InputData(TEST_STRING, 11, 7)
     p1 = p.get_p1()
@@ -23,10 +24,12 @@ def test_part1_1() -> None:
 
 # ----------- Part 2 ------------
 
+
 def test_part2_1() -> None:
     p = InputData(TEST_STRING, 11, 7)
     p1 = p.get_p2()
     assert p1 == 1
+
 
 def test_part2_2() -> None:
     p1, p2 = solve_parts(TEST_STRING)

@@ -5,6 +5,7 @@ from aoc_py.y2024.day11 import InputData, solve_parts
 
 # ----------- Part 1 ------------
 
+
 def test_part1_1() -> None:
     p = InputData(TEST_STRING_1)
     p1, _ = p.get_stone_count(1, 2)
@@ -13,11 +14,13 @@ def test_part1_1() -> None:
 
 # ----------- Part 2 ------------
 
+
 def test_part2_1() -> None:
     p = InputData(TEST_STRING_2)
     p1, p2 = p.get_stone_count(6, 25)
     assert p1 == 22
     assert p2 == 55312
+
 
 # Running the test with the entire solver for coverage
 def test_part2_2() -> None:
