@@ -1,4 +1,6 @@
 """
+2022 day 25 - Full of Hot Air
+
 Stores the SNAFU value in a simple class which then implements the 'add' function, which adds two SNAFU numbers
 directly without converting to/from decimal. Then simply add all the numbers read from the input data.
 """
