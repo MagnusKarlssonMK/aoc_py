@@ -2,16 +2,12 @@
 2022 day 9 - Rope Bridge
 """
 
+from aoc_py.util.math import signum
 from aoc_py.util.point import Directions, Point
 
 
 def catchup(p1: Point, p2: Point) -> Point:
-    def sign(nbr: int) -> int:
-        if nbr == 0:
-            return 0
-        return 1 if nbr > 0 else -1
-
-    return Point(p1.x + sign(p2.x), p1.y + sign(p2.y))
+    return Point(p1.x + signum(p2.x), p1.y + signum(p2.y))
 
 
 class InputData:
