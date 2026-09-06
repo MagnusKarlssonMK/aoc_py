@@ -1,36 +1,51 @@
-import time
-from pathlib import Path
-from dataclasses import dataclass
+"""
+2022 day 18 - Boiling Boulders
+"""
+
 from collections.abc import Generator
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class Point:
+class Point3d:
     x: int
     y: int
     z: int
 
-    def get_adjacent(self) -> Generator["Point"]:
+    def get_adjacent(self) -> Generator[Point3d]:
         for d in ((0, 0, 1), (0, 0, -1), (0, 1, 0), (0, -1, 0), (1, 0, 0), (-1, 0, 0)):
-            yield self + Point(*d)
+            yield self + Point3d(*d)
 
-    def get_additional_air(self) -> Generator["Point"]:
-        for d in ((0, 1, 1), (0, 1, -1), (0, -1, 1), (0, -1, -1),
-                  (1, 0, 1), (-1, 0, 1), (1, 0, -1), (-1, 0, -1),
-                  (1, 1, 0), (-1, 1, 0), (1, -1, 0), (-1, -1, 0)):
-            yield self + Point(*d)
+    def get_additional_air(self) -> Generator[Point3d]:
+        for d in (
+            (0, 1, 1),
+            (0, 1, -1),
+            (0, -1, 1),
+            (0, -1, -1),
+            (1, 0, 1),
+            (-1, 0, 1),
+            (1, 0, -1),
+            (-1, 0, -1),
+            (1, 1, 0),
+            (-1, 1, 0),
+            (1, -1, 0),
+            (-1, -1, 0),
+        ):
+            yield self + Point3d(*d)
 
-    def __add__(self, other: "Point") -> "Point":
-        return Point(self.x + other.x, self.y + other.y, self.z + other.z)
+    def __add__(self, other: Point3d) -> Point3d:
+        return Point3d(self.x + other.x, self.y + other.y, self.z + other.z)
 
 
-class Lavapool:
+class InputData:
     def __init__(self, rawstr: str) -> None:
-        self.__adj: dict[Point, set[Point]] = {}
-        for point in [Point(*list(map(int, line.split(',')))) for line in rawstr.splitlines()]:
+        self.__adj: dict[Point3d, set[Point3d]] = {}
+        for point in [
+            Point3d(*list(map(int, line.split(",")))) for line in rawstr.splitlines()
+        ]:
             self.__adj[point] = set()
-        start = Point(999, 999, 999)
-        air: set[Point] = set()
+        start = Point3d(999, 999, 999)
+        air: set[Point3d] = set()
         for point in self.__adj:
             for adj in point.get_adjacent():
                 if adj not in self.__adj:
@@ -44,7 +59,7 @@ class Lavapool:
         # Use BFS on the air from the start point which is guaranteed to be exterior, and any unreachable points are
         # interior pockets.
         queue = [start]
-        seen: set[Point] = set()
+        seen: set[Point3d] = set()
         while queue:
             current = queue.pop(0)
             if current in seen:
@@ -68,18 +83,12 @@ class Lavapool:
         return result
 
 
-def main(aoc_input: str) -> None:
-    pool = Lavapool(aoc_input)
-    print(f"Part 1: {pool.get_surface_area()}")
-    print(f"Part 2: {pool.get_surface_area(True)}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_surface_area())
+    if part in (None, 2):
+        p2 = str(p.get_surface_area(True))
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2022/day18.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
