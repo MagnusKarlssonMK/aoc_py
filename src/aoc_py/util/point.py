@@ -7,17 +7,17 @@ class Point:
     x: int
     y: int
 
-    def from_str(self, s: str) -> Point:
+    @classmethod
+    def from_str(cls, s: str) -> Point:
         """Creates a new point based on a string. Supports separators [',', '-'].
         Returns x=y=-1 and prints a warning if parsing fails."""
         v = s.split(",")
         if len(v) == 2:
-            return Point(int(v[0]), int(v[1]))
+            return cls(int(v[0]), int(v[1]))
         v = s.split("-")
         if len(v) == 2:
-            return Point(int(v[0]), int(v[1]))
-        print(f"Can't parse point from string: {s}")
-        return Point(-1, -1)
+            return cls(int(v[0]), int(v[1]))
+        raise ValueError(f"Can't parse Point from string: {s}")
 
     def rotate_left(self) -> Point:
         """Rotates the point left."""
