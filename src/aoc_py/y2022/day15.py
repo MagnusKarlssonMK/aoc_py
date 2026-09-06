@@ -1,5 +1,5 @@
 """
-Beacon Exclusion Zone
+2022 day 15 - Beacon Exclusion Zone
 """
 
 from collections.abc import Generator
