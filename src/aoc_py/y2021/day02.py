@@ -1,5 +1,5 @@
 """
-2021 day 1 - Sonar Sweep
+2021 day 2 - Dive!
 """
 
 from dataclasses import dataclass
