@@ -1,18 +1,18 @@
 """
+2021 day 4 - Giant Squid
+
 Create a class to hold each bingo board with methods to draw a number.
 Loop through the numbers for each bingo board and save the result for Part 1 on the first bingo.
 Loop the boards in reverse order so that they can be popped safely when getting bingo, and keep
 going until there is only one board left to get the score for Part 2.
-
 """
-import time
-from pathlib import Path
 
 
 class BingoBoard:
     def __init__(self, rawstr: str) -> None:
-        self.__nbrs: list[list[int]] = []
-        [self.__nbrs.append(list(map(int, row.split()))) for row in rawstr.splitlines()]
+        self.__nbrs: list[list[int]] = [
+            (list(map(int, row.split()))) for row in rawstr.splitlines()
+        ]
         self.__rowtotals = [0 for _, _ in enumerate(self.__nbrs)]
         self.__coltotals = [0 for _, _ in enumerate(self.__nbrs[0])]
         self.__matchnbrs: set[int] = set()
@@ -25,7 +25,9 @@ class BingoBoard:
                     self.__matchnbrs.add(nbr)
                     self.__rowtotals[row] += 1
                     self.__coltotals[col] += 1
-                    if self.__rowtotals[row] >= len(self.__coltotals) or self.__coltotals[col] >= len(self.__rowtotals):
+                    if self.__rowtotals[row] >= len(
+                        self.__coltotals
+                    ) or self.__coltotals[col] >= len(self.__rowtotals):
                         return self.__calculatescore(nbr)
         return 0
 
@@ -38,10 +40,10 @@ class BingoBoard:
         return lastnbr * nomatchsum
 
 
-class BingoModule:
+class InputData:
     def __init__(self, rawinput: str) -> None:
-        blocks = rawinput.split('\n\n')
-        self.__nbrs = list(map(int, blocks[0].split(',')))
+        blocks = rawinput.split("\n\n")
+        self.__nbrs = list(map(int, blocks[0].split(",")))
         self.__boards = [BingoBoard(blocks[b_idx]) for b_idx in range(1, len(blocks))]
 
     def get_scores(self) -> tuple[int, int]:  # (Part1, Part2)
@@ -54,23 +56,17 @@ class BingoModule:
                         p1_score = result
                     if len(self.__boards) == 1:
                         p2_score = result
-                    self.__boards.pop(b)
+                    _ = self.__boards.pop(b)
         return p1_score, p2_score
 
 
-def main(aoc_input: str) -> None:
-    bingo = BingoModule(aoc_input)
-    p1_score, p2_score = bingo.get_scores()
-    print(f"Part 1: {p1_score}")
-    print(f"Part 2: {p2_score}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    r1, r2 = p.get_scores()
+    if part in (None, 1):
+        p1 = str(r1)
+    if part in (None, 2):
+        p2 = str(r2)
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2021/day04.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
