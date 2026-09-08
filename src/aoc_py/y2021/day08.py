@@ -13,16 +13,29 @@ can determine the segment mapping to 'b' and 'd'. From here on we should have en
 rest of the numbers and mappings.
 Store the signals in sets to be able to use the '-' operator to find the difference between numbers.
 """
+
 from typing import Final
 
 
 class InputData:
-    __NUM_SEG_MAP: Final = {0: set('abcefg'), 1: set('cf'), 2: set('acdeg'), 3: set('acdfg'), 4: set('bcdf'),
-                            5: set('abdfg'), 6: set('abdefg'), 7: set('acf'), 8: set('abcdefg'), 9: set('abcdfg')}
+    __NUM_SEG_MAP: Final = {
+        0: set("abcefg"),
+        1: set("cf"),
+        2: set("acdeg"),
+        3: set("acdfg"),
+        4: set("bcdf"),
+        5: set("abdfg"),
+        6: set("abdefg"),
+        7: set("acf"),
+        8: set("abcdefg"),
+        9: set("abcdfg"),
+    }
 
     def __init__(self, s: str) -> None:
-        self.__lines = [(row[0].split(), row[1].split()) for row in
-                        [line.split(' | ') for line in s.splitlines()]]
+        self.__lines = [
+            (row[0].split(), row[1].split())
+            for row in [line.split(" | ") for line in s.splitlines()]
+        ]
 
     def get_p1(self) -> int:
         p1 = 0
@@ -42,22 +55,34 @@ class InputData:
             for key in InputData.__NUM_SEG_MAP:
                 if len(p) == len(InputData.__NUM_SEG_MAP[key]):
                     numbers[key].append(set(p))
-        mapping['a'] = numbers[7][0] - numbers[1][0]  # Determine 'a' from 7 and 1
-        [numbers[3].pop(n) for n in reversed(range(len(numbers[3]))) if len(numbers[7][0] - numbers[3][n]) > 0]  # Id 3
-        mapping['b'] = numbers[4][0] - numbers[3][0]  # Determine 'b' from 4 and 3
-        mapping['d'] = numbers[4][0] - numbers[1][0] - mapping['b']
-        [numbers[2].pop(n) for n in reversed(range(len(numbers[2])))
-            if len(mapping['b'] - numbers[2][n]) == 0 or numbers[2][n] == numbers[3][0]]  # Id 2
-        [numbers[5].pop(n) for n in reversed(range(len(numbers[5])))
-            if len(mapping['b'] - numbers[5][n]) > 0 or numbers[5][n] == numbers[3][0]]  # Id 5
-        mapping['c'] = numbers[7][0] - numbers[5][0]  # Determine 'c' from 7 and 5
-        mapping['f'] = numbers[7][0] - numbers[2][0]  # Determine 'c' from 7 and 2
-        mapping['e'] = numbers[2][0] - numbers[3][0]  # Determine 'c' from 2 and 3
-        mapping['g'] = numbers[3][0] - numbers[7][0] - mapping['d']  # Determine 'c' from 2 and 3
+        mapping["a"] = numbers[7][0] - numbers[1][0]  # Determine 'a' from 7 and 1
+        [
+            numbers[3].pop(n)
+            for n in reversed(range(len(numbers[3])))
+            if len(numbers[7][0] - numbers[3][n]) > 0
+        ]  # Id 3
+        mapping["b"] = numbers[4][0] - numbers[3][0]  # Determine 'b' from 4 and 3
+        mapping["d"] = numbers[4][0] - numbers[1][0] - mapping["b"]
+        [
+            numbers[2].pop(n)
+            for n in reversed(range(len(numbers[2])))
+            if len(mapping["b"] - numbers[2][n]) == 0 or numbers[2][n] == numbers[3][0]
+        ]  # Id 2
+        [
+            numbers[5].pop(n)
+            for n in reversed(range(len(numbers[5])))
+            if len(mapping["b"] - numbers[5][n]) > 0 or numbers[5][n] == numbers[3][0]
+        ]  # Id 5
+        mapping["c"] = numbers[7][0] - numbers[5][0]  # Determine 'c' from 7 and 5
+        mapping["f"] = numbers[7][0] - numbers[2][0]  # Determine 'c' from 7 and 2
+        mapping["e"] = numbers[2][0] - numbers[3][0]  # Determine 'c' from 2 and 3
+        mapping["g"] = (
+            numbers[3][0] - numbers[7][0] - mapping["d"]
+        )  # Determine 'c' from 2 and 3
 
         # Invert the map and translate the output
-        imapping = {''.join(v): k for k, v in mapping.items()}
-        retstr = ''
+        imapping = {"".join(v): k for k, v in mapping.items()}
+        retstr = ""
         for signal in output:
             sigset = {imapping[c] for c in signal}
             for nbr in InputData.__NUM_SEG_MAP:
