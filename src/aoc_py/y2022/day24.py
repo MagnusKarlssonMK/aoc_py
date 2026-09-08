@@ -65,13 +65,16 @@ class InputData:
             if (point, steps) in seen:
                 continue
             seen.add((point, steps))
-            for next_step in [point + d for d  in [
-                Directions.UP,
-                Directions.RIGHT,
-                Directions.DOWN,
-                Directions.LEFT,
-                Directions.ORIGIN,
-            ]]:
+            for next_step in [
+                point + d
+                for d in [
+                    Directions.UP,
+                    Directions.RIGHT,
+                    Directions.DOWN,
+                    Directions.LEFT,
+                    Directions.ORIGIN,
+                ]
+            ]:
                 if (
                     (
                         0 < next_step.y <= self.__height

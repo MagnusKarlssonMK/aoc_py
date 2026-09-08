@@ -1,3 +1,5 @@
+from typing import override
+
 from aoc_py.util.point import Point
 
 
@@ -60,3 +62,12 @@ class Grid:
         """Sets the Point p to the value v. Will do nothing if p is out-of-bounds."""
         if 0 <= p.x < self.x_max and 0 <= p.y < self.y_max:
             self.elements[self.x_max * p.y + p.x] = v
+
+    @override
+    def __str__(self) -> str:
+        r = ""
+        for i, c in enumerate(self.elements):
+            r += c
+            if (i + 1) % self.x_max == 0:
+                r += "\n"
+        return r

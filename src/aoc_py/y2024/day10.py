@@ -22,7 +22,9 @@ class InputData:
                     peaks.add(current)
                     rating += 1
                 else:
-                    for neighbor in [current + d for d in Directions.NEIGHBORS_STRAIGHT]:
+                    for neighbor in [
+                        current + d for d in Directions.NEIGHBORS_STRAIGHT
+                    ]:
                         if (c := self.__grid.get_element(neighbor)) != "" and int(
                             c
                         ) == int(self.__grid.get_element(current)) + 1:
