@@ -1,4 +1,6 @@
 """
+2021 day 8 - Seven Segment Search
+
 Part 1
 
 Straightforward; simply parse the input data, then count number of elements on the right side of the divider
