@@ -1,18 +1,25 @@
 """
-Part 1: Pretty much a basic Djikstra exercise.
-Part 2: Expand the graph according to the updated rules and re-run the shortest-path calculation.
+2021 day 15 - Chiton
+
+Part 1
+
+Pretty much a basic Djikstra exercise.
+
+Part 2
+
+Expand the graph according to the updated rules and re-run the shortest-path calculation.
 I chose to convert the grid to an adjacency list format, anticipating that to be beneficial for Part 2. Which it turned
 out not to quite be the case, but it's actually faster than keeping it in a basic grid format and calculating neighbors
 on the fly.
+
 As a small potential optimization, both parts could be kept in the same 'expanded' object and an input parameter
 to the 'get' function could set the limits on which parts of the grid can be used.
 """
-import time
-from pathlib import Path
+
 from heapq import heappop, heappush
 
 
-class Cavegrid:
+class InputData:
     def __init__(self, rawstr: str, expanded: bool = False) -> None:
         grid = rawstr.splitlines()
         self.__height = len(grid)
@@ -25,14 +32,22 @@ class Cavegrid:
             for col in range(self.__width):
                 self.__adj[(row, col)] = []
                 for direction in {(1, 0), (-1, 0), (0, 1), (0, -1)}:
-                    if 0 <= row + direction[0] < self.__height and 0 <= col + direction[1] < self.__width:
+                    if (
+                        0 <= row + direction[0] < self.__height
+                        and 0 <= col + direction[1] < self.__width
+                    ):
                         row_div = (row + direction[0]) // len(grid)
                         row_mod = (row + direction[0]) % len(grid)
                         col_div = (col + direction[1]) // len(grid[0])
                         col_mod = (col + direction[1]) % len(grid[0])
                         # Note - value wraps around to 1, not 0
-                        value = 1 + (int(grid[row_mod][col_mod]) - 1 + row_div + col_div) % 9
-                        self.__adj[(row, col)].append((row + direction[0], col + direction[1], value))
+                        value = (
+                            1
+                            + (int(grid[row_mod][col_mod]) - 1 + row_div + col_div) % 9
+                        )
+                        self.__adj[(row, col)].append(
+                            (row + direction[0], col + direction[1], value)
+                        )
 
     def get_minimum_risk(self) -> int:
         start = 0, 0
@@ -55,19 +70,13 @@ class Cavegrid:
         return -1
 
 
-def main(aoc_input: str) -> None:
-    cave = Cavegrid(aoc_input)
-    largecave = Cavegrid(aoc_input, True)
-    print("Part 1:", cave.get_minimum_risk())
-    print("Part 2:", largecave.get_minimum_risk())
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1, p2 = "-1"
+    if part in (None, 1):
+        p = InputData(inputdata)
+        p1 = str(p.get_minimum_risk())
+    if part in (None, 2):
+        p = InputData(inputdata, True)
+        p2 = str(p.get_minimum_risk())
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2021/day15.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
