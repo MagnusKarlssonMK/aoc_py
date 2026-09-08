@@ -28,8 +28,7 @@ class InputData:
 
     def getneigbors(self, p: Point, downhill: bool = False) -> Generator[Point]:
         current_val = ord(self.__grid.get_element(p))
-        for d in Directions.NEIGHBORS_STRAIGHT:
-            neighbor = p + d
+        for neighbor in [p + d for d in Directions.NEIGHBORS_STRAIGHT]:
             if (neighbor_s := self.__grid.get_element(neighbor)) != "":
                 neighbor_val = ord(neighbor_s)
                 if (current_val + 1 >= neighbor_val and not downhill) or (

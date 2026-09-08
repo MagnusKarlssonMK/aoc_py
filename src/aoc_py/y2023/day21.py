@@ -27,8 +27,7 @@ class InputData:
                     self.__rocks.add(Point(x, y))
 
     def __get_neighbors(self, coord: Point, expand: bool) -> Generator[Point]:
-        for d in Directions.NEIGHBORS_STRAIGHT:
-            neighbor = coord + d
+        for neighbor in [coord + d for d in Directions.NEIGHBORS_STRAIGHT]:
             if expand:
                 if (
                     Point(neighbor.x % self.__width, neighbor.y % self.__height)

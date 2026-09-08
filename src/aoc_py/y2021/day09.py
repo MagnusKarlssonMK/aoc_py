@@ -21,8 +21,7 @@ class InputData:
     def __find_low_points(self) -> Generator[Point]:
         for i, c in enumerate(self.__grid.elements):
             p = self.__grid.get_point(i)
-            for d in Directions.NEIGHBORS_STRAIGHT:
-                n = p + d
+            for n in [p + d for d in Directions.NEIGHBORS_STRAIGHT]:
                 if (n_c := self.__grid.get_element(n)) != "" and int(c) >= int(n_c):
                     break
             else:
@@ -36,8 +35,7 @@ class InputData:
             if p in seen:
                 continue
             seen.add(p)
-            for d in Directions.NEIGHBORS_STRAIGHT:
-                n = p + d
+            for n in [p + d for d in Directions.NEIGHBORS_STRAIGHT]:
                 if (
                     n not in seen
                     and (n_c := self.__grid.get_element(n)) != ""
