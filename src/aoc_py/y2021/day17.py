@@ -1,5 +1,8 @@
 """
-Part 1:
+2021 day 17 - Trick Shot
+
+Part 1
+
 Algebraic approach - if we start at y-position 0 with velocity V, then the position of 'y' as function over number of
 steps 'n' can be derived as:
 y(0) = 0
@@ -25,7 +28,8 @@ possible to find a starting x-velocity such that we hit the target range. This w
 range is small and the number of steps low, but since we are effectively trying to use as many steps as possible in
 to maximize the y-axis, this shouldn't be any issue at all.
 
-Part 2:
+Part 2
+
 In short: find the range of possible x-values and the number of steps 'n' for each value that would hit the target in
 the x-axis, then do the same for the y-axis and combine the results - any x- and y-combination that has at least
 one common 'n' value will be able to hit the target.
@@ -43,43 +47,44 @@ Y-axis:
     know how to calculate the number of steps to get back to y=0, so we can simply take the step counter from when
     evaluating the corresponding negative value -1 and just add that extra offset.
 """
-import time
-from pathlib import Path
-import re
+
 import math
+from typing import override
 
 
 class Steps:
     def __init__(self, minsteps: float) -> None:
         # Note: store values as float to be able to handle infinity values for when x-axis stops inside the range
-        self.max = minsteps
-        self.min = minsteps
+        self.max: float = minsteps
+        self.min: float = minsteps
 
-    def __eq__(self, other: "Steps") -> bool:
+    @override
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Steps):
+            return NotImplemented
         o_min = max(self.min, other.min)
         o_max = min(self.max, other.max)
-        if o_min <= o_max:
-            return True
-        else:
-            return False
+        return o_min <= o_max
 
 
-class ProbeLauncer:
+class InputData:
     def __init__(self, rawstr: str) -> None:
-        nbrs = list(map(int, re.findall(r"-?\d+", rawstr)))
-        self.__x_min = min(nbrs[0:2])
-        self.__x_max = max(nbrs[0:2])
-        self.__y_min = min(nbrs[2:4])
-        self.__y_max = max(nbrs[2:4])
+        _, _, xs, ys = rawstr.split()
+        x1, x2 = map(int, xs.lstrip("x=").rstrip(",").split(".."))
+        y1, y2 = map(int, ys.lstrip("y=").split(".."))
+        self.__x_min = min(x1, x2)
+        self.__x_max = max(x1, x2)
+        self.__y_min = min(y1, y2)
+        self.__y_max = max(y1, y2)
 
-    def get_max_height(self) -> int:
+    def get_p1(self) -> int:
         y = abs(self.__y_min) - 1
         return y * (y + 1) // 2
 
-    def get_combination_count(self) -> int:
+    def get_p2(self) -> int:
         # Get the x-axis ranges
         xmax_v = self.__x_max
-        xmin_v = math.ceil((-1+math.sqrt(1+8*self.__x_min))/2)
+        xmin_v = math.ceil((-1 + math.sqrt(1 + 8 * self.__x_min)) / 2)
         xv_val: dict[int, Steps] = {}
         for xv in range(xmin_v, xmax_v + 1):
             vel = xv
@@ -119,25 +124,19 @@ class ProbeLauncer:
                         yv_val[yv_up] = Steps(n + (2 * yv_up) + 1)
         # Crosscheck possible combinations
         combinations: set[tuple[int, int]] = set()
-        for y in yv_val:
-            for x in xv_val:
-                if yv_val[y] == xv_val[x]:
+        for y, yv in yv_val.items():
+            for x, xv in xv_val.items():
+                if yv == xv:
                     combinations.add((x, y))
         return len(combinations)
 
 
-def main(aoc_input: str) -> None:
-    mylauncher = ProbeLauncer(aoc_input)
-    print(f"Part 1: {mylauncher.get_max_height()}")
-    print(f"Part 2: {mylauncher.get_combination_count()}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_p1())
+    if part in (None, 2):
+        p2 = str(p.get_p2())
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2021/day17.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
