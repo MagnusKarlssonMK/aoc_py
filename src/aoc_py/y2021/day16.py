@@ -1,13 +1,15 @@
 """
-Reflection: The text description is unfortunately somewhat ambiguous on the decoding of literal values with regard
+2021 day 16 - Packet Decoder
+
+The text description is unfortunately somewhat ambiguous on the decoding of literal values with regard
 to the padding of zeroes - judging from the examples, what is apparently meant is that the padding only applies
 to the last (outer) package, but the description makes it sound like it applies to ANY literal value package. It is
 also not clear what 'its' is referring to - the value or the (sub)package? Or the entire bitstream from the start?
 """
-import time
-from pathlib import Path
+
 from enum import Enum
 from math import prod
+from typing import Final
 
 
 class PacketType(Enum):
@@ -23,12 +25,14 @@ class PacketType(Enum):
 
 class Packet:
     def __init__(self, version: int, packet_type: PacketType, val: int = -1) -> None:
-        self.version = version
-        self.packet_type = packet_type
-        self.literal_value = val if self.packet_type == PacketType.LITERAL_VALUE else -1
-        self.subpackets: list["Packet"] = []
+        self.version: int = version
+        self.packet_type: PacketType = packet_type
+        self.literal_value: int = (
+            val if self.packet_type == PacketType.LITERAL_VALUE else -1
+        )
+        self.subpackets: list[Packet] = []
 
-    def add_subpacket(self, newpacket: "Packet") -> None:
+    def add_subpacket(self, newpacket: Packet) -> None:
         self.subpackets.append(newpacket)
 
     def get_value(self) -> int:
@@ -45,28 +49,59 @@ class Packet:
                 case PacketType.MAX:
                     return max([sp.get_value() for sp in self.subpackets])
                 case PacketType.GT:
-                    return 1 if self.subpackets[0].get_value() > self.subpackets[1].get_value() else 0
+                    return (
+                        1
+                        if self.subpackets[0].get_value()
+                        > self.subpackets[1].get_value()
+                        else 0
+                    )
                 case PacketType.LT:
-                    return 1 if self.subpackets[0].get_value() < self.subpackets[1].get_value() else 0
+                    return (
+                        1
+                        if self.subpackets[0].get_value()
+                        < self.subpackets[1].get_value()
+                        else 0
+                    )
                 case PacketType.EQ:
-                    return 1 if self.subpackets[0].get_value() == self.subpackets[1].get_value() else 0
+                    return (
+                        1
+                        if self.subpackets[0].get_value()
+                        == self.subpackets[1].get_value()
+                        else 0
+                    )
 
 
-class BitsDecoder:
-    HEX_MAP = {'0': '0000', '1': '0001', '2': '0010', '3': '0011', '4': '0100', '5': '0101', '6': '0110', '7': '0111',
-               '8': '1000', '9': '1001', 'A': '1010', 'B': '1011', 'C': '1100', 'D': '1101', 'E': '1110', 'F': '1111'}
+class InputData:
+    __HEX_MAP: Final = {
+        "0": "0000",
+        "1": "0001",
+        "2": "0010",
+        "3": "0011",
+        "4": "0100",
+        "5": "0101",
+        "6": "0110",
+        "7": "0111",
+        "8": "1000",
+        "9": "1001",
+        "A": "1010",
+        "B": "1011",
+        "C": "1100",
+        "D": "1101",
+        "E": "1110",
+        "F": "1111",
+    }
 
     def __init__(self, hexstream: str) -> None:
-        self.__bitstream = ''.join([BitsDecoder.HEX_MAP[c] for c in hexstream])
-        self.versionsum = 0
+        self.__bitstream = "".join([InputData.__HEX_MAP[c] for c in hexstream])
+        self.versionsum: int = 0
 
     def __decode_packet(self, startidx: int) -> tuple[Packet, int]:
         if len(self.__bitstream) - startidx < 6:
             print("Decoding error (packet header) - too short")
             return Packet(0, PacketType(4), 0), len(self.__bitstream)
         head = startidx
-        version = int(self.__bitstream[head:head+3], 2)
-        packet_type = int(self.__bitstream[head+3:head+6], 2)
+        version = int(self.__bitstream[head : head + 3], 2)
+        packet_type = int(self.__bitstream[head + 3 : head + 6], 2)
         head += 6
         self.versionsum += version
         if packet_type == 4:
@@ -77,14 +112,14 @@ class BitsDecoder:
             head += 1
             newpacket = Packet(version, PacketType(packet_type))
             if length_type == 0:
-                subpacket_length = int(self.__bitstream[head:head+15], 2)
+                subpacket_length = int(self.__bitstream[head : head + 15], 2)
                 head += 15
                 endidx = min(head + subpacket_length, len(self.__bitstream))
                 while head < endidx:
                     subpacket, head = self.__decode_packet(head)
                     newpacket.add_subpacket(subpacket)
             else:
-                subpacket_count = int(self.__bitstream[head:head+11], 2)
+                subpacket_count = int(self.__bitstream[head : head + 11], 2)
                 head += 11
                 for _ in range(subpacket_count):
                     subpacket, head = self.__decode_packet(head)
@@ -93,13 +128,13 @@ class BitsDecoder:
 
     def __decode_value(self, startidx: int) -> tuple[int, int]:
         head = startidx
-        valuestr = ''
+        valuestr = ""
         while True:
             if len(self.__bitstream) - head < 5:
                 print("Decoding error (value) - too short")
                 return 0, head
             prefix = int(self.__bitstream[head])
-            valuestr += self.__bitstream[head+1:head+5]
+            valuestr += self.__bitstream[head + 1 : head + 5]
             head += 5
             if prefix == 0:
                 break
@@ -111,19 +146,13 @@ class BitsDecoder:
         return packet
 
 
-def main(aoc_input: str) -> None:
-    decoder = BitsDecoder(aoc_input)
-    mypacket = decoder.decodestream()
-    print(f"Part 1: {decoder.versionsum}")
-    print(f"Part 2: {mypacket.get_value()}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1, p2 = "-1"
+    decoder = InputData(inputdata)
+    p = decoder.decodestream()
+    if part in (None, 1):
+        p1 = str(decoder.versionsum)
+    if part in (None, 2):
+        p2 = str(p.get_value())
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2021/day16.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
