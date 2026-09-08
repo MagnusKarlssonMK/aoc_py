@@ -10,6 +10,11 @@ class Grid:
         self.y_max: int = len(lines)
         self.elements: list[str] = [c for c in s if c != "\n"]
 
+    @classmethod
+    def new(cls, x_max: int, y_max: int, val: str) -> Grid:
+        s = "\n".join([val * x_max for _ in range(y_max)])
+        return cls(s)
+
     def get_element(self, p: Point) -> str:
         """Returns the element in a certain point in the grid.
         If the input point is out-of-bounds, an empty string is returned."""
