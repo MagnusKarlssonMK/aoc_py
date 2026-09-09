@@ -1,28 +1,14 @@
 """
+2020 day 11 - Seating System
+
 Pre-calculate the neighbor seats in all directions for every seat, which is done differently for Part 1 vs Part 2. This
 does most of the heavy lifting, so after that just keep playing rounds until the occupied seats no longer changes.
 """
-import time
-from pathlib import Path
-from dataclasses import dataclass
+
+from aoc_py.util.point import Directions, Point
 
 
-@dataclass(frozen=True)
-class Point:
-    x: int
-    y: int
-
-    def __add__(self, other: "Point") -> "Point":
-        return Point(self.x + other.x, self.y + other.y)
-
-    def __lt__(self, other: "Point") -> bool:
-        return self.x < other.x if self.x != other.x else self.y < other.y
-
-
-class WaitingArea:
-    __DIRECTIONS = (Point(-1, -1), Point(0, -1), Point(1, -1), Point(-1, 0),
-                    Point(1, 0), Point(-1, 1), Point(0, 1), Point(1, 1))
-
+class InputData:
     def __init__(self, rawstr: str) -> None:
         self.__seats_adj: dict[Point, set[Point]] = {}
         self.__seats_first: dict[Point, set[Point]] = {}
@@ -31,15 +17,15 @@ class WaitingArea:
             ymax = max(y, ymax)
             for x, c in enumerate(line):
                 xmax = max(x, xmax)
-                if c == 'L':
+                if c == "L":
                     self.__seats_adj[Point(x, y)] = set()
                     self.__seats_first[Point(x, y)] = set()
         for seat in self.__seats_adj:
-            for d in WaitingArea.__DIRECTIONS:
+            for d in Directions.NEIGHBORS_ALL:
                 if (n := seat + d) in self.__seats_adj:
                     self.__seats_adj[seat].add(n)
         for seat in self.__seats_first:
-            for d in WaitingArea.__DIRECTIONS:
+            for d in Directions.NEIGHBORS_ALL:
                 n = seat + d
                 while 0 <= n.x <= xmax and 0 <= n.y <= ymax:
                     if n in self.__seats_first:
@@ -67,18 +53,12 @@ class WaitingArea:
             occupied_chairs = buffer
 
 
-def main(aoc_input: str) -> None:
-    area = WaitingArea(aoc_input)
-    print(f"Part 1: {area.get_steadystate_occupied()}")
-    print(f"Part 2: {area.get_steadystate_occupied(True)}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_steadystate_occupied())
+    if part in (None, 2):
+        p2 = str(p.get_steadystate_occupied(True))
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2020/day11.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
