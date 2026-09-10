@@ -1,25 +1,26 @@
 """
+2020 day 17 - Conway Cubes
+
 Multidimensional game of life. While checking neighbors of active cubes, collect a set of neiboring inactive cubes,
 and then go through them to see which ones to activate.
 """
-import time
-from pathlib import Path
-from dataclasses import dataclass
+
 from collections.abc import Generator
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class Point:
+class Point3d:
     x: int
     y: int
     z: int
 
-    def get_neighbours(self) -> Generator["Point"]:
+    def get_neighbours(self) -> Generator[Point3d]:
         for x in range(-1, 2):
             for y in range(-1, 2):
                 for z in range(-1, 2):
                     if not (x == 0 and y == 0 and z == 0):
-                        yield Point(self.x + x, self.y + y, self.z + z)
+                        yield Point3d(self.x + x, self.y + y, self.z + z)
 
 
 @dataclass(frozen=True)
@@ -29,23 +30,25 @@ class Point4d:
     z: int
     w: int
 
-    def get_neighbours(self) -> Generator["Point4d"]:
+    def get_neighbours(self) -> Generator[Point4d]:
         for x in range(-1, 2):
             for y in range(-1, 2):
                 for z in range(-1, 2):
                     for w in range(-1, 2):
                         if not (x == 0 and y == 0 and z == 0 and w == 0):
-                            yield Point4d(self.x + x, self.y + y, self.z + z, self.w + w)
+                            yield Point4d(
+                                self.x + x, self.y + y, self.z + z, self.w + w
+                            )
 
 
-class ConwayCubes:
+class InputData:
     def __init__(self, rawstr: str) -> None:
-        self.__cubes: set[Point] = set()
+        self.__cubes: set[Point3d] = set()
         self.__cubes4d: set[Point4d] = set()
         for y, line in enumerate(rawstr.splitlines()):
             for x, c in enumerate(line):
-                if c == '#':
-                    self.__cubes.add(Point(x, y, 0))
+                if c == "#":
+                    self.__cubes.add(Point3d(x, y, 0))
                     self.__cubes4d.add(Point4d(x, y, 0, 0))
 
     def get_nbr_active_cubes(self, is4d: bool = False) -> int:
@@ -78,18 +81,12 @@ class ConwayCubes:
         return len(cubes)
 
 
-def main(aoc_input: str) -> None:
-    cubes = ConwayCubes(aoc_input)
-    print(f"Part 1: {cubes.get_nbr_active_cubes()}")
-    print(f"Part 2: {cubes.get_nbr_active_cubes(True)}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_nbr_active_cubes())
+    if part in (None, 2):
+        p2 = str(p.get_nbr_active_cubes(True))
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2020/day17.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
