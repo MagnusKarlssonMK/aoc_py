@@ -1,16 +1,16 @@
 """
+2020 day 18 - Operation Order
+
 Using the shunting yard algorithm. For part 2, the only difference is to check whether the top item on the operator
 stack has higher precedence before popping it and putting it on the output stack.
 """
-import time
-from pathlib import Path
+
 import operator
-
-
-OPMAP = {'+': operator.add, '*': operator.mul}
+from typing import Final
 
 
 def shunting_yard(line: str, is_advanced: bool) -> int:
+    OPMAP: Final = {"+": operator.add, "*": operator.mul}
     # Generate the output buffer with shunting yard
     output: list[str] = []
     opstack: list[str] = []
@@ -19,15 +19,17 @@ def shunting_yard(line: str, is_advanced: bool) -> int:
             output.append(c)
         elif c in OPMAP:
             while opstack:
-                if opstack[-1] != '(' and (not is_advanced or not (opstack[-1] == '*' and c == '+')):
+                if opstack[-1] != "(" and (
+                    not is_advanced or not (opstack[-1] == "*" and c == "+")
+                ):
                     output.append(opstack.pop())
                 else:
                     break
             opstack.append(c)
-        elif c == '(':
+        elif c == "(":
             opstack.append(c)
-        elif c == ')':
-            while (o := opstack.pop()) != '(':
+        elif c == ")":
+            while (o := opstack.pop()) != "(":
                 output.append(o)
     while opstack:
         output.append(opstack.pop())
@@ -44,7 +46,7 @@ def shunting_yard(line: str, is_advanced: bool) -> int:
     return evaluated[0]
 
 
-class Homework:
+class InputData:
     def __init__(self, rawstr: str) -> None:
         self.__lines = rawstr.splitlines()
 
@@ -52,18 +54,12 @@ class Homework:
         return sum([shunting_yard(line, isadvanced) for line in self.__lines])
 
 
-def main(aoc_input: str) -> None:
-    homework = Homework(aoc_input)
-    print(f"Part 1: {homework.get_value_sum()}")
-    print(f"Part 2: {homework.get_value_sum(True)}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_value_sum())
+    if part in (None, 2):
+        p2 = str(p.get_value_sum(True))
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2020/day18.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
