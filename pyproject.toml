@@ -10,6 +10,7 @@ requires-python = ">=3.14"
 dependencies = [
     "argparse>=1.4.0",
     "importlib>=1.0.4",
+    "networkx>=3.6.1",
     "pathlib>=1.0.1",
     "pytest>=9.1.1",
     "pytest-cov>=7.1.0",
