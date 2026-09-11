@@ -25,12 +25,18 @@ class Grid:
         else:
             return ""
 
-    def find(self, item: str) -> Point:
+    def find(self, item: str, reverse: bool = False) -> Point:
         """Searches the Grid for an element matching item. The first one found
         will be returned as a Point, searching top left to the right and then down.
-        If no match is found, (-1, -1) is returned."""
-        for i, e in enumerate(self.elements):
-            if e == item:
+        If reverse is True, the search starts from the bottom right and goes up and
+        left, returning the last match. If no match is found, (-1, -1) is returned."""
+        rng = (
+            range(len(self.elements) - 1, -1, -1)
+            if reverse
+            else range(len(self.elements))
+        )
+        for i in rng:
+            if self.elements[i] == item:
                 return Point(i % self.x_max, i // self.x_max)
         return Point(-1, -1)
 
