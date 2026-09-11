@@ -1,4 +1,6 @@
 """
+2020 day 20 - Jurassic Jigsaw
+
 Well this became a mess.
 I probably overthought and wound up with an unnecessarily complicated way of representing the tile edges, so when
 re-asssembling the image it gets really wonky.
@@ -6,12 +8,11 @@ re-asssembling the image it gets really wonky.
 This solution also assumes that all edges are unique, i.e. that all tiles have exactly one possible neighbor in the
 directions that a neighbor exists, and none on the border edges.
 """
-import time
-from pathlib import Path
-from itertools import combinations
-from math import prod
+
 from dataclasses import dataclass
 from enum import Enum
+from itertools import combinations
+from math import prod
 
 
 class Directions(Enum):
@@ -20,34 +21,35 @@ class Directions(Enum):
     DOWN = 2
     LEFT = 3
 
-    def get_opposite(self) -> "Directions":
+    def get_opposite(self) -> Directions:
         return Directions((self.value + 2) % 4)
 
 
 @dataclass
 class Edge:
     value: str
-    neighbors: set[tuple[int, bool]]    # tile-id, is-mirror-state
+    neighbors: set[tuple[int, bool]]  # tile-id, is-mirror-state
 
     def get_reverse(self) -> str:
         return self.value[::-1]
 
-    def match_edges(self, other: "Edge") -> bool:
+    def match_edges(self, other: Edge) -> bool:
         return self.value == other.get_reverse()
 
 
 class Tile:
     def __init__(self, tileid: int, grid: list[str]) -> None:
         self.__id = tileid
-        self.__grid = tuple([grid[line][1:-1] for line in range(1, len(grid) - 1)])
-        # self.__grid = tuple([grid[line] for line in range(len(grid))])
-        self.__edges: dict[Directions, Edge] = {Directions.UP: Edge(grid[0], set()),
-                                                Directions.RIGHT: Edge(''.join([g[-1] for g in grid]), set()),
-                                                Directions.DOWN: Edge(grid[-1][::-1], set()),
-                                                Directions.LEFT: Edge(''.join([g[0] for g in reversed(grid)]), set())}
+        self.__grid = [grid[line][1:-1] for line in range(1, len(grid) - 1)]
+        self.__edges: dict[Directions, Edge] = {
+            Directions.UP: Edge(grid[0], set()),
+            Directions.RIGHT: Edge("".join([g[-1] for g in grid]), set()),
+            Directions.DOWN: Edge(grid[-1][::-1], set()),
+            Directions.LEFT: Edge("".join([g[0] for g in reversed(grid)]), set()),
+        }
         self.__reversed = False
 
-    def add_neighbor(self, other: "Tile") -> None:
+    def add_neighbor(self, other: Tile) -> None:
         for e1 in self.__edges.values():
             for e2 in other.__edges.values():
                 if e1.value == e2.value:
@@ -60,7 +62,7 @@ class Tile:
             return n
         return -1, False
 
-    def is_edge_match(self, other: "Tile", d: Directions) -> bool:
+    def is_edge_match(self, other: Tile, d: Directions) -> bool:
         return self.__edges[d].match_edges(other.__edges[d.get_opposite()])
 
     def get_neighbor_count(self) -> int:
@@ -70,20 +72,29 @@ class Tile:
         return {e for e in self.__edges if len(self.__edges[e].neighbors) > 0}
 
     def rotate(self) -> None:
-        newgrid = ['' for _ in range(len(self.__grid[0]))]
+        newgrid = ["" for _ in range(len(self.__grid[0]))]
         for line in self.__grid:
             for i, c in enumerate(line):
                 newgrid[i] = c + newgrid[i]
         self.__grid = newgrid
-        (self.__edges[Directions.UP], self.__edges[Directions.RIGHT],
-         self.__edges[Directions.DOWN], self.__edges[Directions.LEFT]) = \
-            (self.__edges[Directions.LEFT], self.__edges[Directions.UP],
-             self.__edges[Directions.RIGHT], self.__edges[Directions.DOWN])
+        (
+            self.__edges[Directions.UP],
+            self.__edges[Directions.RIGHT],
+            self.__edges[Directions.DOWN],
+            self.__edges[Directions.LEFT],
+        ) = (
+            self.__edges[Directions.LEFT],
+            self.__edges[Directions.UP],
+            self.__edges[Directions.RIGHT],
+            self.__edges[Directions.DOWN],
+        )
 
     def flip(self) -> None:
         self.__grid = [line[::-1] for line in self.__grid]
-        self.__edges[Directions.LEFT], self.__edges[Directions.RIGHT] = \
-            (self.__edges[Directions.RIGHT], self.__edges[Directions.LEFT])
+        self.__edges[Directions.LEFT], self.__edges[Directions.RIGHT] = (
+            self.__edges[Directions.RIGHT],
+            self.__edges[Directions.LEFT],
+        )
         for edge in self.__edges.values():
             edge.value = edge.get_reverse()
             buffer: set[tuple[int, bool]] = set()
@@ -96,12 +107,12 @@ class Tile:
         return tuple(self.__grid)
 
 
-class Image:
+class InputData:
     def __init__(self, rawstr: str) -> None:
         self.__tiles: dict[int, Tile] = {}
-        for tile in rawstr.split('\n\n'):
+        for tile in rawstr.split("\n\n"):
             lines = tile.splitlines()
-            tileid = int(lines[0].split()[1].strip(':'))
+            tileid = int(lines[0].split()[1].strip(":"))
             self.__tiles[tileid] = Tile(tileid, lines[1:])
         for t1, t2 in combinations(self.__tiles, 2):
             self.__tiles[t1].add_neighbor(self.__tiles[t2])
@@ -109,7 +120,7 @@ class Image:
         self.__corners: list[int] = []
         self.__image: list[str] = []
 
-    def get_corner_checksum(self) -> int:
+    def get_p1(self) -> int:
         for tileid, tile in self.__tiles.items():
             if tile.get_neighbor_count() == 2:
                 self.__corners.append(tileid)
@@ -117,7 +128,10 @@ class Image:
 
     def __generate_image(self) -> int:
         start = self.__tiles[min(self.__corners)]
-        while len({Directions.RIGHT, Directions.DOWN} & start.get_neighbor_directions()) < 2:
+        while (
+            len({Directions.RIGHT, Directions.DOWN} & start.get_neighbor_directions())
+            < 2
+        ):
             start.rotate()
 
         placed_tiles = [[start]]
@@ -127,7 +141,9 @@ class Image:
         maxcol = -1
         while corners < 4:
             ndir = Directions.RIGHT if col > 0 else Directions.DOWN
-            previous = placed_tiles[row][col - 1] if col > 0 else placed_tiles[row - 1][col]
+            previous = (
+                placed_tiles[row][col - 1] if col > 0 else placed_tiles[row - 1][col]
+            )
             n, flip = previous.get_neighbor(ndir)
             nexttile = self.__tiles[n]
             if not flip:  # matching edges need to be opposite
@@ -149,20 +165,22 @@ class Image:
                 col += 1
 
         for row in placed_tiles:
-            tmp = ['' for _ in range(len(row[0].get_grid()))]
+            tmp = ["" for _ in range(len(row[0].get_grid()))]
             for tile in row:
                 for i, gridrow in enumerate(tile.get_grid()):
                     tmp[i] += gridrow
             self.__image += tmp
         return -1
 
-    def get_water_roughness(self) -> int:
+    def get_p2(self) -> int:
         self.__generate_image()
-        total_points = sum([line.count('#') for line in self.__image])
-        monster_shapes = [['                  # ', '#    ##    ##    ###', ' #  #  #  #  #  #   ']]
+        total_points = sum([line.count("#") for line in self.__image])
+        monster_shapes = [
+            ["                  # ", "#    ##    ##    ###", " #  #  #  #  #  #   "]
+        ]
         # Rotate the monster rather than the image - Generate the 4 different monster rotations
         for _ in range(3):
-            newgrid = ['' for _ in range(len(monster_shapes[-1][0]))]
+            newgrid = ["" for _ in range(len(monster_shapes[-1][0]))]
             for line in monster_shapes[-1]:
                 for i, c in enumerate(line):
                     newgrid[i] = c + newgrid[i]
@@ -173,29 +191,29 @@ class Image:
         # For each monster shape, convert it to a set of coordinates and scan the image, store matching points in set
         monster_points: set[tuple[int, int]] = set()
         for monster in monster_shapes:
-            m = [(row, col) for row, line in enumerate(monster) for col, c in enumerate(line) if c == "#"]
+            m = [
+                (row, col)
+                for row, line in enumerate(monster)
+                for col, c in enumerate(line)
+                if c == "#"
+            ]
             m_width = len(monster[0])
             m_height = len(monster)
             for row in range(len(self.__image) - m_height):
                 for col in range(len(self.__image[0]) - m_width):
                     points = [(row + m_r, col + m_c) for m_r, m_c in m]
-                    if all([self.__image[r][c] == "#" for r, c in points]):
+                    if all(self.__image[r][c] == "#" for r, c in points):
                         monster_points |= set(points)
         return total_points - len(monster_points)
 
 
-def main(aoc_input: str) -> None:
-    img = Image(aoc_input)
-    print(f"Part 1: {img.get_corner_checksum()}")
-    print(f"Part 2: {img.get_water_roughness()}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    r1 = p.get_p1()
+    if part in (None, 1):
+        p1 = str(r1)
+    if part in (None, 2):
+        p2 = str(p.get_p2())
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2020/day20.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
