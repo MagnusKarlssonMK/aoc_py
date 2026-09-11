@@ -1,9 +1,10 @@
 """
+2020 day 23 - Crab Cups
+
 Storing the cup list as a singly linked list in an array, to avoid slow list operations since we need to do a lot
 of moves for part 2.
 """
-import time
-from pathlib import Path
+
 from dataclasses import dataclass
 
 
@@ -16,12 +17,14 @@ class LinkList:
 
     def get_order(self) -> str:
         value = 1
-        return "".join([str(value := self.cups[value]) for _ in range(len(self.cups) - 2)])
+        return "".join(
+            [str(value := self.cups[value]) for _ in range(len(self.cups) - 2)]
+        )
 
 
-class Crabcups:
-    def __init__(self, rawstr: str) -> None:
-        self.__inputnbrs = list(map(int, rawstr))
+class InputData:
+    def __init__(self, s: str) -> None:
+        self.__inputnbrs = list(map(int, s))
         self.__list = LinkList([0 for _ in range(max(self.__inputnbrs) + 1)])
         self.__current = 0
         self.__reset()
@@ -45,13 +48,14 @@ class Crabcups:
         self.__list.cups[destination] = removed[0]
         self.__current = self.__list.cups[self.__current]
 
-    def play_moves(self, moves: int = 100) -> int:
+    def get_p1(self, moves: int = 100) -> int:
         for _ in range(moves):
             self.__play_move()
-        return int(self.__list.get_order())
-
-    def play_extended_moves(self, moves: int = 10_000_000) -> int:
+        result = int(self.__list.get_order())
         self.__reset()
+        return result
+
+    def get_p2(self, moves: int = 10_000_000) -> int:
         m = max(self.__inputnbrs)
         last = self.__inputnbrs[-1]
         self.__list.cups.extend(range(m + 2, 1_000_002))
@@ -62,18 +66,12 @@ class Crabcups:
         return self.__list.cups[1] * self.__list.cups[self.__list.cups[1]]
 
 
-def main(aoc_input: str) -> None:
-    game = Crabcups(aoc_input)
-    print(f"Part 1: {game.play_moves()}")
-    print(f"Part 2: {game.play_extended_moves()}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_p1())
+    if part in (None, 2):
+        p2 = str(p.get_p2())
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2020/day23.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
