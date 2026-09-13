@@ -1,17 +1,18 @@
 """
+2015 day 9 - All in a Single Night
+
 Generate all permutations of and find the one yielding the shortest total distance covering all nodes. I.e. basically
 a brute force approach, which works decently fast due to the somewhat limited number of nodes.
 """
-import time
-from pathlib import Path
+
 from itertools import permutations
 
 
-class LocationMap:
-    def __init__(self, rawstr: str) -> None:
+class InputData:
+    def __init__(self, s: str) -> None:
         self.__distances: dict[tuple[str, str], int] = {}
         self.__cities: set[str] = set()
-        for line in rawstr.splitlines():
+        for line in s.splitlines():
             city1, _, city2, _, distance = line.split()
             self.__distances[(city1, city2)] = int(distance)
             self.__distances[(city2, city1)] = int(distance)
@@ -21,10 +22,15 @@ class LocationMap:
     def get_route_lengths(self) -> tuple[int, int]:
         route_lengths: list[int] = []
         for route in permutations(self.__cities):
-            if route[0] < route[-1]:  # To avoid re-calculating the same route twice in both directions
+            if (
+                route[0] < route[-1]
+            ):  # To avoid re-calculating the same route twice in both directions
                 new_len = 0
                 for i in range(len(route) - 1):
-                    if (route[i], route[i + 1]) in self.__distances:  # Just in case distance data is missing
+                    if (
+                        route[i],
+                        route[i + 1],
+                    ) in self.__distances:  # Just in case distance data is missing
                         new_len += self.__distances[(route[i], route[i + 1])]
                     else:
                         break
@@ -33,19 +39,13 @@ class LocationMap:
         return min(route_lengths), max(route_lengths)
 
 
-def main(aoc_input: str) -> None:
-    locations = LocationMap(aoc_input)
-    shortest, longest = locations.get_route_lengths()
-    print(f"Part 1: {shortest}")
-    print(f"Part 2: {longest}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1, p2 = "-1"
+    p = InputData(inputdata)
+    r1, r2 = p.get_route_lengths()
+    if part in (None, 1):
+        p1 = str(r1)
+    if part in (None, 2):
+        p2 = str(r2)
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2015/day09.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
