@@ -1,73 +1,77 @@
 """
 2015 day 18 - Like a GIF For Your Yard
 
-Pretty much brute force; not fast.
+Uses a sets of (x,y) tuples rather than the regular grid/point utilities,
+since it makes the solution significantly faster.
 """
 
-from collections import deque
-from copy import deepcopy
-
-from aoc_py.util.grid import Grid
-from aoc_py.util.point import Directions, Point
+from typing import Final
 
 
 class InputData:
+    __NEIGHBORS: Final = [
+        (1, 0),
+        (1, 1),
+        (0, 1),
+        (-1, 1),
+        (-1, 0),
+        (-1, -1),
+        (0, -1),
+        (1, -1),
+    ]
+
     def __init__(self, s: str) -> None:
-        self.__grid = Grid(s)
-        self.__corners = [
-            Directions.ORIGIN,
-            Point(self.__grid.x_max - 1, 0),
-            Point(0, self.__grid.y_max - 1),
-            Point(self.__grid.x_max - 1, self.__grid.y_max - 1),
-        ]
-        # Assume test input if small grid
-        self.__nbr_steps: int = 4 if len(self.__grid.elements) < 40 else 100
+        self.__live = set()
+        for y, line in enumerate(s.splitlines()):
+            for x, c in enumerate(line):
+                if c == "#":
+                    self.__live.add((x, y))
+        lines = s.splitlines()
+        self.__x_max, self.__y_max = len(lines[0]), len(lines)
+        self.__corners = {
+            (0, 0),
+            (self.__x_max - 1, 0),
+            (0, self.__y_max - 1),
+            (self.__x_max - 1, self.__y_max - 1),
+        }
+        self.__nbr_steps: int = 4 if len(self.__live) < 20 else 100
 
     def get_p1(self) -> int:
-        # changed: list[tuple[Point, str]] = []
-        changed = deque()
-        current_grid = deepcopy(self.__grid)
+        on_points = self.__live
+        counts: dict[tuple[int, int], int] = {}
         for _ in range(self.__nbr_steps):
-            for i, c in enumerate(current_grid.elements):
-                p = current_grid.get_point(i)
-                neighbors_on = sum(
-                    1 if current_grid.get_element(n) == "#" else 0
-                    for n in [p + d for d in Directions.NEIGHBORS_ALL]
-                )
-                if c == "#":
-                    if neighbors_on not in range(2, 4):
-                        changed.append((p, "."))
-                elif neighbors_on == 3:
-                    changed.append((p, "#"))
-            while len(changed) > 0:
-                p, c = changed.pop()
-                current_grid.set_point(p, c)
-        return sum(1 if c == "#" else 0 for c in current_grid.elements)
+            for x, y in on_points:
+                for dx, dy in self.__NEIGHBORS:
+                    pos = (x + dx, y + dy)
+                    counts[pos] = counts.get(pos, 0) + 1
+            on_points = {
+                pos
+                for pos, n in counts.items()
+                if 0 <= pos[0] < self.__x_max
+                and 0 <= pos[1] < self.__y_max
+                and (n == 3 or (n == 2 and pos in on_points))
+            }
+            counts.clear()
+        return len(on_points)
 
     def get_p2(self) -> int:
-        # changed: list[tuple[Point, str]] = []
-        changed = deque()
-        current_grid = deepcopy(self.__grid)
-        for corner in self.__corners:
-            current_grid.set_point(corner, "#")
+        on_points = self.__live | self.__corners
+        counts: dict[tuple[int, int], int] = {}
         for _ in range(self.__nbr_steps):
-            for i, c in enumerate(current_grid.elements):
-                p = current_grid.get_point(i)
-                if p in self.__corners:
-                    continue
-                neighbors_on = sum(
-                    1 if current_grid.get_element(n) == "#" else 0
-                    for n in [p + d for d in Directions.NEIGHBORS_ALL]
-                )
-                if c == "#":
-                    if neighbors_on not in range(2, 4):
-                        changed.append((p, "."))
-                elif neighbors_on == 3:
-                    changed.append((p, "#"))
-            while len(changed) > 0:
-                p, c = changed.pop()
-                current_grid.set_point(p, c)
-        return sum(1 if c == "#" else 0 for c in current_grid.elements)
+            for x, y in on_points:
+                for dx, dy in self.__NEIGHBORS:
+                    pos = (x + dx, y + dy)
+                    counts[pos] = counts.get(pos, 0) + 1
+            new_on = {
+                pos
+                for pos, n in counts.items()
+                if 0 <= pos[0] < self.__x_max
+                and 0 <= pos[1] < self.__y_max
+                and (n == 3 or (n == 2 and pos in on_points))
+            }
+            on_points = new_on | self.__corners
+            counts.clear()
+        return len(on_points)
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
