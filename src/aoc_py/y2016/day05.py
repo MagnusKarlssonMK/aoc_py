@@ -1,5 +1,5 @@
 """
-2016 day 5 -
+2016 day 5 - How About a Nice Game of Chess?
 
 Iterate with an increasing index value and use hashlib to calculate the md5 checksums to generate the passwords.
 Takes a lot of iterations, i.e. doorbreaking is NOT fast.
