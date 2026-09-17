@@ -1,15 +1,17 @@
 """
+2015 day 22 - Wizard Simulator 20XX
+
 Seems initially like a simple problem, but lots of tiny details to stumble on in the game rules.
 It's also really tempting to create a giant class structure and almost build an entire basis for an RPG game,
 similarly to the previous day, which here really just made it much harder to actually solve the problem.
 Basically keep game data in a state class which recursively tries different sequences of spells and finds the
 most mana efficient one.
 """
-import time
-from pathlib import Path
+
+from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum, auto
-from copy import deepcopy
+from typing import Final
 
 
 class Spells(Enum):
@@ -25,19 +27,21 @@ class SpellEffects:
     value: int
     time: int
 
-    def countdown(self) -> "SpellEffects":
+    def countdown(self) -> SpellEffects:
         return SpellEffects(self.value, self.time - 1)
 
 
 class GameState:
     """Class for handling DFS-like recursive search through the possible wizard actions."""
+
     min_mana_spent = None
-    SPELLS: dict[Spells, tuple[int, tuple[SpellEffects, ...]]] = \
-        {Spells.MAGIC_MISSILE: (53, (SpellEffects(4, 0),)),
-         Spells.DRAIN: (73, (SpellEffects(2, 0), SpellEffects(2, 0))),
-         Spells.SHIELD: (113, (SpellEffects(7, 6),)),
-         Spells.POISON: (173, (SpellEffects(3, 6),)),
-         Spells.RECHARGE: (229, (SpellEffects(101, 5),))}
+    SPELLS: Final = {
+        Spells.MAGIC_MISSILE: (53, (SpellEffects(4, 0),)),
+        Spells.DRAIN: (73, (SpellEffects(2, 0), SpellEffects(2, 0))),
+        Spells.SHIELD: (113, (SpellEffects(7, 6),)),
+        Spells.POISON: (173, (SpellEffects(3, 6),)),
+        Spells.RECHARGE: (229, (SpellEffects(101, 5),)),
+    }
 
     def __init__(self, bhp: int, bdmg: int, whp: int, wmn: int, hardmode: bool):
         self.__boss_hp = bhp
@@ -97,13 +101,18 @@ class GameState:
             if not GameState.min_mana_spent:
                 GameState.min_mana_spent = self.__manaspent
             else:
-                GameState.min_mana_spent = min(GameState.min_mana_spent, self.__manaspent)
+                GameState.min_mana_spent = min(
+                    GameState.min_mana_spent, self.__manaspent
+                )
             return
         if self.__turncount % 2 == 0:
             # Wizards turn
             self.__turncount += 1
             for spell in Spells:
-                if spell in self.__active_effects or GameState.SPELLS[spell][0] > self.__wizard_mana:
+                if (
+                    spell in self.__active_effects
+                    or GameState.SPELLS[spell][0] > self.__wizard_mana
+                ):
                     continue
                 ns = deepcopy(self)
                 ns.__cast_spell(spell)
@@ -111,20 +120,27 @@ class GameState:
                     if not GameState.min_mana_spent:
                         GameState.min_mana_spent = ns.__manaspent
                     else:
-                        GameState.min_mana_spent = min(GameState.min_mana_spent, ns.__manaspent)
+                        GameState.min_mana_spent = min(
+                            GameState.min_mana_spent, ns.__manaspent
+                        )
                     return
                 ns.play_round()
         else:
             # Boss's turn
             self.__turncount += 1
-            armor = 0 if Spells.SHIELD not in self.__active_effects else self.__active_effects[Spells.SHIELD].value
+            armor = (
+                0
+                if Spells.SHIELD not in self.__active_effects
+                else self.__active_effects[Spells.SHIELD].value
+            )
             self.__wizard_hp -= max(1, self.__boss_dmg - armor)
             if self.__wizard_hp > 0:
                 self.play_round()
 
 
-class WizardSim:
+class InputData:
     """Wrapper class to interface between main and gamestate and hold the initial game data."""
+
     def __init__(self, rawstr: str, wizardhp: int = 50, wizardmana: int = 500) -> None:
         lines = rawstr.splitlines()
         self.__boss_hp = int(lines[0].split()[-1])
@@ -133,7 +149,13 @@ class WizardSim:
         self.__wizard_mana = wizardmana
 
     def get_cheapest_win(self, hardmode: bool = False) -> int:
-        state = GameState(self.__boss_hp, self.__boss_dmg, self.__wizard_hp, self.__wizard_mana, hardmode)
+        state = GameState(
+            self.__boss_hp,
+            self.__boss_dmg,
+            self.__wizard_hp,
+            self.__wizard_mana,
+            hardmode,
+        )
         state.play_round()
         result = GameState.min_mana_spent
         GameState.min_mana_spent = None
@@ -142,18 +164,12 @@ class WizardSim:
         return result
 
 
-def main(aoc_input: str) -> None:
-    game = WizardSim(aoc_input)
-    print(f"Part 1: {game.get_cheapest_win()}")
-    print(f"Part 2: {game.get_cheapest_win(True)}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1 = p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_cheapest_win())
+    if part in (None, 2):
+        p2 = str(p.get_cheapest_win(True))
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2015/day22.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
