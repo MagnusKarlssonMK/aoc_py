@@ -1,10 +1,10 @@
 """
+2016 day 3 - Squares With Three Sides
+
 Mostly a parsing exercise, especially for Part 2. Also realizing that the condition for valid triangle can be boiled
 down to just checking the sum of the two smallest sides agains the largest side; there is no need to check all
 combinations.
 """
-import time
-from pathlib import Path
 
 
 class Triangle:
@@ -17,12 +17,12 @@ class Triangle:
         return self.__sides[0] + self.__sides[1] > self.__sides[2]
 
 
-class DesignOffice:
-    def __init__(self, rawstr: str) -> None:
+class InputData:
+    def __init__(self, s: str) -> None:
         self.__triangles_row: list[Triangle] = []
         self.__triangles_col: list[Triangle] = []
         buffer: list[list[int]] = [[], [], []]
-        for line in rawstr.splitlines():
+        for line in s.splitlines():
             nbrs = list(map(int, line.split()))
             self.__triangles_row.append(Triangle(*nbrs))
             for i, n in enumerate(nbrs):
@@ -31,25 +31,19 @@ class DesignOffice:
                     self.__triangles_col.append(Triangle(*buffer[i]))
                     buffer[i] = []
 
-    def get_valid_row_count(self) -> int:
+    def get_p1(self) -> int:
         return sum([1 if t.is_valid() else 0 for t in self.__triangles_row])
 
-    def get_valid_col_count(self) -> int:
+    def get_p2(self) -> int:
         return sum([1 if t.is_valid() else 0 for t in self.__triangles_col])
 
 
-def main(aoc_input: str) -> None:
-    office = DesignOffice(aoc_input)
-    print(f"Part 1: {office.get_valid_row_count()}")
-    print(f"Part 2: {office.get_valid_col_count()}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1 = p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_p1())
+    if part in (None, 2):
+        p2 = str(p.get_p2())
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2016/day03.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
