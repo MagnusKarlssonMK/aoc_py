@@ -1,14 +1,14 @@
 """
+2015 day 20 - Infinite Elves and Infinite Houses
+
 Seems kind of brute-force-y, but performs much better than attempts to build divisor generator solutions.
 Basically simulates the present delivery by iterating over the elfs from 1 and up. Small optimization to keep track
 of the lowest house found yet reaching the target to avoid iterating further over higher houses that have no chance of
 winning.
 """
-import time
-from pathlib import Path
 
 
-class ElfDelivery:
+class InputData:
     __ELF_PRESENTS = 10
     __LAZY_ELF_PRESENTS = 11
     __LAZY_ELF_CAPACITY = 50
@@ -16,46 +16,39 @@ class ElfDelivery:
     def __init__(self, rawstr: str) -> None:
         self.__target = int(rawstr)
 
-    def get_lowest_house(self) -> int:
-        houses = [10 for _ in range(self.__target // ElfDelivery.__ELF_PRESENTS)]
+    def get_p1(self) -> int:
+        houses = [10 for _ in range(self.__target // InputData.__ELF_PRESENTS)]
         # Note 1 - We are guaranteed to hit the target at t/10 since each elf delivers 10 times its number
         # Note 2 - Zero indexing houses, i.e. houses[0] == House_1
         # Note 3 - We know the first elf will visit all houses, so initialize houses to 10 to skip the first iteration
         upper_bound = len(houses)
         for elf in range(2, len(houses) + 1):
             for i in range(elf - 1, upper_bound, elf):
-                houses[i] += ElfDelivery.__ELF_PRESENTS * elf
+                houses[i] += InputData.__ELF_PRESENTS * elf
                 if houses[i] >= self.__target:
                     upper_bound = min(upper_bound, i + 1)
         return upper_bound
 
-    def get_lowest_house_lazy_elf(self) -> int:
-        houses = [0 for _ in range(self.__target // ElfDelivery.__LAZY_ELF_PRESENTS)]
+    def get_p2(self) -> int:
+        houses = [0 for _ in range(self.__target // InputData.__LAZY_ELF_PRESENTS)]
         upper_bound = len(houses)
         for elf in range(1, len(houses) + 1):
             presents = 0
-            for i in range(elf - 1, upper_bound, elf):
-                presents += 1
-                houses[i] += ElfDelivery.__LAZY_ELF_PRESENTS * elf
+            for presents, i in enumerate(range(elf - 1, upper_bound, elf)):
+                houses[i] += InputData.__LAZY_ELF_PRESENTS * elf
                 if houses[i] >= self.__target:
                     upper_bound = min(upper_bound, i + 1)
-                if presents >= ElfDelivery.__LAZY_ELF_CAPACITY:
+                if presents > InputData.__LAZY_ELF_CAPACITY:
                     break
         return upper_bound
 
 
-def main(aoc_input: str) -> None:
-    delivery = ElfDelivery(aoc_input)
-    print(f"Part 1: {delivery.get_lowest_house()}")
-    print(f"Part 2: {delivery.get_lowest_house_lazy_elf()}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1 = p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_p1())
+    if part in (None, 2):
+        p2 = str(p.get_p2())
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2015/day20.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
