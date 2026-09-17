@@ -25,7 +25,7 @@ def get_numbers(s: str) -> tuple[int, int]:
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
-    p1, p2 = "-1"
+    p1 = p2 = "-1"
     p = get_numbers(inputdata)
     if part in (None, 1):
         p1 = str(p[0])

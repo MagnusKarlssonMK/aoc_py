@@ -22,5 +22,5 @@ def test_part1_1() -> None:
 
 
 def test_part1_2() -> None:
-    p1, _ = solve_parts(TEST_STRING, 2)
-    assert p1 == "-"
+    _, p2 = solve_parts(TEST_STRING, 2)
+    assert p2 == "-"

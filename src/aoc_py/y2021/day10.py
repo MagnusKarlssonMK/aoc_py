@@ -141,7 +141,7 @@ class InputData:
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
-    p1, p2 = "-1"
+    p1 = p2 = "-1"
     p = InputData(inputdata)
     r1 = p.get_p1()  # Part 1 must always be run before part 2
     if part in (None, 1):

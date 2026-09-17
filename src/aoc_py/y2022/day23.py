@@ -102,7 +102,7 @@ class InputData:
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
-    p1, p2 = "-1"
+    p1 = p2 = "-1"
     p = InputData(inputdata)
     p.run_simulation()
     if part in (None, 1):

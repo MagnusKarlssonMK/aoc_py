@@ -147,7 +147,7 @@ class InputData:
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
-    p1, p2 = "-1"
+    p1 = p2 = "-1"
     decoder = InputData(inputdata)
     p = decoder.decodestream()
     if part in (None, 1):

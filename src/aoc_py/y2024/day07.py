@@ -78,7 +78,7 @@ class InputData:
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
-    p1, p2 = "-1"
+    p1 = p2 = "-1"
     p = InputData(inputdata)
     part1, part2 = p.get_calibration_result()
     if part in (None, 1):

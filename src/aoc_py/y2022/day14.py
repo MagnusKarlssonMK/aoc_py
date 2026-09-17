@@ -59,7 +59,7 @@ class InputData:
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
-    p1, p2 = "-1"
+    p1 = p2 = "-1"
     p = InputData(inputdata)
     r1, r2 = p.dropsand()
     if part in (None, 1):

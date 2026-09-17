@@ -39,7 +39,7 @@ class InputData:
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
-    p1, p2 = "-1"
+    p1 = p2 = "-1"
     p = InputData(inputdata)
     if part in (None, 1):
         p1 = str(p.get_nbr_tail_positions(2))
