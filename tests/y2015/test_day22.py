@@ -11,9 +11,6 @@ Damage: 1"""
 TEST_STRING_4 = """Hit Points: 8
 Damage: 1"""
 
-TEST_STRING_5 = """Hit Points: 13
-Damage: 1"""
-
 from aoc_py.y2015.day22 import InputData, solve_parts
 
 # ----------- Part 1 ------------
@@ -44,11 +41,3 @@ def test_part2_1() -> None:
 def test_part2_2() -> None:
     _, p2 = solve_parts(TEST_STRING_4)
     assert p2 == "106"
-
-
-# The boss should die from poison with this input with 173 mana, but the solution
-# doesn't seem to find it and finds a solution with magic missile instead.
-# Disabling for now to investigate later if the problem is in the solution or the input.
-# def test_part2_3() -> None:
-#    _, p2 = solve_parts(TEST_STRING_5)
-#    assert p2 == "173"
