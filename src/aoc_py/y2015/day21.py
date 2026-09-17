@@ -1,14 +1,15 @@
 """
+2015 day 21 - RPG Simulator 20XX
+
 Basic structure is a game consisting of a shop and two players (the player and the boss). Pretty much just generate
 all possible equipment combinations from the shop and then simulate the battle to see who wins. The collected result
 can then be used to determine the answers to both part 1 and 2.
 """
-import time
-from pathlib import Path
-import re
+
+from collections.abc import Generator
 from dataclasses import dataclass
 from itertools import combinations
-from collections.abc import Generator
+from pathlib import Path
 
 
 @dataclass(frozen=True)
@@ -20,9 +21,9 @@ class EquipmentItem:
 
 class Shop:
     def __init__(self, shopdata: dict[str, dict[str, EquipmentItem]]) -> None:
-        self.__weapons: dict[str, EquipmentItem] = shopdata['Weapons']
-        self.__armor: dict[str, EquipmentItem] = shopdata['Armor']
-        self.__rings: dict[str, EquipmentItem] = shopdata['Rings']
+        self.__weapons: dict[str, EquipmentItem] = shopdata["Weapons"]
+        self.__armor: dict[str, EquipmentItem] = shopdata["Armor"]
+        self.__rings: dict[str, EquipmentItem] = shopdata["Rings"]
 
     def get_item_bundles(self) -> Generator[EquipmentItem]:
         """Generates all possible allowed item combinations (Weapons=1, Armor=0..1, Rings=0..2).
@@ -72,14 +73,13 @@ class Player:
 
     def take_hit(self, incoming_dmg: int) -> bool:
         """Deal dmg to player, returns True if the hit kills the player."""
-        self.__current_hp -= max(1, incoming_dmg - self.___base_armor - self.__equipped_item.armor)
+        self.__current_hp -= max(
+            1, incoming_dmg - self.___base_armor - self.__equipped_item.armor
+        )
         return self.__current_hp <= 0
 
-    def __repr__(self):
-        return f"{self.__current_hp}"
 
-
-class Game:
+class InputData:
     def __init__(self, boss_str: str, shopstr: str) -> None:
         self.__boss = Player(*parse_boss(boss_str))
         self.__player = Player(100, 0, 0)
@@ -107,57 +107,59 @@ class Game:
         to (part1, part2)."""
         winning_loadouts: list[EquipmentItem] = []
         losing_loadouts: list[EquipmentItem] = []
-        count = 0
         for b in self.__shop.get_item_bundles():
-            count += 1
             if self.__player_wins(b):
                 winning_loadouts.append(b)
             else:
                 losing_loadouts.append(b)
         winning_loadouts.sort(key=lambda x: x.cost)
         losing_loadouts.sort(key=lambda x: x.cost, reverse=True)
-        return winning_loadouts[0].cost, losing_loadouts[0].cost
+        r1 = winning_loadouts[0].cost if winning_loadouts else -1
+        r2 = losing_loadouts[0].cost if losing_loadouts else -1
+        return r1, r2
 
 
-def parse_boss(rawstr: str) -> tuple[int, int, int]:
-    hp, dmg, armor = tuple(map(int, re.findall(r"\d+", rawstr)))
-    return hp, dmg, armor
+def parse_boss(s: str) -> tuple[int, int, int]:
+    lines = s.splitlines()
+    _, _, hp = lines[0].split()
+    _, dmg = lines[1].split()
+    _, armor = lines[2].split()
+    return int(hp), int(dmg), int(armor)
 
 
-def parse_shop(rawstr: str) -> dict[str, dict[str, EquipmentItem]]:
+def parse_shop(s: str) -> dict[str, dict[str, EquipmentItem]]:
     items: dict[str, dict[str, EquipmentItem]] = {}
-    label = ''
-    for block in rawstr.split('\n\n'):
+    label = ""
+    for block in s.split("\n\n"):
         for i, line in enumerate(block.splitlines()):
             tokens = line.split()
             if i == 0:
-                label = tokens[0].strip(':')
+                label = tokens[0].strip(":")
                 items[label] = {}
             else:
                 if len(tokens) == 4:
-                    items[label][tokens[0]] = EquipmentItem(*list(map(int, tokens[1:4])))
+                    items[label][tokens[0]] = EquipmentItem(
+                        *list(map(int, tokens[1:4]))
+                    )
                 elif len(tokens) == 5:
-                    items[label][tokens[0]+tokens[1]] = EquipmentItem(*list(map(int, tokens[2:5])))
+                    items[label][tokens[0] + tokens[1]] = EquipmentItem(
+                        *list(map(int, tokens[2:5]))
+                    )
     return items
 
 
-def main(aoc_input: str, shop_input: str) -> None:
-    game = Game(aoc_input, shop_input)
-    part1, part2 = game.get_loadouts()
-    print(f"Part 1: {part1}")
-    print(f"Part 2: {part2}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    project_root = Path(__file__).resolve().parents[3]
+    shop_path = project_root / "AdventOfCode-Input" / "2015" / "day21_shop.txt"
+    if not shop_path.exists():
+        raise FileNotFoundError(f"No shop input file at {shop_path}")
+    shopdata = shop_path.read_text().strip("\n")
+    p1 = p2 = "-1"
+    p = InputData(inputdata, shopdata)
+    r1, r2 = p.get_loadouts()
+    if part in (None, 1):
+        p1 = str(r1)
+    if part in (None, 2):
+        p2 = str(r2)
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2015/day21.txt')
-    SHOP_FILE = Path(ROOT_DIR, '2015/day21_shop.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file_boss:
-        bossdata = file_boss.read().strip('\n')
-    with open(SHOP_FILE, 'r') as file_shop:
-        shopdata = file_shop.read().strip('\n')
-    main(bossdata, shopdata)
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
