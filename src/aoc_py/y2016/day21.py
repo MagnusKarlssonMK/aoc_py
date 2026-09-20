@@ -1,14 +1,19 @@
 """
-Part 1: Mostly straightforward, just parse and store the operations in a generic format and call corresponding
+2016 day 21 - Scrambled Letters and Hash
+
+Part 1
+
+Mostly straightforward, just parse and store the operations in a generic format and call corresponding
 functions on a password class when iterating through the list later.
 
-Part 2: Same thing but in reverse, kind of. Mostly the 'rotate position' operation is a bit funky to reverse; there
+Part 2
+
+Same thing but in reverse, kind of. Mostly the 'rotate position' operation is a bit funky to reverse; there
 might be some more clever way to do this, but basically just try and rotate left one step at a time and see if that
 would result in the correct result, and that way we will eventually find the origin string that generated the
 result from calling this operation.
 """
-import time
-from pathlib import Path
+
 from dataclasses import dataclass
 from enum import Enum
 
@@ -25,8 +30,8 @@ class Instr(Enum):
 @dataclass(frozen=True)
 class Operation:
     instr: Instr
-    attr1: str = None
-    attr2: str = None
+    attr1: str = ""
+    attr2: str = ""
 
 
 @dataclass
@@ -38,7 +43,7 @@ class Password:
         tmp = p[idx1]
         p[idx1] = p[idx2]
         p[idx2] = tmp
-        self.pwd = ''.join(p)
+        self.pwd = "".join(p)
 
     def swap_letter(self, c1: str, c2: str) -> None:
         self.swap_pos(self.pwd.index(c1), self.pwd.index(c2))
@@ -66,37 +71,51 @@ class Password:
                 break
 
     def reverse_pos(self, idx1: int, idx2: int) -> None:
-        self.pwd = self.pwd[:idx1] + ''.join(reversed(self.pwd[idx1: idx2 + 1])) + self.pwd[idx2 + 1:]
+        self.pwd = (
+            self.pwd[:idx1]
+            + "".join(reversed(self.pwd[idx1 : idx2 + 1]))
+            + self.pwd[idx2 + 1 :]
+        )
 
     def move_pos(self, idx1: int, idx2: int) -> None:
         tmp = [c for c in self.pwd]
         c = tmp.pop(idx1)
         tmp.insert(idx2, c)
-        self.pwd = ''.join(tmp)
+        self.pwd = "".join(tmp)
 
 
-class Scrambler:
+class InputData:
     def __init__(self, rawstr: str) -> None:
         self.__operations: list[Operation] = []
         for line in rawstr.splitlines():
             tokens = line.split()
             match tokens[0]:
-                case 'swap':
-                    if tokens[1] == 'position':
-                        self.__operations.append(Operation(Instr.SWAP_POS, tokens[2], tokens[5]))
+                case "swap":
+                    if tokens[1] == "position":
+                        self.__operations.append(
+                            Operation(Instr.SWAP_POS, tokens[2], tokens[5])
+                        )
                     else:
-                        self.__operations.append(Operation(Instr.SWAP_LETTER, tokens[2], tokens[5]))
-                case 'rotate':
-                    if tokens[1] == 'left':
+                        self.__operations.append(
+                            Operation(Instr.SWAP_LETTER, tokens[2], tokens[5])
+                        )
+                case "rotate":
+                    if tokens[1] == "left":
                         self.__operations.append(Operation(Instr.ROTATE, tokens[2]))
-                    elif tokens[1] == 'right':
-                        self.__operations.append(Operation(Instr.ROTATE, '-' + tokens[2]))
+                    elif tokens[1] == "right":
+                        self.__operations.append(
+                            Operation(Instr.ROTATE, "-" + tokens[2])
+                        )
                     else:
                         self.__operations.append(Operation(Instr.ROTATE_POS, tokens[6]))
-                case 'reverse':
-                    self.__operations.append(Operation(Instr.REVERSE_POS, tokens[2], tokens[4]))
-                case 'move':
-                    self.__operations.append((Operation(Instr.MOVE_POS, tokens[2], tokens[5])))
+                case "reverse":
+                    self.__operations.append(
+                        Operation(Instr.REVERSE_POS, tokens[2], tokens[4])
+                    )
+                case "move":
+                    self.__operations.append(
+                        Operation(Instr.MOVE_POS, tokens[2], tokens[5])
+                    )
                 case _:
                     pass
 
@@ -137,18 +156,12 @@ class Scrambler:
         return descrambled.pwd
 
 
-def main(aoc_input: str) -> None:
-    scrambler = Scrambler(aoc_input)
-    print(f"Part 1: {scrambler.get_scrambled_string('abcdefgh')}")
-    print(f"Part 2: {scrambler.get_descrambled_string('fbgdceah')}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1 = p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_scrambled_string("abcdefgh"))
+    if part in (None, 2):
+        p2 = str(p.get_descrambled_string("fbgdceah"))
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2016/day21.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
