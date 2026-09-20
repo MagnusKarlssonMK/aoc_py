@@ -1,15 +1,15 @@
 """
+2016 day 19 - An Elephant Named Joseph
+
 Part 1: Straight up the Josephus problem. By using binary representation, the answer can be found by shifting the most
 significant 1 to the end.
 
 Part 2: Modified variant of the Josephus problem. It can be solved in a similar manner by converting to base-3 number
-and then doig similar modifications, but it gets quite a bit more complicated. Instead, find the largest power of 3
+and then doing similar modifications, but it gets quite a bit more complicated. Instead, find the largest power of 3
 that is still smaller than the target, and then the answer can be found based on that. In short, the pattern resets
 with 1 as winner on every 'new' / added digit in the base-3 representation (4, 10, 28...); in the first half in-between
 those numbers, the winning number is incremented by 1, while in the second half the winning number is incremented by 2.
 """
-import time
-from pathlib import Path
 
 
 def get_winning_elf(nbr_elfs: int) -> int:
@@ -33,18 +33,12 @@ def get_winning_elf_opposite(nbr_elfs: int) -> int:
         return nbr_elfs - b3_p + rem
 
 
-def main(aoc_input: str) -> None:
-    nbr = int(aoc_input)
-    print(f"Part 1: {get_winning_elf(nbr)}")
-    print(f"Part 2: {get_winning_elf_opposite(nbr)}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1 = p2 = "-1"
+    nbr = int(inputdata)
+    if part in (None, 1):
+        p1 = str(get_winning_elf(nbr))
+    if part in (None, 2):
+        p2 = str(get_winning_elf_opposite(nbr))
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2016/day19.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
