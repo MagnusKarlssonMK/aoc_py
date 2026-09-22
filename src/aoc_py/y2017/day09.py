@@ -1,12 +1,11 @@
 """
+2017 day 9 - Stream Processing
 """
-import time
-from pathlib import Path
 
 
-class Stream:
-    def __init__(self, rawstr: str) -> None:
-        self.__s = rawstr
+class InputData:
+    def __init__(self, s: str) -> None:
+        self.__s = s
 
     def get_score_and_garbage(self) -> tuple[int, int]:
         i = 0
@@ -37,19 +36,13 @@ class Stream:
         return score, garbage_count
 
 
-def main(aoc_input: str) -> None:
-    stream = Stream(aoc_input)
-    p1, p2 = stream.get_score_and_garbage()
-    print(f"Part 1: {p1}")
-    print(f"Part 2: {p2}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1 = p2 = "-1"
+    p = InputData(inputdata)
+    r1, r2 = p.get_score_and_garbage()
+    if part in (None, 1):
+        p1 = str(r1)
+    if part in (None, 2):
+        p2 = str(r2)
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2017/day09.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
