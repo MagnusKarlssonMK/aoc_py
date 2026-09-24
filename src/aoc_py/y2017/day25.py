@@ -1,25 +1,33 @@
 """
+2017 day 25 - The Halting Problem
+
 Mostly just a bit of parsing headache. It would probably have been much easier to just manually hard code the input,
 but resisting the temptation and using a bit of simple regex instead...
 Then just keep track of the cursor position and store the positions set to 1 in a set.
 """
-import time
-from pathlib import Path
+
 import re
 
 
-class TuringMachine:
-    def __init__(self, rawstr: str) -> None:
-        blocks = rawstr.split('\n\n')
+class InputData:
+    def __init__(self, s: str) -> None:
+        blocks = s.split("\n\n")
         self.__state = re.findall(r"state (\w).", blocks[0])[0]
         self.__diag_steps = int(re.findall(r"\d+", blocks[0])[0])
-        self.__process: dict[str, dict[int, tuple[int, int, str]]] = {}  # state: (value: (new_v, direction, new_s))
+        self.__process: dict[
+            str, dict[int, tuple[int, int, str]]
+        ] = {}  # state: (value: (new_v, direction, new_s))
         for block in blocks[1:]:
             states = re.findall(r"state (\w).", block)
             nbrs = list(map(int, re.findall(r"\d+", block)))
-            directions = [1 if c == 'right' else -1 for c in re.findall(r"slot to the (\w+).", block)]
-            self.__process[states[0]] = {nbrs[0]: (nbrs[1], directions[0], states[1]),
-                                         nbrs[2]: (nbrs[3], directions[1], states[2])}
+            directions = [
+                1 if c == "right" else -1
+                for c in re.findall(r"slot to the (\w+).", block)
+            ]
+            self.__process[states[0]] = {
+                nbrs[0]: (nbrs[1], directions[0], states[1]),
+                nbrs[2]: (nbrs[3], directions[1], states[2]),
+            }
 
     def get_checksum(self) -> int:
         ones: set[int] = set()
@@ -36,17 +44,12 @@ class TuringMachine:
         return len(ones)
 
 
-def main(aoc_input: str) -> None:
-    machine = TuringMachine(aoc_input)
-    print(f"Part 1: {machine.get_checksum()}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1 = p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_checksum())
+    if part in (None, 2):
+        p2 = "-"
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2017/day25.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
