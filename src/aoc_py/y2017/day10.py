@@ -49,7 +49,6 @@ class InputData:
     def get_p2(self, buffer_len: int) -> str:
         lengths: list[int] = [ord(c) for c in self.__inputstr]
         lengths += [17, 31, 73, 47, 23]
-        # lengths.extend([17, 31, 73, 47, 23])
         sparse = generate_hash(lengths, buffer_len, 64)
         dense = []
 
