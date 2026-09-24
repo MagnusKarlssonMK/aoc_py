@@ -1,4 +1,6 @@
 """
+2017 day 24 - Electromagnetic Moat
+
 Perhaps a bit over-engineered solution, but at least it's fast.
 First, convert the component list to an adjacency list, each component is given an id corresponding to its row in the
 input (any unique id would do, this was the easiest) and stores its strength and the neighbors on either side.
@@ -9,15 +11,24 @@ For part 1, keep track of the max strength by any found bridge.
 For part 2, keep track of the longest bridge found (use strength as secondary selector for equal lengths).
 The answer to both parts can be obtained in one go.
 """
-import time
-from pathlib import Path
+
+from typing import Literal
+
+Side = Literal[
+    1, 2
+]  # Which side of a component is open for extension (1 = left, 2 = right)
 
 
-class Bridge:
-    def __init__(self, rawstr: str) -> None:
-        self.__components = [tuple(map(int, line.split('/'))) for line in rawstr.splitlines()]
-        self.__adj: dict[int, tuple[int, tuple[int, ...], tuple[int, ...]]] = {}  # id: strength, (left connectors), (right connectors)
-        self.__zerostarts: list[tuple[int, int]] = []
+class InputData:
+    def __init__(self, s: str) -> None:
+        self.__components = [
+            (int(left), int(right))
+            for left, right in [line.split("/", 1) for line in s.splitlines()]
+        ]
+        self.__adj: dict[
+            int, tuple[int, tuple[int, ...], tuple[int, ...]]
+        ] = {}  # id: strength, (left connectors), (right connectors)
+        self.__zerostarts: list[tuple[int, Side]] = []
         for i, (left, right) in enumerate(self.__components):
             left_connects: list[int] = []
             right_connects: list[int] = []
@@ -34,11 +45,17 @@ class Bridge:
                     right_connects.append(j)
             self.__adj[i] = (left + right, tuple(left_connects), tuple(right_connects))
 
+    def _get_connectors(self, comp_id: int, side: Side) -> tuple[int, ...]:
+        """Components that can connect to comp_id via the given side (1 = left, 2 = right)."""
+        return self.__adj[comp_id][1] if side == 1 else self.__adj[comp_id][2]
+
     def get_max_strength(self) -> tuple[int, int]:
         seen = set()
         maxstr = 0
         longest = []
-        queue = [(tuple(), z, s) for z, s in self.__zerostarts]  # Tail, head, available connector side
+        queue: list[tuple[tuple[int, ...], int, Side]] = [
+            ((), z, s) for z, s in self.__zerostarts
+        ]  # Tail, head, available connector side
         while queue:
             state = queue.pop()
             if state in seen:
@@ -54,7 +71,7 @@ class Bridge:
                 l_str = sum([self.__adj[t][0] for t in longest])
                 if tailstr > l_str:
                     longest = tail
-            for nxt in self.__adj[head][side]:
+            for nxt in self._get_connectors(head, side):
                 if nxt in tail:
                     continue
                 if head in self.__adj[nxt][1]:
@@ -64,19 +81,13 @@ class Bridge:
         return maxstr, sum([self.__adj[t][0] for t in longest])
 
 
-def main(aoc_input: str) -> None:
-    bridge = Bridge(aoc_input)
-    p1, p2 = bridge.get_max_strength()
-    print(f"Part 1: {p1}")
-    print(f"Part 2: {p2}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1 = p2 = "-1"
+    p = InputData(inputdata)
+    r1, r2 = p.get_max_strength()
+    if part in (None, 1):
+        p1 = str(r1)
+    if part in (None, 2):
+        p2 = str(r2)
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2017/day24.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
