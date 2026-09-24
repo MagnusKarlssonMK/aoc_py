@@ -1,13 +1,15 @@
 """
+2017 day 22 - Sporifica Virus
+
 Represent the grid with a set of infected points, and store non-clean points in a dict with its state. While performing
 the bursts, add the point or update its state if the point the virus is on is no longer clean, or remove it from the
 dict if it becomes clean.
 """
-import time
-from pathlib import Path
-from dataclasses import dataclass
-from enum import Enum
+
 from copy import deepcopy
+from enum import Enum
+
+from aoc_py.util.point import Directions, Point
 
 
 class NodeState(Enum):
@@ -17,35 +19,21 @@ class NodeState(Enum):
     FLAGGED = 3
 
 
-@dataclass(frozen=True)
-class Point:
-    row: int
-    col: int
-
-    def __add__(self, other: "Point") -> "Point":
-        return Point(self.row + other.row, self.col + other.col)
-
-    def turn_left(self) -> "Point":
-        return Point(-self.col, self.row)
-
-    def turn_right(self) -> "Point":
-        return Point(self.col, -self.row)
-
-    def turn_back(self) -> "Point":
-        return Point(-self.row, -self.col)
-
-
-class Cluster:
+class InputData:
     def __init__(self, rawstr: str) -> None:
         self.__infected: dict[Point, NodeState] = {}
         lines = rawstr.splitlines()
-        for row, line in enumerate(lines):
-            for col, c in enumerate(line):
-                if c == '#':
-                    self.__infected[Point(row, col)] = NodeState.INFECTED
+        for y, line in enumerate(lines):
+            for x, c in enumerate(line):
+                if c == "#":
+                    self.__infected[Point(x, y)] = NodeState.INFECTED
         self.__virus_pos: Point = Point(len(lines) // 2, len(lines[0]) // 2)
-        self.__virus_dir = Point(-1, 0)
-        self.__startvalues = (deepcopy(self.__infected), deepcopy(self.__virus_pos), deepcopy(self.__virus_dir))
+        self.__virus_dir = Directions.UP
+        self.__startvalues = (
+            deepcopy(self.__infected),
+            deepcopy(self.__virus_pos),
+            deepcopy(self.__virus_dir),
+        )
 
     def __reset(self):
         self.__infected = deepcopy(self.__startvalues[0])
@@ -55,29 +43,28 @@ class Cluster:
     def __perform_burst(self) -> bool:
         current_infected: bool = self.__virus_pos in self.__infected
         if current_infected:
-            self.__virus_dir = self.__virus_dir.turn_right()
+            self.__virus_dir = self.__virus_dir.rotate_right()
             self.__infected.pop(self.__virus_pos)
         else:
-            self.__virus_dir = self.__virus_dir.turn_left()
+            self.__virus_dir = self.__virus_dir.rotate_left()
             self.__infected[self.__virus_pos] = NodeState.INFECTED
         self.__virus_pos += self.__virus_dir
         return not current_infected
 
     def __perform_evolved_burst(self) -> bool:
-        current_state = NodeState.CLEAN if self.__virus_pos not in self.__infected \
-            else self.__infected[self.__virus_pos]
+        current_state = self.__infected.get(self.__virus_pos, NodeState.CLEAN)
         newstate = None
         match current_state:
             case NodeState.CLEAN:
-                self.__virus_dir = self.__virus_dir.turn_left()
+                self.__virus_dir = self.__virus_dir.rotate_left()
                 newstate = NodeState.WEAKENED
             case NodeState.WEAKENED:
                 newstate = NodeState.INFECTED
             case NodeState.INFECTED:
-                self.__virus_dir = self.__virus_dir.turn_right()
+                self.__virus_dir = self.__virus_dir.rotate_right()
                 newstate = NodeState.FLAGGED
             case NodeState.FLAGGED:
-                self.__virus_dir = self.__virus_dir.turn_back()
+                self.__virus_dir = self.__virus_dir.rotate_right().rotate_right()
                 newstate = NodeState.CLEAN
         if newstate != NodeState.CLEAN:
             self.__infected[self.__virus_pos] = newstate
@@ -95,18 +82,12 @@ class Cluster:
         return result
 
 
-def main(aoc_input: str) -> None:
-    cluster = Cluster(aoc_input)
-    print(f"Part 1: {cluster.get_infected_count(10_000)}")
-    print(f"Part 2: {cluster.get_infected_count(10_000_000, True)}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1 = p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_infected_count(10_000))
+    if part in (None, 2):
+        p2 = str(p.get_infected_count(10_000_000, True))
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2017/day22.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
