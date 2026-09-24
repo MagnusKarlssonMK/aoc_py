@@ -1,4 +1,6 @@
 """
+2017 day 20 - Particle Swarm
+
 Part 1: Note that the question is which particle will be closest *in the long term*, not the closest ever over the
 entire trajectory. In the long term (i.e. t->inf), the closest will be the one with the lowest acceleration. However,
 with my input, there's multiple particles sharing the same lowest acceleration, and making a secondary sorting on
@@ -6,57 +8,60 @@ initial velocity is not safe since it depends on the relative direction between 
 So in lack of better ideas at the moment, I'll just stick with a bit of trial and error to try to find an estimate
 of number of steps to run the simulation before it seems to stabilize.
 """
-import time
-from pathlib import Path
+
 import re
-from dataclasses import dataclass
 from copy import deepcopy
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class Point:
+class Point3D:
     x: int
     y: int
     z: int
 
-    def get_distance(self, other: "Point") -> int:
+    def get_distance(self, other: Point3D) -> int:
         return abs(self.x - other.x) + abs(self.y - other.y) + abs(self.z - other.z)
 
-    def __add__(self, other: "Point") -> "Point":
-        return Point(self.x + other.x, self.y + other.y, self.z + other.z)
+    def __add__(self, other: Point3D) -> Point3D:
+        return Point3D(self.x + other.x, self.y + other.y, self.z + other.z)
 
 
 @dataclass(frozen=True)
 class Particle:
-    point: Point
-    vel: Point
-    acc: Point
+    point: Point3D
+    vel: Point3D
+    acc: Point3D
 
-    def step(self) -> "Particle":
+    def step(self) -> Particle:
         vel = self.vel + self.acc
         point = self.point + vel
         return Particle(point, vel, self.acc)
 
 
-class GPU:
+class InputData:
     def __init__(self, rawstr: str) -> None:
-        self.__particles: list[Particle] = \
-            [Particle(Point(*nbrs[0:3]), Point(*nbrs[3:6]), Point(*nbrs[6:])) for nbrs in
-             [list(map(int, re.findall(r"-?\d+", line))) for line in rawstr.splitlines()]]
+        self.__particles: list[Particle] = [
+            Particle(Point3D(*nbrs[0:3]), Point3D(*nbrs[3:6]), Point3D(*nbrs[6:]))
+            for nbrs in [
+                list(map(int, re.findall(r"-?\d+", line)))
+                for line in rawstr.splitlines()
+            ]
+        ]
 
-    def get_closest_particle(self) -> int:
+    def get_p1(self) -> int:
         particles = deepcopy(self.__particles)
         for _ in range(1000):
             for p, part in enumerate(particles):
                 particles[p] = part.step()
-        distances = [p.point.get_distance(Point(0, 0, 0)) for p in particles]
+        distances = [p.point.get_distance(Point3D(0, 0, 0)) for p in particles]
         return distances.index(min(distances))
 
-    def get_remaining_particle_count(self) -> int:
+    def get_p2(self) -> int:
         particles = deepcopy(self.__particles)
         for _ in range(1000):
-            seen_points: set[Point] = set()
-            collided_points: set[Point] = set()
+            seen_points: set[Point3D] = set()
+            collided_points: set[Point3D] = set()
             for p, part in enumerate(particles):
                 particles[p] = part.step()
                 if particles[p].point in seen_points:
@@ -74,18 +79,12 @@ class GPU:
         return len(particles)
 
 
-def main(aoc_input: str) -> None:
-    gpu = GPU(aoc_input)
-    print(f"Part 1: {gpu.get_closest_particle()}")
-    print(f"Part 2: {gpu.get_remaining_particle_count()}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1 = p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_p1())
+    if part in (None, 2):
+        p2 = str(p.get_p2())
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2017/day20.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
