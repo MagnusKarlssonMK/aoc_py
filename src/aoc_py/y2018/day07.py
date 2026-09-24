@@ -1,15 +1,15 @@
 """
+2018 day 7 - The Sum of Its Parts
+
 Store the step rules in a dict, then keep track of which steps are done (and working for part 2) to figure out
 which steps are available.
 """
-import time
-from pathlib import Path
 
 
-class SleighKit:
-    def __init__(self, rawstr: str) -> None:
+class InputData:
+    def __init__(self, s: str) -> None:
         self.__steprules: dict[str, set[str]] = {}
-        for line in rawstr.splitlines():
+        for line in s.splitlines():
             w = line.split()
             if w[1] not in self.__steprules:
                 self.__steprules[w[1]] = set()
@@ -17,10 +17,10 @@ class SleighKit:
                 self.__steprules[w[7]] = set()
             self.__steprules[w[7]].add(w[1])
 
-    def get_step_order(self) -> str:
+    def get_p1(self) -> str:
         done: list[str] = []
         # Sorted list so that we choose alphabetically when multiple steps are available
-        not_done = sorted([step for step in self.__steprules])
+        not_done = sorted(self.__steprules)
         while not_done:
             available = None
             for i, step in enumerate(not_done):
@@ -32,17 +32,17 @@ class SleighKit:
                 if available:
                     done.append(available)
                     break
-        return ''.join(done)
+        return "".join(done)
 
-    def get_step_count(self, additional_workers: int = 4, flatcost: int = 60) -> int:
+    def get_p2(self, additional_workers: int = 4, flatcost: int = 60) -> int:
         done: list[str] = []
         not_done = sorted([step for step in self.__steprules])
         working: dict[str, int] = {}
         seconds = 0
         while not_done or working:
             isdone: list[str] = []
-            for w in working:
-                if working[w] == 0:
+            for w, val in working.items():
+                if val == 0:
                     isdone.append(w)
                 else:
                     working[w] -= 1
@@ -59,25 +59,19 @@ class SleighKit:
                     available.append(step)
             for a in available:
                 if len(working) < 1 + additional_workers:
-                    working[a] = flatcost + ord(a) - ord('A')
+                    working[a] = flatcost + ord(a) - ord("A")
                     not_done.remove(a)
                 else:
                     break
         return seconds - 1
 
 
-def main(aoc_input: str) -> None:
-    sleigh = SleighKit(aoc_input)
-    print(f"Part 1: {sleigh.get_step_order()}")
-    print(f"Part 2: {sleigh.get_step_count()}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1 = p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_p1())
+    if part in (None, 2):
+        p2 = str(p.get_p2())
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2018/day07.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
