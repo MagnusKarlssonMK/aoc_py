@@ -1,4 +1,6 @@
 """
+2018 day 12 - Subterranean Sustainability
+
 1D game of life kind of.
 Store the pot state as a set of indices containing a plant, to make it a bit easier to deal with the growing sides, and
 temporarily convert it to string while creating a new generation.
@@ -7,31 +9,38 @@ Part 2: the sum increase for each generation will eventually converge to a const
 generations and checking the increase, and once it seems to have settled (using 10 times repeated delta here), we can
 calculate the final value.
 """
-import time
-from pathlib import Path
 
 
-class Tunnel:
-    def __init__(self, rawstr: str) -> None:
-        block_a, block_b = rawstr.split('\n\n')
+class InputData:
+    def __init__(self, s: str) -> None:
+        block_a, block_b = s.split("\n\n")
         _, _, pots = block_a.split()
-        self.__initialstate = set([i for i, c in enumerate(pots) if c == "#"])
-        self.__spread = {left: right for left, right in [line.split(' => ') for line in block_b.splitlines()]}
+        self.__initialstate = {i for i, c in enumerate(pots) if c == "#"}
+        self.__spread = {
+            left: right
+            for left, right in [line.split(" => ") for line in block_b.splitlines()]
+        }
 
     def __generate(self, pots: set[int]) -> set[int]:
         result: set[int] = set()
         for i in range(min(pots) - 2, max(pots) + 3):
-            if self.__spread[''.join(["#" if j in pots else "." for j in range(i - 2, i + 3)])] == "#":
+            if (
+                self.__spread.get(
+                    "".join(["#" if j in pots else "." for j in range(i - 2, i + 3)]),
+                    ".",
+                )
+                == "#"
+            ):
                 result.add(i)
         return result
 
-    def get_pot_sum_small(self) -> int:
+    def get_p1(self) -> int:
         pots = set(self.__initialstate)
         for _ in range(20):
             pots = self.__generate(pots)
         return sum(pots)
 
-    def get_pot_sum_large(self) -> int:
+    def get_p2(self) -> int:
         pots = set(self.__initialstate)
         generations = 0
         delta = 0
@@ -49,18 +58,12 @@ class Tunnel:
         return sum(pots) + delta * (50_000_000_000 - generations)
 
 
-def main(aoc_input: str) -> None:
-    tunnel = Tunnel(aoc_input)
-    print(f"Part 1: {tunnel.get_pot_sum_small()}")
-    print(f"Part 2: {tunnel.get_pot_sum_large()}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1 = p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_p1())
+    if part in (None, 2):
+        p2 = str(p.get_p2())
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2018/day12.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
