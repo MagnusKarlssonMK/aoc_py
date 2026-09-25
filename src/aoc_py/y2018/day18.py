@@ -1,38 +1,26 @@
 """
+2018 day 18 - Settlers of The North Pole
+
 Game of life with three states instead of two, kind of.
 Store the grid in a dict with the state for each coordinate and update according to the rules for each passing minute.
 For part 2 we obviously don't want to brute force a trillion minutes, so instead try to find a cycle. The grid value
 appears not to be unique enough for all inputs to use as hash for the seen states and look for repetitions based on
 that, so instead generate a sorted tuple of the grid to use as key.
 """
-import time
-from pathlib import Path
-from dataclasses import dataclass
-from enum import Enum
+
 from collections import Counter
-from collections.abc import Generator
+from enum import Enum
+
+from aoc_py.util.point import Directions, Point
 
 
 class State(Enum):
-    OPEN = '.'
-    TREES = '|'
-    LUMBERYARD = '#'
+    OPEN = "."
+    TREES = "|"
+    LUMBERYARD = "#"
 
 
-@dataclass(frozen=True)
-class Point:
-    x: int
-    y: int
-
-    def get_surrounding(self) -> Generator["Point"]:
-        for dx, dy in ((-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)):
-            yield Point(self.x + dx, self.y + dy)
-
-    def __lt__(self, other: "Point") -> bool:
-        return self.y < other.y if self.y != other.y else self.x < other.x
-
-
-class LumberArea:
+class InputData:
     P1_TIME = 10
     P2_TIME = 1_000_000_000
 
@@ -45,7 +33,13 @@ class LumberArea:
     def __step_minute(self) -> dict[Point, State]:
         result: dict[Point, State] = {}
         for point in self.__grid:
-            surrounding = Counter([self.__grid[s] for s in point.get_surrounding() if s in self.__grid])
+            surrounding = Counter(
+                [
+                    self.__grid[s]
+                    for s in [point + d for d in Directions.NEIGHBORS_ALL]
+                    if s in self.__grid
+                ]
+            )
             newstate = self.__grid[point]
             match self.__grid[point]:
                 case State.OPEN:
@@ -55,7 +49,10 @@ class LumberArea:
                     if surrounding[State.LUMBERYARD] >= 3:
                         newstate = State.LUMBERYARD
                 case State.LUMBERYARD:
-                    if surrounding[State.LUMBERYARD] == 0 or surrounding[State.TREES] == 0:
+                    if (
+                        surrounding[State.LUMBERYARD] == 0
+                        or surrounding[State.TREES] == 0
+                    ):
                         newstate = State.OPEN
             result[point] = newstate
         return result
@@ -76,12 +73,12 @@ class LumberArea:
             self.__grid = self.__step_minute()
             value = self.__get_value()
             keyval = self.__get_keyval()
-            if time == LumberArea.P1_TIME:
+            if time == InputData.P1_TIME:
                 p1 = value
             if keyval in seen:
                 cycle = time - seen[keyval][0]
                 offset = time - cycle
-                p2_time = offset + ((LumberArea.P2_TIME - offset) % cycle)
+                p2_time = offset + ((InputData.P2_TIME - offset) % cycle)
                 for v in seen:
                     if seen[v][0] == p2_time:
                         p2 = seen[v][1]
@@ -92,19 +89,13 @@ class LumberArea:
         return p1, p2
 
 
-def main(aoc_input: str) -> None:
-    area = LumberArea(aoc_input)
-    p1, p2 = area.get_total_resource_value()
-    print(f"Part 1: {p1}")
-    print(f"Part 2: {p2}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1 = p2 = "-1"
+    p = InputData(inputdata)
+    r1, r2 = p.get_total_resource_value()
+    if part in (None, 1):
+        p1 = str(r1)
+    if part in (None, 2):
+        p2 = str(r2)
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2018/day18.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
