@@ -1,39 +1,29 @@
 """
-Oh boy, just when I assumed that day 15 was done dealt with, we get another one just like it...
+2018 day 24 - Immune System Simulator 20XX
 """
-import time
-from pathlib import Path
-from dataclasses import dataclass
-from enum import Enum
+
 import re
 from copy import deepcopy
+from dataclasses import dataclass
+from enum import Enum
 
 
 class Team(Enum):
-    IMMUNESYSTEM = 'Immune System'
-    INFECTION = 'Infection'
-
-    def __repr__(self):
-        return f"{self.name}"
+    IMMUNESYSTEM = "Immune System"
+    INFECTION = "Infection"
 
 
 class DmgType(Enum):
-    COLD = 'cold'
-    FIRE = 'fire'
-    SLASHING = 'slashing'
-    RADIATION = 'radiation'
-    BLUDGEONING = 'bludgeoning'
-
-    def __repr__(self):
-        return f"{self.name}"
+    COLD = "cold"
+    FIRE = "fire"
+    SLASHING = "slashing"
+    RADIATION = "radiation"
+    BLUDGEONING = "bludgeoning"
 
 
 class TraitType(Enum):
-    WEAK = 'weak'
-    IMMUNE = 'immune'
-
-    def __repr__(self):
-        return f"{self.name}"
+    WEAK = "weak"
+    IMMUNE = "immune"
 
 
 @dataclass(frozen=True)
@@ -54,7 +44,7 @@ class Group:
     traits: list[Trait]
 
     @property
-    def effective_power(self):
+    def effective_power(self) -> int:
         return self.units * self.attackpower
 
     def get_dmgtaken(self, power: int, atype: DmgType) -> int:
@@ -72,7 +62,7 @@ class Group:
         return lostunits
 
 
-class ImmuneSystemSimulator:
+class InputData:
     def __init__(self, rawstr: str) -> None:
         team = None
         uid = 1
@@ -80,19 +70,23 @@ class ImmuneSystemSimulator:
         for line in rawstr.splitlines():
             if len(line) > 0:
                 if not line[0].isdigit():
-                    team = Team(line.strip(':'))
+                    team = Team(line.strip(":"))
                 else:
                     units, hp, ap, init = list(map(int, re.findall(r"\d+", line)))
                     at = DmgType(re.findall(r"\d (\w+) damage at initiative", line)[0])
                     traits: list[Trait] = []
                     traitstr = re.findall(r"\(([^)]+)", line)
                     if traitstr:
-                        for part in traitstr[0].split('; '):
+                        for part in traitstr[0].split("; "):
                             words = part.split()
                             for t in words[2:]:
-                                traits.append(Trait(TraitType(words[0]), DmgType(t.strip(', '))))
+                                traits.append(
+                                    Trait(TraitType(words[0]), DmgType(t.strip(", ")))
+                                )
                     if team:
-                        self.__groups[uid] = Group(uid, team, units, hp, ap, at, init, traits)
+                        self.__groups[uid] = Group(
+                            uid, team, units, hp, ap, at, init, traits
+                        )
                     uid += 1
 
     def __get_winner_and_units(self, boost: int) -> tuple[Team, int]:
@@ -101,20 +95,37 @@ class ImmuneSystemSimulator:
             if groups[g].team == Team.IMMUNESYSTEM:
                 groups[g].attackpower += boost
 
-        while len(set([g.team for g in list(groups.values()) if g.units > 0])) > 1:
+        while len({g.team for g in list(groups.values()) if g.units > 0}) > 1:
             # Target selection
             targets: dict[int, int] = {}
-            attackerlist = sorted([g for g in groups.values() if g.units > 0],
-                                  key=lambda x: (x.effective_power, x.initiative), reverse=True)
+            attackerlist = sorted(
+                [g for g in groups.values() if g.units > 0],
+                key=lambda x: (x.effective_power, x.initiative),
+                reverse=True,
+            )
             for attacker in attackerlist:
-                targetlist = sorted([t for t in attackerlist
-                                     if t.team != attacker.team and t.uid not in targets.values()],
-                                    key=lambda x: (x.get_dmgtaken(attacker.effective_power, attacker.attacktype),
-                                                   x.effective_power, x.initiative), reverse=True)
+                targetlist = sorted(
+                    [
+                        t
+                        for t in attackerlist
+                        if t.team != attacker.team and t.uid not in targets.values()
+                    ],
+                    key=lambda x: (
+                        x.get_dmgtaken(attacker.effective_power, attacker.attacktype),
+                        x.effective_power,
+                        x.initiative,
+                    ),
+                    reverse=True,
+                )
                 for target in targetlist:
                     # So this is NOT obvious, but we should apparently skip over immune targets, and somehow that
                     # impacts the result.
-                    if groups[target.uid].get_dmgtaken(attacker.effective_power, attacker.attacktype) > 0:
+                    if (
+                        groups[target.uid].get_dmgtaken(
+                            attacker.effective_power, attacker.attacktype
+                        )
+                        > 0
+                    ):
                         targets[attacker.uid] = target.uid
                         break
             if not targets:
@@ -122,13 +133,17 @@ class ImmuneSystemSimulator:
 
             # Combat
             totaldmg = 0
-            for attacker in sorted(list(groups.values()), key=lambda x: x.initiative, reverse=True):
+            for attacker in sorted(
+                groups.values(), key=lambda x: x.initiative, reverse=True
+            ):
                 if groups[attacker.uid].units > 0 and attacker.uid in targets:
-                    totaldmg += groups[targets[attacker.uid]].receive_dmg(attacker.effective_power, attacker.attacktype)
+                    totaldmg += groups[targets[attacker.uid]].receive_dmg(
+                        attacker.effective_power, attacker.attacktype
+                    )
             if totaldmg == 0:
                 # In case of deadlock of nothing mut immune dmg
                 return Team.INFECTION, -1
-        winner = Team.INFECTION # Initialize to any, will be set in loop
+        winner = Team.INFECTION  # Initialize to any, will be set in loop
         for g in groups:
             if groups[g].units > 0:
                 winner = groups[g].team
@@ -145,19 +160,13 @@ class ImmuneSystemSimulator:
         return p1, p2
 
 
-def main(aoc_input: str) -> None:
-    iss = ImmuneSystemSimulator(aoc_input)
-    p1, p2 = iss.get_winning_units()
-    print(f"Part 1: {p1}")
-    print(f"Part 2: {p2}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1 = p2 = "-1"
+    p = InputData(inputdata)
+    r1, r2 = p.get_winning_units()
+    if part in (None, 1):
+        p1 = str(r1)
+    if part in (None, 2):
+        p2 = str(r2)
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2018/day24.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
