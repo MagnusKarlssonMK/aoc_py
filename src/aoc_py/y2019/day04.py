@@ -1,16 +1,17 @@
 """
+2019 day 4 - Secure Container
+
 Valid passwords are generated with an iter function, minimizing the number of numbers to loop though by first finding
 the lowest valid password and then for each increment, adjust to follow the rules if necessary before completing
 the loop.
 """
-import time
-from pathlib import Path
+
 from collections.abc import Generator
 
 
-class PasswordGenerator:
+class InputData:
     def __init__(self, rawstr: str) -> None:
-        self.__lower, self.__upper = list(map(int, rawstr.split('-')))
+        self.__lower, self.__upper = list(map(int, rawstr.split("-")))
 
     def __generate_pwds(self, exactlytwo: bool) -> Generator[int]:
         v_list = [int(c) for c in str(self.__lower)]
@@ -22,7 +23,7 @@ class PasswordGenerator:
             elif v_list[i] < v_list[i - 1]:
                 v_list[i] = v_list[i - 1]
                 tmp = v_list[i]
-        value = int(''.join(map(str, v_list)))
+        value = int("".join(map(str, v_list)))
 
         while value <= self.__upper:
             # valid pwd if two adjacent digits are the same
@@ -36,10 +37,10 @@ class PasswordGenerator:
                     tmp = v_list[i]
 
             if not exactlytwo:
-                if any([c > 1 for c in counts]):
+                if any(c > 1 for c in counts):
                     yield value
             else:
-                if any([c == 2 for c in counts]):
+                if any(c == 2 for c in counts):
                     yield value
 
             # step the value, make sure to follow the 'never decreases' rule
@@ -49,24 +50,18 @@ class PasswordGenerator:
                     for j in range(i + 1, len(v_list)):
                         v_list[j] = v_list[i]
                     break
-            value = int(''.join(map(str, v_list)))
+            value = int("".join(map(str, v_list)))
 
     def get_password_count(self, exactlytwo: bool = False) -> int:
         return sum([1 for _ in self.__generate_pwds(exactlytwo)])
 
 
-def main(aoc_input: str) -> None:
-    pwdgen = PasswordGenerator(aoc_input)
-    print(f"Part 1: {pwdgen.get_password_count()}")
-    print(f"Part 2: {pwdgen.get_password_count(True)}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1 = p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_password_count())
+    if part in (None, 2):
+        p2 = str(p.get_password_count(True))
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2019/day04.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
