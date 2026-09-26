@@ -1,18 +1,18 @@
 """
 2019 day 20 - Donut Maze
 
-Quite similar to day 18.
-- Step 1. Parse the input, which is a major headache here, particularly getting the portal names right. Store the path
-in a coordinate dict, and also build a dict of portal locations, also containing indicators for 'inner' and 'outer'
-portals which we need for Part 2.
-- Step 2: Build a map of how the portals are connected and with how many steps. Corresponding 'inner' and 'outer'
-portals (i.e. same name) have a cost of 1 step.
-- Step 3: Dijkstra search to find the shortest path from 'AA' to 'ZZ'. This is the answer to Part 1.
-- Step 4: Modify the Dijkstra search to also contain level information, and prevent using outer portals on level 0
-except start and target node, and preventing use of start and target node on levels deeper than 0. This gives the
-answer to Part 2.
+- Step 1: Parse the grid into a set of walkable cells and the portal entrances. A corridor cell that has two
+  uppercase letters two cells away in any straight direction is the entrance of a portal; the label is read in
+  reading order and the entrance is classified as OUTER when it lies on the bounding box of the maze cells.
+- Step 2: Build a graph whose nodes are the portal entrances. An edge between two different entrances is a BFS
+  path through the open corridors and carries the number of steps; the two sides of the same portal (equal label)
+  are joined by a single-step edge that stands for stepping through the portal.
+- Step 3: One Dijkstra search finds the shortest path from 'AA' to 'ZZ'. Part 1 stays on a single level; Part 2
+  tracks a recursion level: stepping through an inner portal goes one level deeper, through an outer portal one
+  level shallower, outer portals cannot be used on level 0 and 'AA'/'ZZ' can only be entered on level 0.
 """
 
+from collections import deque
 from dataclasses import dataclass
 from enum import Enum
 from heapq import heappop, heappush
@@ -33,139 +33,105 @@ class Portal:
     name: str
     ptype: PortalType
 
-    def __lt__(
-        self, other: Portal
-    ) -> bool:  # return whatever in case of tie-breaker in pq
+    def __lt__(self, other: Portal) -> bool:  # tie-breaker in the priority queue
         return self.name < other.name
 
 
 class InputData:
     def __init__(self, rawstr: str) -> None:
-        self.__path: dict[Point, set[Point]] = {}
+        self.__walkable: set[Point] = set()
         self.__portals: dict[Point, Portal] = {}
-        portpoints: dict[Point, str] = {}
-        for y, line in enumerate(rawstr.splitlines()):
+        lines = rawstr.splitlines()
+
+        def ch(x: int, y: int) -> str:
+            if 0 <= y < len(lines) and 0 <= x < len(lines[y]):
+                return lines[y][x]
+            return " "
+
+        for y, line in enumerate(lines):
             for x, c in enumerate(line):
                 if c == ".":
-                    self.__path[Point(x, y)] = set()
-                elif c.isupper():
-                    portpoints[Point(x, y)] = c
-        for p in self.__path:
-            for n in [p + d for d in Directions.NEIGHBORS_STRAIGHT]:
-                if n in self.__path:
-                    self.__path[p].add(n)
-        x_outer = min([p.x for p in self.__path]), max([p.x for p in self.__path])
-        y_outer = min([p.y for p in self.__path]), max([p.y for p in self.__path])
-        pp: list[Point] = list(portpoints.keys())
-        while pp:
-            p1 = pp.pop()
-            p2 = Point(-1, -1)
-            entrance = None
-            for n in [p1 + d for d in Directions.NEIGHBORS_STRAIGHT]:
-                if n in pp:
-                    p2 = n
-                    pp.remove(p2)
-                elif n in self.__path:
-                    entrance = n
-            if not entrance:
-                for n in [p2 + d for d in Directions.NEIGHBORS_STRAIGHT]:
-                    if n in self.__path:
-                        entrance = n
-                        break
-                else:
-                    return  # Should never happen
-            name = "".join(portpoints[i] for i in sorted([p1, p2]))
-            portaltype = (
+                    self.__walkable.add(Point(x, y))
+        names: dict[Point, str] = {}
+        for point in self.__walkable:
+            for delta in Directions.NEIGHBORS_STRAIGHT:
+                first = ch(point.x + delta.x, point.y + delta.y)
+                second = ch(point.x + 2 * delta.x, point.y + 2 * delta.y)
+                if first.isupper() and second.isupper():
+                    if delta == Directions.RIGHT or delta == Directions.DOWN:
+                        names[point] = first + second
+                    else:
+                        names[point] = second + first
+                    break
+        min_x = min(p.x for p in self.__walkable)
+        max_x = max(p.x for p in self.__walkable)
+        min_y = min(p.y for p in self.__walkable)
+        max_y = max(p.y for p in self.__walkable)
+        for point, name in names.items():
+            ptype = (
                 PortalType.OUTER
-                if entrance.x in x_outer or entrance.y in y_outer
+                if point.x in (min_x, max_x) or point.y in (min_y, max_y)
                 else PortalType.INNER
             )
-            self.__portals[entrance] = Portal(name, portaltype)
+            self.__portals[point] = Portal(name, ptype)
         self.__portalmap: dict[Portal, set[tuple[Portal, int]]] = {
-            pt: set() for pt in self.__portals.values()
+            portal: set() for portal in self.__portals.values()
         }
         self.__build_portalmap()
 
     def __build_portalmap(self) -> None:
         for point, portal in self.__portals.items():
-            seen: set[Point] = set()
-            targetsfound: dict[Portal, int] = {}
-            queue = [(point, Point(-1, -1), 0)]
+            dist: dict[Point, int] = {point: 0}
+            queue: deque[Point] = deque([point])
             while queue:
-                current, previous, steps = queue.pop(0)
-                if current in self.__portals and self.__portals[current] != portal:
-                    if (
-                        self.__portals[current] not in targetsfound
-                        or steps < targetsfound[self.__portals[current]]
-                    ):
-                        targetsfound[self.__portals[current]] = steps
-                    continue
-                if current in seen:
-                    continue
-                seen.add(current)
-                for n in self.__path[current]:
-                    if n != previous:
-                        queue.append((n, current, steps + 1))
-            for k, v in targetsfound.items():
-                for _, s in self.__portalmap[portal]:
-                    if portal == k and s <= v:
-                        break
-                else:
-                    self.__portalmap[portal].add((k, v))
+                current = queue.popleft()
+                for nxt in (current + d for d in Directions.NEIGHBORS_STRAIGHT):
+                    if nxt in self.__walkable and nxt not in dist:
+                        dist[nxt] = dist[current] + 1
+                        queue.append(nxt)
+            for other, other_portal in self.__portals.items():
+                if other == point:
+                    continue  # would be a zero-step self-loop
+                if other_portal.name == portal.name:
+                    continue  # sibling side is reached by stepping through the portal
+                if other in dist:
+                    self.__portalmap[portal].add((other_portal, dist[other]))
         for portal in self.__portalmap:
-            if (
-                mirror := Portal(portal.name, portal.ptype.get_opposite())
-            ) in self.__portalmap:
+            mirror = Portal(portal.name, portal.ptype.get_opposite())
+            if mirror in self.__portalmap:
                 self.__portalmap[portal].add((mirror, 1))
 
-    def get_p1(self) -> int:
-        visited = {}
-        pqueue: list[tuple[int, Portal, Portal]] = []
+    def __min_steps(self, recursive: bool) -> int:
         start = Portal("AA", PortalType.OUTER)
         target = Portal("ZZ", PortalType.OUTER)
-        heappush(pqueue, (0, start, start))
+        maxlevel = len(self.__portalmap) if recursive else 0
+        visited: dict[tuple[Portal, int], int] = {(start, 0): 0}
+        pqueue: list[tuple[int, int, Portal]] = [(0, 0, start)]
         while pqueue:
-            steps, current, previous = heappop(pqueue)
+            steps, level, current = heappop(pqueue)
             if current == target:
                 return steps
-            if current in visited and visited[current] <= steps:
+            if visited[(current, level)] < steps:
                 continue
-            visited[current] = steps
-            for n, n_steps in self.__portalmap[current]:
-                if n != previous:
-                    heappush(pqueue, (steps + n_steps, n, current))
+            for nxt, cost in self.__portalmap[current]:
+                newlevel = level
+                if recursive and nxt.name == current.name:  # stepping through a portal
+                    newlevel = level + (1 if nxt.ptype == PortalType.OUTER else -1)
+                    if newlevel < 0 or newlevel > maxlevel:
+                        continue
+                if nxt == start or (nxt == target and newlevel != 0):
+                    continue
+                nsteps = steps + cost
+                if nsteps < visited.get((nxt, newlevel), 10**9):
+                    visited[(nxt, newlevel)] = nsteps
+                    heappush(pqueue, (nsteps, newlevel, nxt))
         return -1
 
+    def get_p1(self) -> int:
+        return self.__min_steps(False)
+
     def get_p2(self) -> int:
-        visited = {}
-        pqueue: list[tuple[int, int, Portal, Portal]] = []
-        start = Portal("AA", PortalType.OUTER)
-        target = Portal("ZZ", PortalType.OUTER)
-        heappush(pqueue, (0, 0, start, start))
-        result = -1
-        while pqueue:
-            steps, level, current, previous = heappop(pqueue)
-            if current == target:
-                result = steps
-            if (current, level) in visited and visited[(current, level)] <= steps:
-                continue
-            visited[(current, level)] = steps
-            for n, n_steps in self.__portalmap[current]:
-                if n != previous:
-                    dd = 0
-                    if (
-                        n.name == current.name
-                    ):  # Change level if we step through a portal
-                        dd = (
-                            1 if n.ptype == PortalType.OUTER else -1
-                        )  # note: n is outer if we step deeper
-                    if n.ptype == PortalType.OUTER and (
-                        (level + dd <= 0 and n not in (start, target))
-                        or (level + dd > 0 and n in (start, target))
-                    ):
-                        continue
-                    heappush(pqueue, (steps + n_steps, level + dd, n, current))
-        return result
+        return self.__min_steps(True)
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
