@@ -1,4 +1,6 @@
 """
+2019 day 20 - Donut Maze
+
 Quite similar to day 18.
 - Step 1. Parse the input, which is a major headache here, particularly getting the portal names right. Store the path
 in a coordinate dict, and also build a dict of portal locations, also containing indicators for 'inner' and 'outer'
@@ -10,35 +12,19 @@ portals (i.e. same name) have a cost of 1 step.
 except start and target node, and preventing use of start and target node on levels deeper than 0. This gives the
 answer to Part 2.
 """
-import time
-from pathlib import Path
+
 from dataclasses import dataclass
 from enum import Enum
 from heapq import heappop, heappush
-from collections.abc import Generator
 
-
-@dataclass(frozen=True)
-class Point:
-    x: int
-    y: int
-
-    def get_neighbors(self) -> Generator["Point"]:
-        for dx, dy in ((0, -1), (1, 0), (0, 1), (-1, 0)):
-            yield Point(self.x + dx, self.y + dy)
-
-    def __add__(self, other: "Point") -> "Point":
-        return Point(self.x + other.x, self.y + other.y)
-
-    def __lt__(self, other: "Point") -> bool:
-        return self.x < other.x if self.x != other.x else self.y < other.y
+from aoc_py.util.point import Directions, Point
 
 
 class PortalType(Enum):
     INNER = 0
     OUTER = 1
 
-    def get_opposite(self) -> "PortalType":
+    def get_opposite(self) -> PortalType:
         return PortalType.INNER if self == PortalType.OUTER else PortalType.OUTER
 
 
@@ -47,23 +33,25 @@ class Portal:
     name: str
     ptype: PortalType
 
-    def __lt__(self, other: "Portal") -> bool:  # return whatever in case of tie-breaker in pq
+    def __lt__(
+        self, other: Portal
+    ) -> bool:  # return whatever in case of tie-breaker in pq
         return self.name < other.name
 
 
-class DonutMaze:
+class InputData:
     def __init__(self, rawstr: str) -> None:
         self.__path: dict[Point, set[Point]] = {}
         self.__portals: dict[Point, Portal] = {}
         portpoints: dict[Point, str] = {}
         for y, line in enumerate(rawstr.splitlines()):
             for x, c in enumerate(line):
-                if c == '.':
+                if c == ".":
                     self.__path[Point(x, y)] = set()
                 elif c.isupper():
                     portpoints[Point(x, y)] = c
         for p in self.__path:
-            for n in p.get_neighbors():
+            for n in [p + d for d in Directions.NEIGHBORS_STRAIGHT]:
                 if n in self.__path:
                     self.__path[p].add(n)
         x_outer = min([p.x for p in self.__path]), max([p.x for p in self.__path])
@@ -73,23 +61,29 @@ class DonutMaze:
             p1 = pp.pop()
             p2 = Point(-1, -1)
             entrance = None
-            for n in p1.get_neighbors():
+            for n in [p1 + d for d in Directions.NEIGHBORS_STRAIGHT]:
                 if n in pp:
                     p2 = n
                     pp.remove(p2)
                 elif n in self.__path:
                     entrance = n
             if not entrance:
-                for n in p2.get_neighbors():
+                for n in [p2 + d for d in Directions.NEIGHBORS_STRAIGHT]:
                     if n in self.__path:
                         entrance = n
                         break
                 else:
                     return  # Should never happen
-            name = ''.join(portpoints[i] for i in sorted([p1, p2]))
-            portaltype = PortalType.OUTER if entrance.x in x_outer or entrance.y in y_outer else PortalType.INNER
+            name = "".join(portpoints[i] for i in sorted([p1, p2]))
+            portaltype = (
+                PortalType.OUTER
+                if entrance.x in x_outer or entrance.y in y_outer
+                else PortalType.INNER
+            )
             self.__portals[entrance] = Portal(name, portaltype)
-        self.__portalmap: dict[Portal, set[tuple[Portal, int]]] = {pt: set() for pt in self.__portals.values()}
+        self.__portalmap: dict[Portal, set[tuple[Portal, int]]] = {
+            pt: set() for pt in self.__portals.values()
+        }
         self.__build_portalmap()
 
     def __build_portalmap(self) -> None:
@@ -100,7 +94,10 @@ class DonutMaze:
             while queue:
                 current, previous, steps = queue.pop(0)
                 if current in self.__portals and self.__portals[current] != portal:
-                    if self.__portals[current] not in targetsfound or steps < targetsfound[self.__portals[current]]:
+                    if (
+                        self.__portals[current] not in targetsfound
+                        or steps < targetsfound[self.__portals[current]]
+                    ):
                         targetsfound[self.__portals[current]] = steps
                     continue
                 if current in seen:
@@ -116,14 +113,16 @@ class DonutMaze:
                 else:
                     self.__portalmap[portal].add((k, v))
         for portal in self.__portalmap:
-            if (mirror := Portal(portal.name, portal.ptype.get_opposite())) in self.__portalmap:
+            if (
+                mirror := Portal(portal.name, portal.ptype.get_opposite())
+            ) in self.__portalmap:
                 self.__portalmap[portal].add((mirror, 1))
 
-    def get_steps_aa_to_zz(self) -> int:
+    def get_p1(self) -> int:
         visited = {}
         pqueue: list[tuple[int, Portal, Portal]] = []
-        start = Portal('AA', PortalType.OUTER)
-        target = Portal('ZZ', PortalType.OUTER)
+        start = Portal("AA", PortalType.OUTER)
+        target = Portal("ZZ", PortalType.OUTER)
         heappush(pqueue, (0, start, start))
         while pqueue:
             steps, current, previous = heappop(pqueue)
@@ -137,43 +136,44 @@ class DonutMaze:
                     heappush(pqueue, (steps + n_steps, n, current))
         return -1
 
-    def get_recursion_steps_aa_to_zz(self) -> int:
+    def get_p2(self) -> int:
         visited = {}
         pqueue: list[tuple[int, int, Portal, Portal]] = []
-        start = Portal('AA', PortalType.OUTER)
-        target = Portal('ZZ', PortalType.OUTER)
+        start = Portal("AA", PortalType.OUTER)
+        target = Portal("ZZ", PortalType.OUTER)
         heappush(pqueue, (0, 0, start, start))
+        result = -1
         while pqueue:
             steps, level, current, previous = heappop(pqueue)
             if current == target:
-                return steps
+                result = steps
             if (current, level) in visited and visited[(current, level)] <= steps:
                 continue
             visited[(current, level)] = steps
             for n, n_steps in self.__portalmap[current]:
                 if n != previous:
                     dd = 0
-                    if n.name == current.name:  # Change level if we step through a portal
-                        dd = 1 if n.ptype == PortalType.OUTER else -1  # note: n is outer if we step deeper
-                    if n.ptype == PortalType.OUTER and ((level + dd <= 0 and n not in (start, target)) or
-                                                        (level + dd > 0 and n in (start, target))):
+                    if (
+                        n.name == current.name
+                    ):  # Change level if we step through a portal
+                        dd = (
+                            1 if n.ptype == PortalType.OUTER else -1
+                        )  # note: n is outer if we step deeper
+                    if n.ptype == PortalType.OUTER and (
+                        (level + dd <= 0 and n not in (start, target))
+                        or (level + dd > 0 and n in (start, target))
+                    ):
                         continue
                     heappush(pqueue, (steps + n_steps, level + dd, n, current))
-        return -1
+        return result
 
 
-def main(aoc_input: str) -> None:
-    maze = DonutMaze(aoc_input)
-    print(f"Part 1: {maze.get_steps_aa_to_zz()}")
-    print(f"Part 2: {maze.get_recursion_steps_aa_to_zz()}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1 = p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_p1())
+    if part in (None, 2):
+        p2 = str(p.get_p2())
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2019/day20.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
