@@ -1,8 +1,3 @@
-# --- NOTICE ---
-This project is currently being restructured to use UV for managing it, including adding a new CLI program for running it. The old
-standalone solver scripts are gradually being migrated into the new structure inside the src/ directory and is work-in-progress.
-This notice will be removed once everything has been migrated.
-
 # Introduction
 This is a collection of my Python solutions with varying degrees of quality to [Advent of Code](http://adventofcode.com) challenges, which 
 I have been going through retroactively to blow the dust off my coding skills. Advent of Code is an annual event, with 
