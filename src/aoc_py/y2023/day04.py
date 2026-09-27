@@ -1,16 +1,20 @@
 """
 2023 day 4 - Scratchcards
+
+Each card holds a set of winning numbers and the numbers that were drawn for it, and the matches of the card are the
+numbers that appear in both sets.
+For part 1, a card with matches is worth 2^(matches - 1) points, while a card without a single match is worth nothing.
+For part 2, a card hands out one extra copy of each of the next matches cards, and the answer is the total number of
+copies once every card has handed out its copies in card order.
 """
 
 
 class Card:
     def __init__(self, s: str) -> None:
-        all_numbers = s.split(": ")[1]
-        parts = all_numbers.split(" | ")
-        winning_numbers = {int(p) for p in parts[0].split()}
-        draw_numbers = {int(c) for c in parts[1].split()}
-        self.wincount: int = len(winning_numbers & draw_numbers)
-        self.score: int = 0 if self.wincount <= 0 else pow(2, self.wincount - 1)
+        winning, drawn = s.split(": ")[1].split(" | ")
+        self.matchcount: int = len(
+            {int(w) for w in winning.split()} & {int(d) for d in drawn.split()}
+        )
 
 
 class InputData:
@@ -18,14 +22,20 @@ class InputData:
         self.__scratchcards = [Card(line) for line in s.splitlines()]
 
     def get_p1(self) -> int:
-        return sum([card.score for card in self.__scratchcards])
+        return sum(
+            [
+                pow(2, card.matchcount - 1)
+                for card in self.__scratchcards
+                if card.matchcount
+            ]
+        )
 
     def get_p2(self) -> int:
-        copylist = [1 for _ in range(len(self.__scratchcards))]
+        copies = [1] * len(self.__scratchcards)
         for i, card in enumerate(self.__scratchcards):
-            for j in range(1, card.wincount + 1):
-                copylist[i + j] += copylist[i]
-        return sum(copylist)
+            for j in range(1, card.matchcount + 1):
+                copies[i + j] += copies[i]
+        return sum(copies)
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
