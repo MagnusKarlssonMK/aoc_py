@@ -1,24 +1,18 @@
 """
-Part 1 is mostly just running the Intcode program without any input, storing the output in a dict and then count number
-of blocks.
-Part 2 is not clear at all from the problem description what the joystick actually controls or how to use it to beat
-the game, but apparently all we need to do is to steer the x-position of the paddle towards the ball (so it's basically
-sort of an Arkanoid game), e.g. if ball < paddle steer left.
+2019 day 13 - Care Package
+
+- Step 1: Run the game program, collecting every output triple (x, y, tile id) that is sent before it
+  requests input, storing the tiles in a dict keyed by coordinates.
+- Step 2: Count the tiles with id 2 (blocks) for part 1; the program is given no input for this part.
+- Step 3: For part 2, enable free play by overwriting memory position 0 with 2 (two coins), then run the
+  program, steering the joystick (-1/0/1) at each input request to move the paddle's x-position toward
+  the ball, somewhat like a game of Arkanoid (e.g. if ball < paddle, steer left). Track the score triple
+  at x,y=(-1, 0) and return it when the program halts.
 """
-import time
-from pathlib import Path
+
 from enum import Enum
-from dataclasses import dataclass
-from intcode import Intcode, IntResult
 
-
-@dataclass(frozen=True)
-class Point:
-    x: int
-    y: int
-
-    def __add__(self, other: "Point") -> "Point":
-        return Point(self.x + other.x, self.y + other.y)
+from aoc_py.y2019.intcode import Intcode, IntResult
 
 
 class TileId(Enum):
@@ -35,29 +29,28 @@ class Joystick(Enum):
     RIGHT = 1
 
 
-class ArcadeGame:
+class InputData:
     def __init__(self, rawstr: str) -> None:
-        self.__cpu = Intcode(list(map(int, rawstr.split(','))))
+        self.__cpu = Intcode(list(map(int, rawstr.split(","))))
 
-    def get_block_tiles(self) -> int:
-        tiles: dict[Point, TileId] = {}
+    def get_p1(self) -> int:
+        self.__cpu.reboot()
+        tiles: dict[tuple[int, int], TileId] = {}
         output_buffer: list[int] = []
         while True:
             val, res = self.__cpu.run_program()
-            if res == IntResult.WAIT_INPUT:
-                break
-            elif res == IntResult.OUTPUT:
+            if res == IntResult.OUTPUT:
                 output_buffer.append(val)
                 if len(output_buffer) == 3:
                     x, y, t = output_buffer
-                    tiles[Point(x, y)] = TileId(t)
+                    tiles[(x, y)] = TileId(t)
                     output_buffer = []
             else:
                 break
-        self.__cpu.reboot()
         return sum([1 for t in tiles if tiles[t] == TileId.BLOCK])
 
-    def get_winning_score(self) -> int:
+    def get_p2(self) -> int:
+        self.__cpu.reboot()
         self.__cpu.override_program(0, 2)
         score = 0
         ball = 0
@@ -89,18 +82,12 @@ class ArcadeGame:
         return score
 
 
-def main(aoc_input: str) -> None:
-    arcade = ArcadeGame(aoc_input)
-    print(f"Part 1: {arcade.get_block_tiles()}")
-    print(f"Part 2: {arcade.get_winning_score()}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1 = p2 = "-1"
+    p = InputData(inputdata)
+    if part in (None, 1):
+        p1 = str(p.get_p1())
+    if part in (None, 2):
+        p2 = str(p.get_p2())
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2019/day13.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
