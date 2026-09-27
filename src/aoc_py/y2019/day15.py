@@ -1,27 +1,18 @@
 """
-BFS day!
-Unsurprisingly by now, we need the Intcode computer again for use on a repair bot.
-- Step one: we need to create a map of the maze with the bot program. Generate inputs by using BFS to find the
-shortest path to an unknown tile, until there are no more reachable unknown tiles.
-- Step two: use BFS from the start point to get minimum number of steps to the tile with oxygen. This gives us the
-answer to part 1.
-- Step 3: use BFS starting from the oxygen tile and run until all reachable tiles have been seen / filled. This gives
-the answer to part 2.
+2019 day 15 - Oxygen System
+
+- Step 1: Drive the repair droid through the maze using BFS to find the shortest path toward still-unknown tiles,
+  recording every probe result (wall / open / oxygen) until no reachable tile remains unknown.
+- Step 2: BFS from the start over the non-wall tiles to find the shortest path to the oxygen tile, or -1 if no
+  oxygen cell was found. This answers part 1.
+- Step 3: BFS from the oxygen cell to the farthest reachable tile for the minute count. This answers part 2.
 """
-import time
-from pathlib import Path
+
 from enum import Enum
-from dataclasses import dataclass
-from intcode import Intcode, IntResult
+from typing import Final
 
-
-@dataclass(frozen=True)
-class Point:
-    x: int
-    y: int
-
-    def __add__(self, other: "Point") -> "Point":
-        return Point(self.x + other.x, self.y + other.y)
+from aoc_py.util.point import Directions, Point
+from aoc_py.y2019.intcode import Intcode, IntResult
 
 
 class InputCommand(Enum):
@@ -37,34 +28,47 @@ class DroidStatus(Enum):
     OXYGEN = 2
 
 
-class MazeMap:
-    __DIRECTIONS = {InputCommand.NORTH: Point(0, -1), InputCommand.SOUTH: Point(0, 1),
-                    InputCommand.WEST: Point(-1, 0), InputCommand.EAST: Point(1, 0)}
+DIRECTION_MAP: Final = {
+    InputCommand.NORTH: Directions.UP,
+    InputCommand.SOUTH: Directions.DOWN,
+    InputCommand.WEST: Directions.LEFT,
+    InputCommand.EAST: Directions.RIGHT,
+}
 
+
+class MazeMap:
     def __init__(self) -> None:
-        self.__maze: dict[Point, DroidStatus] = {Point(0, 0): DroidStatus.OK}
+        self.__maze: dict[Point, DroidStatus] = {Directions.ORIGIN: DroidStatus.OK}
 
     def get_unknown_path(self, from_pos: Point) -> list[InputCommand]:
-        queue: list[tuple[Point, Point, InputCommand]] = [(from_pos, None, None)]
-        seen: dict[Point, tuple[Point, InputCommand]] = {}
+        queue: list[tuple[Point, Point | None, InputCommand | None]] = [
+            (from_pos, None, None)
+        ]
+        seen: dict[Point, tuple[Point | None, InputCommand | None]] = {}
         while queue:
             current, previous, command = queue.pop(0)
             if current not in self.__maze:
                 seen[current] = (previous, command)
                 result: list[InputCommand] = []
                 while current != from_pos:
-                    current, cmd = seen[current]
-                    result.append(cmd)
+                    previous_point, from_command = seen[current]
+                    assert previous_point is not None
+                    assert from_command is not None
+                    current = previous_point
+                    result.append(from_command)
                 return list(reversed(result))
             if current in seen:
                 continue
             elif previous:
                 seen[current] = (previous, command)
-            for dc, dp in MazeMap.__DIRECTIONS.items():
+            for dc, dp in DIRECTION_MAP.items():
                 neighbor = current + dp
                 if neighbor == previous:
                     continue
-                if neighbor not in self.__maze or self.__maze[neighbor] != DroidStatus.WALL:
+                if (
+                    neighbor not in self.__maze
+                    or self.__maze[neighbor] != DroidStatus.WALL
+                ):
                     queue.append((neighbor, current, dc))
         return []
 
@@ -72,7 +76,7 @@ class MazeMap:
         self.__maze[p] = v
 
     def get_shortest_path(self) -> int:
-        queue = [(Point(0, 0), 0)]
+        queue = [(Directions.ORIGIN, 0)]
         seen: set[Point] = set()
         while queue:
             current, steps = queue.pop(0)
@@ -81,14 +85,16 @@ class MazeMap:
             if current in seen:
                 continue
             seen.add(current)
-            for d in MazeMap.__DIRECTIONS.values():
+            for d in DIRECTION_MAP.values():
                 n = current + d
                 if n not in seen and self.__maze[n] != DroidStatus.WALL:
                     queue.append((n, steps + 1))
         return -1
 
     def get_flood_time(self) -> int:
-        oxygen_point = list(self.__maze.keys())[list(self.__maze.values()).index(DroidStatus.OXYGEN)]
+        oxygen_point = list(self.__maze.keys())[
+            list(self.__maze.values()).index(DroidStatus.OXYGEN)
+        ]
         steps = 0
         queue = [(oxygen_point, steps)]
         seen: set[Point] = set()
@@ -97,24 +103,21 @@ class MazeMap:
             if current in seen:
                 continue
             seen.add(current)
-            for d in MazeMap.__DIRECTIONS.values():
+            for d in DIRECTION_MAP.values():
                 n = current + d
                 if n not in seen and self.__maze[n] != DroidStatus.WALL:
                     queue.append((n, steps + 1))
         return steps
 
 
-class RepairDroid:
-    __DIRECTIONS = {InputCommand.NORTH: Point(0, -1), InputCommand.SOUTH: Point(0, 1),
-                    InputCommand.WEST: Point(-1, 0), InputCommand.EAST: Point(1, 0)}
-
+class InputData:
     def __init__(self, rawstr: str) -> None:
-        self.__cpu = Intcode(list(map(int, rawstr.split(','))))
+        self.__cpu = Intcode(list(map(int, rawstr.split(","))))
         self.__maze = MazeMap()
 
     def __build_maze_map(self) -> None:
-        droid_pos = Point(0, 0)
-        droid_direction = Point(0, -1)
+        droid_pos = Directions.ORIGIN
+        droid_direction = Directions.UP
         input_buffer = []
         while True:
             val, res = self.__cpu.run_program()
@@ -124,7 +127,7 @@ class RepairDroid:
                 if not input_buffer:  # No more reachable unknowns
                     break
                 step = input_buffer.pop(0)
-                droid_direction = RepairDroid.__DIRECTIONS[step]
+                droid_direction = DIRECTION_MAP[step]
                 self.__cpu.add_input(step.value)
             elif res == IntResult.OUTPUT:
                 self.__maze.add_tile(droid_pos + droid_direction, DroidStatus(val))
@@ -132,28 +135,23 @@ class RepairDroid:
                     droid_pos += droid_direction
             else:
                 break
-        self.__cpu.reboot()
 
-    def get_min_movement_cmds(self) -> int:
+    def get_p1(self) -> int:
+        self.__cpu.reboot()
         self.__build_maze_map()
         return self.__maze.get_shortest_path()
 
-    def get_oxygen_fill_time(self) -> int:
+    def get_p2(self) -> int:
         return self.__maze.get_flood_time()
 
 
-def main(aoc_input: str) -> None:
-    droid = RepairDroid(aoc_input)
-    print(f"Part 1: {droid.get_min_movement_cmds()}")
-    print(f"Part 2: {droid.get_oxygen_fill_time()}")
+def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
+    p1 = p2 = "-1"
+    p = InputData(inputdata)
+    r1 = p.get_p1()
+    if part in (None, 1):
+        p1 = str(r1)
+    if part in (None, 2):
+        p2 = str(p.get_p2())
 
-
-if __name__ == "__main__":
-    ROOT_DIR = Path(Path(__file__).parents[1], 'AdventOfCode-Input')
-    INPUT_FILE = Path(ROOT_DIR, '2019/day15.txt')
-
-    start_time = time.perf_counter()
-    with open(INPUT_FILE, 'r') as file:
-        main(file.read().strip('\n'))
-    end_time = time.perf_counter()
-    print(f"Total time (ms): {1000 * (end_time - start_time)}")
+    return p1, p2
