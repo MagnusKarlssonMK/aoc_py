@@ -1,8 +1,19 @@
 """
 2023 day 2 - Cube Conundrum
+
+The bag holds 12 red, 14 blue and 13 green cubes in total, and every game is split into hands of cubes.
+For part 1, sum the ids of the games where each single hand of the game fits inside the bag.
+For part 2, ignore the bag: require only the largest number of cubes of each colour seen in any hand of the game,
+and the power of the game is the product of those three maxima.
 """
 
+from dataclasses import dataclass
 from enum import Enum
+from typing import Final
+
+BAG_RED: Final = 12
+BAG_BLUE: Final = 14
+BAG_GREEN: Final = 13
 
 
 class Color(Enum):
@@ -11,22 +22,22 @@ class Color(Enum):
     GREEN = "green"
 
 
+@dataclass(frozen=True)
 class Hand:
-    def __init__(self, r: int, b: int, g: int) -> None:
-        self.red: int = r
-        self.blue: int = b
-        self.green: int = g
+    red: int
+    blue: int
+    green: int
 
     @classmethod
-    def parse(cls, s: str) -> Hand:
-        newhand = {color: 0 for color in Color}
-        for n in s.split(", "):
-            nbr, colorstr = n.split()
-            newhand[Color(colorstr)] = int(nbr)
-        return cls(r=newhand[Color.RED], b=newhand[Color.BLUE], g=newhand[Color.GREEN])
+    def parse_str(cls, s: str) -> Hand:
+        counts: dict[Color, int] = {color: 0 for color in Color}
+        for cube in s.split(", "):
+            nbr, colorstr = cube.split()
+            counts[Color(colorstr)] = int(nbr)
+        return cls(counts[Color.RED], counts[Color.BLUE], counts[Color.GREEN])
 
     def is_valid(self) -> bool:
-        return all([self.red <= 12, self.blue <= 14, self.green <= 13])
+        return self.red <= BAG_RED and self.blue <= BAG_BLUE and self.green <= BAG_GREEN
 
     def get_hand_power(self) -> int:
         return self.red * self.blue * self.green
@@ -43,7 +54,7 @@ class Game:
     def __init__(self, inputstr: str) -> None:
         gameidstring, handstring = inputstr.split(": ")
         self.gameid: int = int(gameidstring.split()[1])
-        self.__hands = [Hand.parse(h) for h in handstring.split("; ")]
+        self.__hands = [Hand.parse_str(h) for h in handstring.split("; ")]
 
     def is_valid(self) -> bool:
         return all(hand.is_valid() for hand in self.__hands)
