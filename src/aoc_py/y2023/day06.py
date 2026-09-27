@@ -4,6 +4,9 @@
 Uses quadratic formula to calculate the two points where the score intersects the old record. One of the surprising
 challenges was to round them off in the right direction, to also account for the few cases where the solution was
 exactly the same value as the old record.
+For part 1, the answer is the product of the number of hold times that win each of the races.
+For part 2, the digits of all the times are concatenated into one big time, and the same is done with all the
+distances, which turns the whole input into a single race.
 """
 
 import math
@@ -16,24 +19,24 @@ class Race:
     distance: int
 
     def get_score(self) -> int:
-        minvelocity = (
+        minholdtime = (
             math.floor((self.time - math.sqrt(self.time**2 - (4 * self.distance))) / 2)
             + 1
         )
-        maxvelocity = (
+        maxholdtime = (
             math.ceil((self.time + math.sqrt(self.time**2 - (4 * self.distance))) / 2)
             - 1
         )
-        return 1 + maxvelocity - minvelocity
+        return 1 + maxholdtime - minholdtime
 
 
 class InputData:
     def __init__(self, s: str) -> None:
-        t, d = s.splitlines()
-        timelist = list(map(int, t.split()[1:]))
-        distancelist = list(map(int, d.split()[1:]))
-        self.__races = [
-            Race(timelist[idx], distancelist[idx]) for idx, _ in enumerate(timelist)
+        tline, dline = s.splitlines()
+        timelist = list(map(int, tline.split()[1:]))
+        distancelist = list(map(int, dline.split()[1:]))
+        self.__races: list[Race] = [
+            Race(time, distance) for time, distance in zip(timelist, distancelist)
         ]
 
     def get_p1(self) -> int:
