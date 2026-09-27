@@ -17,3 +17,14 @@ def test_part2_1() -> None:
     p = InputData(TEST_STRING, 2, 2)
     p2 = p.get_p2()
     assert p2 == "\n #\n# "
+
+
+def test_part2_2() -> None:
+    _, p2 = solve_parts(TEST_STRING, 2)
+    assert p2 == "\n    ##    #     "
+
+
+def test_part2_3() -> None:
+    p1, p2 = solve_parts(TEST_STRING)
+    assert p1 == "24"
+    assert p2 == "\n    ##    #     "
