@@ -6,97 +6,92 @@ the answer by dividing the number of steps taken by 2. For part 2, calculate the
 with the shoelace formula and then use that with Pick's theorem.
 """
 
-from typing import Final
-
+from aoc_py.util.grid import Grid
 from aoc_py.util.point import Directions, Point
 
 
+def get_connection_directions(c: str, outgoing: bool) -> tuple[Point, Point]:
+    match c:
+        case "-":
+            return Directions.LEFT, Directions.RIGHT
+        case "L":
+            if outgoing:
+                return Directions.UP, Directions.RIGHT
+            else:
+                return Directions.DOWN, Directions.LEFT
+        case "J":
+            if outgoing:
+                return Directions.UP, Directions.LEFT
+            else:
+                return Directions.DOWN, Directions.RIGHT
+        case "7":
+            if outgoing:
+                return Directions.DOWN, Directions.LEFT
+            else:
+                return Directions.UP, Directions.RIGHT
+        case "F":
+            if outgoing:
+                return Directions.DOWN, Directions.RIGHT
+            else:
+                return Directions.UP, Directions.LEFT
+        case _:  # '|'
+            return Directions.UP, Directions.DOWN
+
+
 class InputData:
-    __DIRECTIONS: Final = {
-        "u": Directions.UP,
-        "r": Directions.RIGHT,
-        "d": Directions.DOWN,
-        "l": Directions.LEFT,
-    }
-    # @typing.ClassVar
-    __PIPES: Final = {
-        "|": ("u", "d"),
-        "-": ("l", "r"),
-        "L": ("u", "r"),
-        "J": ("u", "l"),
-        "7": ("d", "l"),
-        "F": ("d", "r"),
-    }
+    def __init__(self, s: str) -> None:
+        self.__grid = Grid(s)
 
-    def __init__(self, rawstr: str) -> None:
-        self.__grid = rawstr.splitlines()
-        self.__startpoint: Point = Point(-1, -1)
-        for y, row in enumerate(self.__grid):
-            if (x := row.find("S")) >= 0:
-                self.__startpoint = Point(x, y)
-        # Note: when starting at 'S', take whatever direction we find first, it doesn't matter which way we walk
-        for direction in InputData.__DIRECTIONS.values():
-            v = self.__get_value(self.__startpoint + direction)
-            if v == ".":
-                continue
-            if direction.reverse() in [
-                InputData.__DIRECTIONS[p] for p in InputData.__PIPES[v]
-            ]:
-                self.__startdirection = direction
+    def get_p1_p2(self) -> tuple[int, int]:
+        # Solves both part 1 and 2 in one pass
+        start_pos = self.__grid.find("S")
+        current_dir = Directions.UP
+        # Find start direction. There can be two possible ways to move; it doesn't matter which one we
+        # choose since it will be a circular path
+        for d in Directions.NEIGHBORS_STRAIGHT:
+            if (
+                c := self.__grid.get_element(start_pos + d)
+            ) != "" and d in get_connection_directions(c, False):
+                current_dir = d
                 break
-        self.__pipepath: list[Point] = []
+        pipe_path = [start_pos]
+        current_pos = start_pos + current_dir
+        while current_pos != start_pos:
+            pipe_path.append(current_pos)
+            for d in get_connection_directions(
+                self.__grid.get_element(current_pos), True
+            ):
+                # Every point has two connections - make sure we don't go back the way we came in
+                if d.x != -current_dir.x or d.y != -current_dir.y:
+                    current_dir = d
+                    break
+            current_pos += current_dir
+        pipe_len = len(pipe_path)
 
-    def __get_value(self, pos: Point) -> str:
-        return self.__grid[pos.y][pos.x]
-
-    def __get_nextstepdir(self, pos: Point, indir: Point) -> Point:
-        for outdir in InputData.__PIPES[self.__get_value(pos)]:
-            if InputData.__DIRECTIONS[outdir] != indir.reverse():
-                return InputData.__DIRECTIONS[outdir]
-        return indir  # Should never happen, there should always be one out...
-
-    def __traverse(self) -> None:
-        self.__pipepath = []
-        currentdir = self.__startdirection
-        currentpos = self.__startpoint + currentdir
-        self.__pipepath.append(self.__startpoint)
-        while currentpos != self.__startpoint:
-            self.__pipepath.append(currentpos)
-            # Trust that the grid content will never lead us outside the grid, so skip boundary check of new pos
-            currentdir = self.__get_nextstepdir(currentpos, currentdir)
-            currentpos += currentdir
-
-    def get_p1(self) -> int:
-        if not self.__pipepath:
-            self.__traverse()
-        return len(self.__pipepath) // 2
-
-    def get_p2(self) -> int:
-        if not self.__pipepath:
-            self.__traverse()
         # Calculate shoelace area
-        area = 0
-        for idx, _ in enumerate(self.__pipepath):
-            area += (
-                self.__pipepath[idx].x
-                * self.__pipepath[(idx + 1) % len(self.__pipepath)].y
-            ) - (
-                self.__pipepath[(idx + 1) % len(self.__pipepath)].x
-                * self.__pipepath[idx].y
+        # Add start point to the end of the path to connect also the last entry
+        pipe_path.append(start_pos)
+        shoelace_area = (
+            abs(
+                sum(
+                    (pipe_path[i].x * pipe_path[i + 1].y)
+                    - (pipe_path[i + 1].x * pipe_path[i].y)
+                    for i in range(pipe_len)
+                )
             )
-            # Note: we need to 'close the loop' and include also the combination of the first and last entries, thus
-            # mod length for the idx + 1 point
-        area = abs(area) // 2
-        # Use Pick's theorem to get number of enclosed tiles
-        return area + 1 - (len(self.__pipepath) // 2)
+            // 2
+        )
+        # Use Pick's theorem to calculate the contained area
+        area = shoelace_area + 1 - (pipe_len // 2)
+        return pipe_len // 2, area
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1 = p2 = "-1"
     p = InputData(inputdata)
+    r1, r2 = p.get_p1_p2()
     if part in (None, 1):
-        p1 = str(p.get_p1())
+        p1 = str(r1)
     if part in (None, 2):
-        p2 = str(p.get_p2())
-
+        p2 = str(r2)
     return p1, p2
