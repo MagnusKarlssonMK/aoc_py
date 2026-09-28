@@ -27,14 +27,15 @@ class Module:
     def __init__(self, outputs: list[str]) -> None:
         self.outputs: set[str] = set(outputs)
 
+    def send(self, inmsg: Message, pulse: Pulse) -> list[Message]:
+        """One message to every output, all of them carrying the same pulse"""
+        return [Message(to, inmsg.receiver, pulse) for to in self.outputs]
+
     def process_signal(self, inmsg: Message) -> list[Message]:
         """Broadcaster behavior as default"""
-        return [Message(to, inmsg.receiver, Pulse.LOW) for to in self.outputs]
+        return self.send(inmsg, Pulse.LOW)
 
     def reset(self) -> None:
-        pass
-
-    def add_input(self, _newinput: str) -> None:
         pass
 
 
@@ -47,13 +48,8 @@ class Flipflop(Module):
     def process_signal(self, inmsg: Message) -> list[Message]:
         if inmsg.pulse == Pulse.HIGH:
             return []
-        else:
-            if self.is_on:
-                self.is_on = False
-                return [Message(to, inmsg.receiver, Pulse.LOW) for to in self.outputs]
-            else:
-                self.is_on = True
-                return [Message(to, inmsg.receiver, Pulse.HIGH) for to in self.outputs]
+        self.is_on = not self.is_on
+        return self.send(inmsg, Pulse.HIGH if self.is_on else Pulse.LOW)
 
     @override
     def reset(self) -> None:
@@ -65,17 +61,14 @@ class Conjunction(Module):
         super().__init__(outputs)
         self.inputs: dict[str, Pulse] = {}
 
-    @override
     def add_input(self, newinput: str) -> None:
         self.inputs[newinput] = Pulse.LOW
 
     @override
     def process_signal(self, inmsg: Message) -> list[Message]:
         self.inputs[inmsg.sender] = inmsg.pulse
-        if any(instate != Pulse.HIGH for instate in list(self.inputs.values())):
-            return [Message(to, inmsg.receiver, Pulse.HIGH) for to in self.outputs]
-        else:
-            return [Message(to, inmsg.receiver, Pulse.LOW) for to in self.outputs]
+        allhigh = all(state == Pulse.HIGH for state in self.inputs.values())
+        return self.send(inmsg, Pulse.LOW if allhigh else Pulse.HIGH)
 
     @override
     def reset(self) -> None:
@@ -86,31 +79,39 @@ class Conjunction(Module):
 class CommunicationSystem:
     def __init__(self, rawstr: str) -> None:
         self.__modules: dict[str, Module] = {}
-        conjunction_ids: list[str] = []
         rxcon = ""
         for line in rawstr.splitlines():
             name, out = line.split(" -> ")
-            out = out.split(", ")
+            outputs = out.split(", ")
+            module: Module
             if name[0] == "%":
-                self.__modules[name[1:]] = Flipflop(out)
+                module = Flipflop(outputs)
+                name = name[1:]
             elif name[0] == "&":
-                self.__modules[name[1:]] = Conjunction(out)
-                conjunction_ids.append(name[1:])
+                module = Conjunction(outputs)
+                name = name[1:]
             else:
-                self.__modules[name[0:]] = Module(out)  # Broadcaster
-            if "rx" in out:
-                rxcon = name[1:]
+                module = Module(outputs)
+            self.__modules[name] = module
+            if "rx" in outputs:
+                rxcon = name
 
-        # Initialize conjunctions
-        for cid in conjunction_ids:
-            for m in self.__modules:
-                if cid in self.__modules[m].outputs:
-                    self.__modules[cid].add_input(m)
+        # Initialize conjunctions. Only a conjunction can feed 'rx', so only a conjunction has
+        # to know about its inputs up front, and they all start out low.
+        for name, module in self.__modules.items():
+            if isinstance(module, Conjunction):
+                for sender, other in self.__modules.items():
+                    if name in other.outputs:
+                        module.add_input(sender)
 
         # Find the modules connecting to the module connecting to 'rx'
         self.__rxcon_inputs: list[str] = [
-            m for m in self.__modules if rxcon in self.__modules[m].outputs
+            name for name, module in self.__modules.items() if rxcon in module.outputs
         ]
+
+    def __reset(self) -> None:
+        for module in self.__modules.values():
+            module.reset()
 
     def get_push_1000(self) -> int:
         pulsecount: dict[Pulse, int] = {Pulse.LOW: 0, Pulse.HIGH: 0}
@@ -120,17 +121,17 @@ class CommunicationSystem:
                 newmsg = msgqueue.pop(0)
                 pulsecount[newmsg.pulse] += 1
                 if newmsg.receiver in self.__modules:
-                    outmsgs = self.__modules[newmsg.receiver].process_signal(newmsg)
-                    [msgqueue.append(m) for m in outmsgs]
+                    msgqueue.extend(
+                        self.__modules[newmsg.receiver].process_signal(newmsg)
+                    )
         # Reset module states before exiting
-        for m in self.__modules:
-            self.__modules[m].reset()
+        self.__reset()
         return math.prod(pulsecount.values())
 
     def get_rx_mincount(self) -> int:
         pushcount = 0
         rxcon_inputs = {rx: 0 for rx in self.__rxcon_inputs}
-        while any(count == 0 for count in list(rxcon_inputs.values())):
+        while any(count == 0 for count in rxcon_inputs.values()):
             pushcount += 1
             msgqueue = [Message("broadcaster", "button", Pulse.LOW)]
             while msgqueue:
@@ -145,9 +146,8 @@ class CommunicationSystem:
                         ):
                             rxcon_inputs[newmsg.receiver] = pushcount
         # Reset module states before exiting
-        for m in self.__modules:
-            self.__modules[m].reset()
-        return math.lcm(*list(rxcon_inputs.values()))
+        self.__reset()
+        return math.lcm(*rxcon_inputs.values())
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
