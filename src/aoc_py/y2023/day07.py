@@ -3,13 +3,15 @@
 
 Create Hand class to store the cards and bid, and provides methods to calculate a power value that can be used to
 sort the hands. The power value is generated as a hex value with the hand result in the MSB and card values in LSB,
-this way the different hands can be sorted according to the rules. The power calculation method is done in two variants,
-one basic for Part 1 and one using jokers for Part 2.
+this way the different hands can be sorted according to the rules.
+The hand type comes from counting how many cards share each value, and for part 2 the jokers are wild cards that
+join the largest group of cards, while still sorting below all the other cards.
 """
 
 from collections import Counter
 from dataclasses import dataclass
 from enum import Enum
+from typing import Final
 
 
 class HandResults(Enum):
@@ -22,24 +24,13 @@ class HandResults(Enum):
     FIVE_OF_A_KIND = 7
 
 
-CARDLIST = {
-    "2": "2",
-    "3": "3",
-    "4": "4",
-    "5": "5",
-    "6": "6",
-    "7": "7",
-    "8": "8",
-    "9": "9",
-    "T": "A",
-    "J": "B",
-    "Q": "C",
-    "K": "D",
-    "A": "E",
+CARDVALUES: Final[dict[str, str]] = {
+    card: format(rank, "x") for rank, card in enumerate("23456789TJQKA", start=2)
 }
+JOKERVALUES: Final[dict[str, str]] = {**CARDVALUES, "J": "1"}
 
 
-@dataclass
+@dataclass(frozen=True)
 class Hand:
     bid: int
     cards: list[str]
@@ -47,70 +38,46 @@ class Hand:
     @classmethod
     def parse_str(cls, s: str) -> Hand:
         left, right = s.split()
-        cards = [c for c in left]
-        return Hand(int(right), cards)
+        return cls(int(right), list(left))
 
-    def gethandpower(self) -> int:
+    def get_hand_power(self) -> int:
         """Returns the input to Part 1 for this hand."""
-        result = HandResults.HIGH_CARD
-        cardcount = sorted(Counter(self.cards).values(), reverse=True)
-        match cardcount[0]:
-            case 5:
-                result = HandResults.FIVE_OF_A_KIND
-            case 4:
-                result = HandResults.FOUR_OF_A_KIND
-            case 3:
-                if cardcount[1] == 2:
-                    result = HandResults.FULL_HOUSE
-                else:
-                    result = HandResults.THREE_OF_A_KIND
-            case 2:
-                if cardcount[1] == 2:
-                    result = HandResults.TWO_PAIR
-                else:
-                    result = HandResults.ONE_PAIR
-            case 1:
-                result = HandResults.HIGH_CARD
-            case _:
-                pass
-        cardstring = "".join([CARDLIST[c] for c in self.cards])
-        return int(str(result.value) + cardstring, 16)
+        return self.__getpower(False)
 
-    def gethandpower_jokers(self) -> int:
+    def get_hand_power_jokers(self) -> int:
         """Returns the input to Part 2 for this hand."""
-        result = HandResults.HIGH_CARD
-        if (jokercount := self.cards.count("J")) >= 4:
-            result = HandResults.FIVE_OF_A_KIND
-        else:
-            nonjokercards = [c for c in self.cards if c != "J"]
-            cardcount = sorted(Counter(nonjokercards).values(), reverse=True)
+        return self.__getpower(True)
 
-            match cardcount[0] + jokercount:
-                case 5:
-                    result = HandResults.FIVE_OF_A_KIND
-                case 4:
-                    result = HandResults.FOUR_OF_A_KIND
-                case 3:
-                    if cardcount[1] == 2:
-                        result = HandResults.FULL_HOUSE
-                    else:
-                        result = HandResults.THREE_OF_A_KIND
-                case 2:
-                    if cardcount[1] == 2:
-                        result = HandResults.TWO_PAIR
-                    else:
-                        result = HandResults.ONE_PAIR
-                case 1:
-                    result = HandResults.HIGH_CARD
-                case _:
-                    pass
-        cardstring = ""
-        for card in self.cards:
-            if card == "J":
-                cardstring += "1"
-            else:
-                cardstring += CARDLIST[card]
-        return int(str(result.value) + cardstring, 16)
+    def __getpower(self, jokers: bool) -> int:
+        values = JOKERVALUES if jokers else CARDVALUES
+        cardstring = "".join([values[c] for c in self.cards])
+        return int(str(self.__getresult(jokers).value) + cardstring, 16)
+
+    def __getresult(self, jokers: bool) -> HandResults:
+        """Returns the type of the hand, where the jokers join the largest group of cards as wild cards."""
+        if jokers:
+            cards = [c for c in self.cards if c != "J"]
+            jokercount = len(self.cards) - len(cards)
+        else:
+            cards = self.cards
+            jokercount = 0
+        counts = sorted(Counter(cards).values(), reverse=True) or [0]
+        counts[0] += jokercount
+        match counts:
+            case [5]:
+                return HandResults.FIVE_OF_A_KIND
+            case [4, 1]:
+                return HandResults.FOUR_OF_A_KIND
+            case [3, 2]:
+                return HandResults.FULL_HOUSE
+            case [3, 1, 1]:
+                return HandResults.THREE_OF_A_KIND
+            case [2, 2, 1]:
+                return HandResults.TWO_PAIR
+            case [2, 1, 1, 1]:
+                return HandResults.ONE_PAIR
+            case _:
+                return HandResults.HIGH_CARD
 
 
 class InputData:
@@ -120,12 +87,12 @@ class InputData:
         ]
 
     def get_p1(self) -> int:
-        self.__hands.sort(key=lambda a: a.gethandpower())
-        return sum([hand.bid * (rank + 1) for rank, hand in enumerate(self.__hands)])
+        hands = sorted(self.__hands, key=lambda hand: hand.get_hand_power())
+        return sum([hand.bid * (rank + 1) for rank, hand in enumerate(hands)])
 
     def get_p2(self) -> int:
-        self.__hands.sort(key=lambda a: a.gethandpower_jokers())
-        return sum([hand.bid * (rank + 1) for rank, hand in enumerate(self.__hands)])
+        hands = sorted(self.__hands, key=lambda hand: hand.get_hand_power_jokers())
+        return sum([hand.bid * (rank + 1) for rank, hand in enumerate(hands)])
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
