@@ -14,6 +14,7 @@ AAA = (BBB, BBB)
 BBB = (AAA, ZZZ)
 ZZZ = (ZZZ, ZZZ)"""
 
+# The part 2 example, which has no AAA node and so can only be run through part 2.
 TEST_STRING_3 = """LR
 
 11A = (11B, XXX)
@@ -44,5 +45,15 @@ def test_part1_2() -> None:
 
 
 def test_part2_1() -> None:
+    _, p2 = solve_parts(TEST_STRING_1, 2)
+    assert p2 == "2"
+
+
+def test_part2_2() -> None:
+    _, p2 = solve_parts(TEST_STRING_2, 2)
+    assert p2 == "6"
+
+
+def test_part2_3() -> None:
     _, p2 = solve_parts(TEST_STRING_3, 2)
     assert p2 == "6"
