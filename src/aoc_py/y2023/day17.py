@@ -2,7 +2,9 @@
 2023 day 17 - Clumsy Crucible
 
 Sort of an A* solution (using the manhattan distance as heuristic) but with a bit more complicated state, since it also
-needs to track direction. Certainly not fast, but gets the job done.
+needs to track the direction of travel and the number of consecutive steps taken in it, so that part two can insist on
+moving a minimum distance before turning. Certainly not fast, but gets the job done. Returns -1 when no path reaches the
+target within the step limits, which happens on grids too small to travel that far in one direction.
 """
 
 from dataclasses import dataclass
@@ -27,23 +29,21 @@ class InputData:
         self.__grid = Grid(s)
 
     def get_shortestpath(self, minsteps: int = 0, maxsteps: int = 3) -> int:
-        state = State(Directions.ORIGIN, Directions.DOWN, 0)
         target = self.__grid.get_point(len(self.__grid.elements) - 1)
-        visited = {}
+        visited: dict[State, int] = {}
         queue: list[tuple[int, int, State]] = []
-        heappush(queue, (Directions.ORIGIN.manhattan(target), 0, state))
-        state = State(Directions.ORIGIN, Directions.RIGHT, 0)
-        heappush(queue, (Directions.ORIGIN.manhattan(target), 0, state))
+        for startdir in (Directions.DOWN, Directions.RIGHT):
+            start = State(Directions.ORIGIN, startdir, 0)
+            heappush(queue, (Directions.ORIGIN.manhattan(target), 0, start))
         while queue:
             _, heat, state = heappop(queue)
             if state.pos == target and state.steps >= minsteps:
                 return heat
             neighborstates: list[State] = []
             if state.steps >= minsteps:
-                ccw = state.direction.rotate_left()
-                neighborstates.append(State(state.pos + ccw, ccw, 1))
-                cw = state.direction.rotate_right()
-                neighborstates.append(State(state.pos + cw, cw, 1))
+                turns = (state.direction.rotate_left(), state.direction.rotate_right())
+                for turn in turns:
+                    neighborstates.append(State(state.pos + turn, turn, 1))
             if state.steps < maxsteps:
                 neighborstates.append(
                     State(state.pos + state.direction, state.direction, state.steps + 1)
@@ -58,13 +58,19 @@ class InputData:
                         )
         return -1
 
+    def get_p1(self) -> int:
+        return self.get_shortestpath()
+
+    def get_p2(self) -> int:
+        return self.get_shortestpath(4, 10)
+
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1 = p2 = "-1"
     p = InputData(inputdata)
     if part in (None, 1):
-        p1 = str(p.get_shortestpath())
+        p1 = str(p.get_p1())
     if part in (None, 2):
-        p2 = str(p.get_shortestpath(4, 10))
+        p2 = str(p.get_p2())
 
     return p1, p2
