@@ -20,32 +20,29 @@ from typing import Final
 Partrating = dict[str, int]  # Parts = ['x', 'm', 'a', 's']
 Partratingrange = dict[str, range]
 
+PARTRANGE: Final = range(1, 4001)  # One to four thousand, for every part
+
 
 class Rule:
-    __OPMAP: Final = {"<": operator.lt, ">": operator.gt}
+    OPMAP: Final = {"<": operator.lt, ">": operator.gt}
 
     def __init__(self, rulestr: str) -> None:
         self.__condpart: str | None = None
         self.__condthrshold: int = 0
         self.__condoperation: str = ""
         tmp = rulestr.split(":")
-        if len(tmp) > 1:
-            if len(parts := tmp[0].split(">")) > 1:
-                self.__condpart = parts[0]
-                self.__condoperation = ">"
-                self.__condthrshold = int(parts[1])
-            else:
-                parts = tmp[0].split("<")
-                self.__condpart = parts[0]
-                self.__condoperation = "<"
-                self.__condthrshold = int(parts[1])
         self.__ifpass = tmp[-1]
+        if len(tmp) > 1:
+            cond = tmp[0]
+            self.__condoperation = ">" if ">" in cond else "<"
+            self.__condpart, threshold = cond.split(self.__condoperation)
+            self.__condthrshold = int(threshold)
 
     def getverdict(self, part: Partrating) -> str:
         return (
             ""
             if self.__condpart
-            and not Rule.__OPMAP[self.__condoperation](
+            and not Rule.OPMAP[self.__condoperation](
                 part[self.__condpart], self.__condthrshold
             )
             else self.__ifpass
@@ -54,28 +51,22 @@ class Rule:
     def getrangesplit(
         self, inranges: Partratingrange
     ) -> Generator[tuple[str, Partratingrange]]:
-        if self.__condpart and self.__condthrshold in inranges[self.__condpart]:
-            thrshold = (
-                self.__condthrshold
-                if self.__condoperation == "<"
-                else self.__condthrshold + 1
-            )
-            outrangeslow: Partratingrange = dict(inranges)
-            outrangeshigh: Partratingrange = dict(inranges)
-            outrangeslow[self.__condpart] = range(
-                outrangeslow[self.__condpart].start, thrshold
-            )
-            outrangeshigh[self.__condpart] = range(
-                thrshold, inranges[self.__condpart].stop
-            )
-            if self.__condoperation == ">":
-                yield "", outrangeslow
-                yield self.__ifpass, outrangeshigh
-            else:
-                yield "", outrangeshigh
-                yield self.__ifpass, outrangeslow
-        else:
+        condpart = self.__condpart
+        if condpart is None or self.__condthrshold not in inranges[condpart]:
             yield self.__ifpass, inranges
+            return
+        inrange = inranges[condpart]
+        split = self.__condthrshold
+        if self.__condoperation == ">":
+            split += 1
+        low = {**inranges, condpart: range(inrange.start, split)}
+        high = {**inranges, condpart: range(split, inrange.stop)}
+        if self.__condoperation == ">":
+            yield "", low
+            yield self.__ifpass, high
+        else:
+            yield "", high
+            yield self.__ifpass, low
 
 
 class InputData:
@@ -83,25 +74,24 @@ class InputData:
         wf, rt = rawstr.split("\n\n")
         self.__workflows: dict[str, list[Rule]] = {}
         for flow in wf.splitlines():
-            label, rls = flow.strip("}").split("{")
+            label, rls = flow.strip("{}").split("{")
             self.__workflows[label] = [Rule(r) for r in rls.split(",")]
         self.__ratings: list[Partrating] = []
         for line in rt.splitlines():
-            parts = line.lstrip("{").rstrip("}").split(",")
+            parts = line.strip("{}").split(",")
             self.__ratings.append(
-                {p1: int(p2) for p1, p2 in [p.split("=") for p in parts]}
+                {p1: int(p2) for p1, p2 in (p.split("=") for p in parts)}
             )
 
     def __process_workflow(self, rating: Partrating) -> int:
+        # Note: assumes that the input assures that every rating matches a workflow.
         currentworkflow = "in"
         while currentworkflow not in ("A", "R"):
             for rule in self.__workflows[currentworkflow]:
                 if (verdict := rule.getverdict(rating)) != "":
                     currentworkflow = verdict
                     break
-        if currentworkflow == "A":
-            return sum(rating.values())
-        return 0
+        return sum(rating.values()) if currentworkflow == "A" else 0
 
     def get_p1(self) -> int:
         return sum([self.__process_workflow(rating) for rating in self.__ratings])
@@ -109,12 +99,7 @@ class InputData:
     def get_p2(self) -> int:
         initialpartgroup: tuple[str, Partratingrange] = (
             "in",
-            {
-                "x": range(1, 4001),
-                "m": range(1, 4001),
-                "a": range(1, 4001),
-                "s": range(1, 4001),
-            },
+            dict.fromkeys("xmas", PARTRANGE),
         )
         queue: list[tuple[str, Partratingrange]] = [initialpartgroup]
         verdict_a: list[Partratingrange] = []
@@ -135,7 +120,7 @@ class InputData:
                 verdict_a.append(ranges)
         return sum(
             [
-                prod([r.stop - r.start for r in list(a_ranges.values())])
+                prod([r.stop - r.start for r in a_ranges.values()])
                 for a_ranges in verdict_a
             ]
         )
