@@ -6,36 +6,20 @@ the answer by dividing the number of steps taken by 2. For part 2, calculate the
 with the shoelace formula and then use that with Pick's theorem.
 """
 
+from typing import Final
+
 from aoc_py.util.grid import Grid
 from aoc_py.util.point import Directions, Point
 
-
-def get_connection_directions(c: str, outgoing: bool) -> tuple[Point, Point]:
-    match c:
-        case "-":
-            return Directions.LEFT, Directions.RIGHT
-        case "L":
-            if outgoing:
-                return Directions.UP, Directions.RIGHT
-            else:
-                return Directions.DOWN, Directions.LEFT
-        case "J":
-            if outgoing:
-                return Directions.UP, Directions.LEFT
-            else:
-                return Directions.DOWN, Directions.RIGHT
-        case "7":
-            if outgoing:
-                return Directions.DOWN, Directions.LEFT
-            else:
-                return Directions.UP, Directions.RIGHT
-        case "F":
-            if outgoing:
-                return Directions.DOWN, Directions.RIGHT
-            else:
-                return Directions.UP, Directions.LEFT
-        case _:  # '|'
-            return Directions.UP, Directions.DOWN
+# The two directions each pipe segment connects, which are also the two directions it can be entered from.
+CONNECTIONS: Final[dict[str, tuple[Point, Point]]] = {
+    "|": (Directions.UP, Directions.DOWN),
+    "-": (Directions.LEFT, Directions.RIGHT),
+    "L": (Directions.UP, Directions.RIGHT),
+    "J": (Directions.UP, Directions.LEFT),
+    "7": (Directions.DOWN, Directions.LEFT),
+    "F": (Directions.DOWN, Directions.RIGHT),
+}
 
 
 class InputData:
@@ -49,40 +33,31 @@ class InputData:
         # Find start direction. There can be two possible ways to move; it doesn't matter which one we
         # choose since it will be a circular path
         for d in Directions.NEIGHBORS_STRAIGHT:
-            if (
-                c := self.__grid.get_element(start_pos + d)
-            ) != "" and d in get_connection_directions(c, False):
+            neighbor = self.__grid.get_element(start_pos + d)
+            if d.reverse() in CONNECTIONS.get(neighbor, ()):
                 current_dir = d
                 break
         pipe_path = [start_pos]
         current_pos = start_pos + current_dir
         while current_pos != start_pos:
             pipe_path.append(current_pos)
-            for d in get_connection_directions(
-                self.__grid.get_element(current_pos), True
-            ):
+            for d in CONNECTIONS[self.__grid.get_element(current_pos)]:
                 # Every point has two connections - make sure we don't go back the way we came in
-                if d.x != -current_dir.x or d.y != -current_dir.y:
+                if d != current_dir.reverse():
                     current_dir = d
                     break
             current_pos += current_dir
         pipe_len = len(pipe_path)
 
         # Calculate shoelace area
-        # Add start point to the end of the path to connect also the last entry
-        pipe_path.append(start_pos)
-        shoelace_area = (
-            abs(
-                sum(
-                    (pipe_path[i].x * pipe_path[i + 1].y)
-                    - (pipe_path[i + 1].x * pipe_path[i].y)
-                    for i in range(pipe_len)
-                )
-            )
-            // 2
+        areasum = sum(
+            [
+                p.determinant(pipe_path[(idx + 1) % len(pipe_path)])
+                for idx, p in enumerate(pipe_path)
+            ]
         )
         # Use Pick's theorem to calculate the contained area
-        area = shoelace_area + 1 - (pipe_len // 2)
+        area = (abs(areasum) // 2) + 1 - (pipe_len // 2)
         return pipe_len // 2, area
 
 

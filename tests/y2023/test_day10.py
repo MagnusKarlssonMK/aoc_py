@@ -42,6 +42,12 @@ L---JF-JLJ.||-FJLJJ7
 L.L7LFJ|||||FJL7||LJ
 L7JLJL-JLJLJL--JLJ.L"""
 
+# A loop with an L directly below the S, which is the only way to reach the start-direction search finding an L.
+TEST_STRING_6 = """FS.
+|L7
+|.|
+J-J"""
+
 from aoc_py.y2023.day10 import solve_parts
 
 # ----------- Part 1 ------------
@@ -57,19 +63,54 @@ def test_part1_2() -> None:
     assert p1 == "8"
 
 
+def test_part1_3() -> None:
+    p1, _ = solve_parts(TEST_STRING_3, 1)
+    assert p1 == "23"
+
+
+def test_part1_4() -> None:
+    p1, _ = solve_parts(TEST_STRING_4, 1)
+    assert p1 == "70"
+
+
+def test_part1_5() -> None:
+    p1, _ = solve_parts(TEST_STRING_5, 1)
+    assert p1 == "80"
+
+
+def test_part1_6() -> None:
+    p1, _ = solve_parts(TEST_STRING_6, 1)
+    assert p1 == "5"
+
+
 # ----------- Part 2 ------------
 
 
 def test_part2_1() -> None:
+    _, p2 = solve_parts(TEST_STRING_1, 2)
+    assert p2 == "1"
+
+
+def test_part2_2() -> None:
+    _, p2 = solve_parts(TEST_STRING_2, 2)
+    assert p2 == "1"
+
+
+def test_part2_3() -> None:
     _, p2 = solve_parts(TEST_STRING_3, 2)
     assert p2 == "4"
 
 
-def test_part2_2() -> None:
+def test_part2_4() -> None:
     _, p2 = solve_parts(TEST_STRING_4, 2)
     assert p2 == "8"
 
 
-def test_part2_3() -> None:
+def test_part2_5() -> None:
     _, p2 = solve_parts(TEST_STRING_5, 2)
     assert p2 == "10"
+
+
+def test_part2_6() -> None:
+    _, p2 = solve_parts(TEST_STRING_6, 2)
+    assert p2 == "1"
