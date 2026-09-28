@@ -8,6 +8,7 @@ one basic for Part 1 and one using jokers for Part 2.
 """
 
 from collections import Counter
+from dataclasses import dataclass
 from enum import Enum
 
 
@@ -38,15 +39,21 @@ CARDLIST = {
 }
 
 
+@dataclass
 class Hand:
-    def __init__(self, newcardstring: str, newbid: int):
-        self.bid: int = newbid
-        self.__cards = [c for c in newcardstring]
+    bid: int
+    cards: list[str]
+
+    @classmethod
+    def parse_str(cls, s: str) -> Hand:
+        left, right = s.split()
+        cards = [c for c in left]
+        return Hand(int(right), cards)
 
     def gethandpower(self) -> int:
         """Returns the input to Part 1 for this hand."""
         result = HandResults.HIGH_CARD
-        cardcount = sorted(Counter(self.__cards).values(), reverse=True)
+        cardcount = sorted(Counter(self.cards).values(), reverse=True)
         match cardcount[0]:
             case 5:
                 result = HandResults.FIVE_OF_A_KIND
@@ -66,16 +73,16 @@ class Hand:
                 result = HandResults.HIGH_CARD
             case _:
                 pass
-        cardstring = "".join([CARDLIST[c] for c in self.__cards])
+        cardstring = "".join([CARDLIST[c] for c in self.cards])
         return int(str(result.value) + cardstring, 16)
 
     def gethandpower_jokers(self) -> int:
         """Returns the input to Part 2 for this hand."""
         result = HandResults.HIGH_CARD
-        if (jokercount := self.__cards.count("J")) >= 4:
+        if (jokercount := self.cards.count("J")) >= 4:
             result = HandResults.FIVE_OF_A_KIND
         else:
-            nonjokercards = [c for c in self.__cards if c != "J"]
+            nonjokercards = [c for c in self.cards if c != "J"]
             cardcount = sorted(Counter(nonjokercards).values(), reverse=True)
 
             match cardcount[0] + jokercount:
@@ -98,7 +105,7 @@ class Hand:
                 case _:
                     pass
         cardstring = ""
-        for card in self.__cards:
+        for card in self.cards:
             if card == "J":
                 cardstring += "1"
             else:
@@ -108,16 +115,16 @@ class Hand:
 
 class InputData:
     def __init__(self, rawstr: str) -> None:
-        self.__hands: list[Hand] = []
-        for line in rawstr.splitlines():
-            left, right = line.split()
-            self.__hands.append(Hand(left, int(right)))
+        self.__hands: list[Hand] = [
+            Hand.parse_str(line) for line in rawstr.splitlines()
+        ]
 
-    def get_winnings(self, use_jokers: bool = False) -> int:
-        if use_jokers:
-            self.__hands.sort(key=lambda a: a.gethandpower_jokers())
-        else:
-            self.__hands.sort(key=lambda a: a.gethandpower())
+    def get_p1(self) -> int:
+        self.__hands.sort(key=lambda a: a.gethandpower())
+        return sum([hand.bid * (rank + 1) for rank, hand in enumerate(self.__hands)])
+
+    def get_p2(self) -> int:
+        self.__hands.sort(key=lambda a: a.gethandpower_jokers())
         return sum([hand.bid * (rank + 1) for rank, hand in enumerate(self.__hands)])
 
 
@@ -125,8 +132,8 @@ def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1 = p2 = "-1"
     p = InputData(inputdata)
     if part in (None, 1):
-        p1 = str(p.get_winnings())
+        p1 = str(p.get_p1())
     if part in (None, 2):
-        p2 = str(p.get_winnings(True))
+        p2 = str(p.get_p2())
 
     return p1, p2
