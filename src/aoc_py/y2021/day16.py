@@ -5,6 +5,10 @@ The text description is unfortunately somewhat ambiguous on the decoding of lite
 to the padding of zeroes - judging from the examples, what is apparently meant is that the padding only applies
 to the last (outer) package, but the description makes it sound like it applies to ANY literal value package. It is
 also not clear what 'its' is referring to - the value or the (sub)package? Or the entire bitstream from the start?
+
+The input is expected to be a single, complete and well formed transmission. A length delimited region
+that declares more bits than the stream holds is taken to include the trailing padding, so the region is
+clamped to the end of the stream - without that clamp the decode of such a packet would never terminate.
 """
 
 from enum import Enum
@@ -71,34 +75,32 @@ class Packet:
                     )
 
 
-class InputData:
-    __HEX_MAP: Final = {
-        "0": "0000",
-        "1": "0001",
-        "2": "0010",
-        "3": "0011",
-        "4": "0100",
-        "5": "0101",
-        "6": "0110",
-        "7": "0111",
-        "8": "1000",
-        "9": "1001",
-        "A": "1010",
-        "B": "1011",
-        "C": "1100",
-        "D": "1101",
-        "E": "1110",
-        "F": "1111",
-    }
+HEX_MAP: Final = {
+    "0": "0000",
+    "1": "0001",
+    "2": "0010",
+    "3": "0011",
+    "4": "0100",
+    "5": "0101",
+    "6": "0110",
+    "7": "0111",
+    "8": "1000",
+    "9": "1001",
+    "A": "1010",
+    "B": "1011",
+    "C": "1100",
+    "D": "1101",
+    "E": "1110",
+    "F": "1111",
+}
 
+
+class InputData:
     def __init__(self, hexstream: str) -> None:
-        self.__bitstream = "".join([InputData.__HEX_MAP[c] for c in hexstream])
+        self.__bitstream = "".join([HEX_MAP[c] for c in hexstream])
         self.versionsum: int = 0
 
     def __decode_packet(self, startidx: int) -> tuple[Packet, int]:
-        if len(self.__bitstream) - startidx < 6:
-            print("Decoding error (packet header) - too short")
-            return Packet(0, PacketType(4), 0), len(self.__bitstream)
         head = startidx
         version = int(self.__bitstream[head : head + 3], 2)
         packet_type = int(self.__bitstream[head + 3 : head + 6], 2)
@@ -130,9 +132,6 @@ class InputData:
         head = startidx
         valuestr = ""
         while True:
-            if len(self.__bitstream) - head < 5:
-                print("Decoding error (value) - too short")
-                return 0, head
             prefix = int(self.__bitstream[head])
             valuestr += self.__bitstream[head + 1 : head + 5]
             head += 5
@@ -141,8 +140,8 @@ class InputData:
         return int(valuestr, 2), head
 
     def decodestream(self) -> Packet:
-        packet, head = self.__decode_packet(0)
-        head += 4 - (head % 4)
+        self.versionsum = 0
+        packet, _ = self.__decode_packet(0)
         return packet
 
 

@@ -1,4 +1,9 @@
-from aoc_py.y2021.day16 import solve_parts
+from aoc_py.y2021.day16 import InputData, solve_parts
+
+# A hand built transmission: v1 SUM count=3 { v2 GT count=2 {LIT 10, LIT 10},
+# v3 LT count=2 {LIT 5, LIT 5}, v0 LIT 7 }. None of the official examples compare two equal
+# operands, and that is the only case where GT/LT differ from their non strict counterparts.
+TEST_STRING_2 = "2200D5802114229E80210A214438"
 
 # ----------- Part 1 ------------
 
@@ -21,6 +26,21 @@ def test_part1_3() -> None:
 def test_part1_4() -> None:
     p1, _ = solve_parts("A0016C880162017C3686B18A3D4780", 1)
     assert p1 == "31"
+
+
+def test_part1_5() -> None:
+    p1, _ = solve_parts(TEST_STRING_2, 1)
+    assert p1 == "6"
+
+
+def test_part1_6() -> None:
+    """decodestream() accumulates into versionsum, so a second call on the same object has to
+    start counting from zero again or the version sum doubles."""
+    decoder = InputData("8A004A801A8002F478")
+    _ = decoder.decodestream()
+    first = decoder.versionsum
+    _ = decoder.decodestream()
+    assert decoder.versionsum == first == 16
 
 
 # ----------- Part 2 ------------
@@ -64,3 +84,10 @@ def test_part2_7() -> None:
 def test_part2_8() -> None:
     _, p2 = solve_parts("9C0141080250320F1802104A08", 2)
     assert p2 == "1"
+
+
+def test_part2_9() -> None:
+    """Both comparisons here are on equal operands, so they have to be strict. Treating them as
+    >= and <= makes one of the two come out as 1 and the part 2 total 8 rather than 7."""
+    _, p2 = solve_parts(TEST_STRING_2, 2)
+    assert p2 == "7"
