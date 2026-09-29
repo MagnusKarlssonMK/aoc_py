@@ -1,13 +1,14 @@
 """
-Part 1
+2021 day 7 - The Treachery of Whales
 
-The optimal distance will be on the median value, so simply calculate this using the median function
-from statistics module, and then determine the total fuel cost at that value.
-
-Part 2
-
-The optimal distance will rather be on the mean value, so similar approach to part 1, but also check
-the surrounding values to be safe against rounding errors.
+Each crab sits at a horizontal position and spends one unit of fuel per step towards a
+chosen target. Part 1 spends one unit per step however far it walks, so the total cost is
+the sum of absolute distances, which is minimised at the median; that is taken straight from
+the sorted crabs, averaging the two middle values when the count is even and taking the
+single middle one when it is odd. Part 2 instead spends the step number, one unit for the
+first step, two for the second, and so on, so a crab at distance d costs d * (d + 1) / 2.
+That cost is minimised at the mean, which need not be a whole number, so the floored mean
+and the positions either side of it are each costed and the cheapest of the three taken.
 """
 
 
@@ -24,26 +25,27 @@ class InputData:
             else crabs[middle]
         )
 
-    def get_mean(self) -> int:
+    def __get_mean(self) -> int:
         return sum(self.__crabs) // len(self.__crabs)
 
     def get_p1(self) -> int:
-        calnbr = self.__get_median()
-        return sum([abs(crab - calnbr) for crab in self.__crabs])
+        target = self.__get_median()
+        return sum([abs(crab - target) for crab in self.__crabs])
 
     def get_p2(self) -> int:
-        distance = self.get_mean()
-        cost = min(
-            self.__scaling_cost(distance),
-            self.__scaling_cost(distance - 1),
-            self.__scaling_cost(distance + 1),
+        target = self.__get_mean()
+        return min(
+            self.__scaling_cost(target),
+            self.__scaling_cost(target - 1),
+            self.__scaling_cost(target + 1),
         )
-        return cost
 
-    def __scaling_cost(self, calnbr: int) -> int:
-        return sum(
-            [d * (d + 1) // 2 for d in [abs(crab - calnbr) for crab in self.__crabs]]
-        )
+    def __scaling_cost(self, target: int) -> int:
+        cost = 0
+        for crab in self.__crabs:
+            distance = abs(crab - target)
+            cost += distance * (distance + 1) // 2
+        return cost
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
