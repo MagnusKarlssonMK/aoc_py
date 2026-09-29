@@ -3,7 +3,7 @@
 
 Part 1
 
-Pretty much a basic Djikstra exercise.
+Pretty much a basic Dijkstra exercise.
 
 Part 2
 
@@ -14,9 +14,17 @@ on the fly.
 
 As a small potential optimization, both parts could be kept in the same 'expanded' object and an input parameter
 to the 'get' function could set the limits on which parts of the grid can be used.
+
+When the cave is tiled out, rows wrap on their own period and columns on theirs, so the two axes have to be
+divided by their own line counts. On a square grid the two counts are equal and the distinction cannot be
+observed, but on a cave that is wider or taller than it is deep they give different tiles. The grid has to be
+rectangular as well, since the width is taken from the first line and the rest are indexed against it.
 """
 
 from heapq import heappop, heappush
+from typing import Final
+
+NBR_TILES: Final = 5  # How many copies of the cave along each axis in part 2
 
 
 class InputData:
@@ -25,8 +33,8 @@ class InputData:
         self.__height = len(grid)
         self.__width = len(grid[0])
         if expanded:
-            self.__height *= 5
-            self.__width *= 5
+            self.__height *= NBR_TILES
+            self.__width *= NBR_TILES
         self.__adj: dict[tuple[int, int], list[tuple[int, int, int]]] = {}
         for row in range(self.__height):
             for col in range(self.__width):
@@ -57,17 +65,18 @@ class InputData:
         queue: list[tuple[int, tuple[int, int]]] = []
         heappush(queue, (0, start))
         while queue:
-            c, node = heappop(queue)
+            _, node = heappop(queue)
             visited.add(node)
             if node == end:
-                return c
+                break
             for n_row, n_col, n_cost in self.__adj[node]:
                 if (n_row, n_col) not in visited:
                     newcost = costs[node] + n_cost
                     if (n_row, n_col) not in costs or costs[(n_row, n_col)] > newcost:
                         costs[(n_row, n_col)] = newcost
                         heappush(queue, (newcost, (n_row, n_col)))
-        return -1
+        # The grid is a full rectangle of four-connected cells, so the end is always reached
+        return costs[end]
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
