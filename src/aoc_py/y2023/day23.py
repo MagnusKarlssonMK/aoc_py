@@ -2,23 +2,28 @@
 2023 day 23 - A Long Walk
 
 Stores the grid as a graph with the gridpoints connecting to more than two neighbors as vertices. Uses BFS to find
-the edges, and then a recursive DFS to calculate all path lengths from start to exit to find the longest path.
-An argument can be given when rebuilding the graph to ignore the slopes for part 2. Note that this graph results in
-significantly more edges and makes Part 2 take a really long time to complete.
+the edges, and then a recursive DFS to calculate the longest path from start to exit. An argument can be given when
+rebuilding the graph to ignore the slopes for part 2. Note that this graph results in more edges and makes part 2
+considerably slower than part 1.
 """
+
+from typing import Final
 
 from aoc_py.util.grid import Grid
 from aoc_py.util.point import Directions, Point
 
+OPPOSITE_DIRMAP: Final = {
+    "<": Directions.RIGHT,
+    ">": Directions.LEFT,
+    "^": Directions.DOWN,
+    "v": Directions.UP,
+}
 
-def is_opposite_direction(p: Point, d: str) -> bool:
-    opposite_dirmap = {
-        "<": Directions.RIGHT,
-        ">": Directions.LEFT,
-        "^": Directions.DOWN,
-        "v": Directions.UP,
-    }
-    return False if d == "." else p == opposite_dirmap[d]
+
+def is_opposite_direction(direction: Point, nchar: str) -> bool:
+    """Returns True if the tile at `nchar` is a slope facing back against the direction of travel, meaning the
+    gardener can't enter it that way."""
+    return False if nchar == "." else direction == OPPOSITE_DIRMAP[nchar]
 
 
 class InputData:
@@ -42,7 +47,7 @@ class InputData:
         self.__connectors.add(self.__start)
         self.__connectors.add(self.__exit)
 
-    def __load_tree(self, ignore_slopes: bool):
+    def __load_tree(self, ignore_slopes: bool) -> None:
         """Creates the neighbor list between the connectors."""
         self.__adj.clear()
         for vertex in self.__connectors:
@@ -68,11 +73,10 @@ class InputData:
         # I.e. make those edges directional so that they don't allow backtracking towards the start, since that would
         # make the path cut itself off from the rest of the map.
         trim_queue: list[tuple[Point, Point]] = [(self.__start, Directions.ORIGIN)]
-        trim_seen: set[Point] = set()
         while trim_queue:
             node, prev = trim_queue.pop(0)
             remove_me = None
-            exit_in_neighbors = self.__exit in [x for x, _ in self.__adj[node]]
+            exit_in_neighbors = any(n == self.__exit for n, _ in self.__adj[node])
             for n, s in self.__adj[node]:
                 if n == prev:
                     remove_me = n, s
@@ -80,31 +84,35 @@ class InputData:
                     trim_queue.append((n, node))
             if remove_me:
                 self.__adj[node].remove(remove_me)
-            trim_seen.add(node)
 
-    def __dfs(self, from_v: Point, to_v: Point, seen: set[Point]) -> list[int]:
+    def __dfs(self, from_v: Point, to_v: Point, seen: set[Point]) -> int:
         if from_v == to_v:
-            return [0]
+            return 0
         seen.add(from_v)
-        lengthlist: list[int] = []
+        longest = 0
         for next_v, distance in self.__adj[from_v]:
             if next_v not in seen:
-                for length in self.__dfs(next_v, to_v, seen):
-                    lengthlist.append(length + distance)
+                longest = max(longest, distance + self.__dfs(next_v, to_v, seen))
         seen.remove(from_v)
-        return lengthlist
+        return longest
 
     def get_maxpathlength(self, ignore_slopes: bool = False) -> int:
         self.__load_tree(ignore_slopes)
-        return max(self.__dfs(self.__start, self.__exit, set()))
+        return self.__dfs(self.__start, self.__exit, set())
+
+    def get_p1(self) -> int:
+        return self.get_maxpathlength()
+
+    def get_p2(self) -> int:
+        return self.get_maxpathlength(True)
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1 = p2 = "-1"
     p = InputData(inputdata)
     if part in (None, 1):
-        p1 = str(p.get_maxpathlength())
+        p1 = str(p.get_p1())
     if part in (None, 2):
-        p2 = str(p.get_maxpathlength(True))
+        p2 = str(p.get_p2())
 
     return p1, p2
