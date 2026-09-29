@@ -11,14 +11,26 @@ bdfegc cbegaf gecbf dfcage bdacg ed bedf ced adcbefg gebcd | ed bcgafe cdgba cbg
 egadfb cdbfeg cegd fecab cgb gbdefca cg fgcdab egfdb bfceg | gbdfcae bgc cg cgb
 gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce"""
 
+TEST_STRING_3 = """abcefg cf acdeg acdfg bcdf abdfg abdefg acf abcdefg abcdfg | abcefg cf abdefg acdfg"""
+
 from aoc_py.y2021.day08 import solve_parts
 
 # ----------- Part 1 ------------
 
 
 def test_part1_1() -> None:
+    p1, _ = solve_parts(TEST_STRING_1, 1)
+    assert p1 == "0"
+
+
+def test_part1_2() -> None:
     p1, _ = solve_parts(TEST_STRING_2, 1)
     assert p1 == "26"
+
+
+def test_part1_3() -> None:
+    p1, _ = solve_parts(TEST_STRING_3, 1)
+    assert p1 == "1"
 
 
 # ----------- Part 2 ------------
@@ -32,3 +44,8 @@ def test_part2_1() -> None:
 def test_part2_2() -> None:
     _, p2 = solve_parts(TEST_STRING_2, 2)
     assert p2 == "61229"
+
+
+def test_part2_3() -> None:
+    _, p2 = solve_parts(TEST_STRING_3, 2)
+    assert p2 == "163"
