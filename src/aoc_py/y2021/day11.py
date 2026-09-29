@@ -2,15 +2,23 @@
 2021 day 11 - Dumbo Octopus
 
 Use recursion to update all adjacent nodes when incrementing a node and it flashes.
+A single run of the grid serves both parts. The octopuses keep flashing after the step
+on which the whole grid goes off, so part 1 has to keep stepping to 100 even once part
+2's answer is known.
 """
+
+from typing import Final
 
 from aoc_py.util.grid import Grid
 from aoc_py.util.point import Directions, Point
 
+P1_NBR_STEPS: Final = 100
+
 
 class InputData:
-    def __init__(self, s: str) -> None:
-        self.__grid = Grid(s)
+    def __init__(self, rawstr: str) -> None:
+        self.__rawstr = rawstr
+        self.__grid = Grid(rawstr)
         self.__flashed: set[Point] = set()
 
     def __take_step(self) -> int:
@@ -36,14 +44,21 @@ class InputData:
                     self.__increment(adjacent)
 
     def get_flashcounts(self) -> tuple[int, int]:
+        """Returns the number of flashes over the first 100 steps and the number of the
+        first step on which every octopus flashes at once."""
+        self.__grid = Grid(self.__rawstr)
         max_flashes = self.__grid.x_max * self.__grid.y_max
-        step_count = 0
         p1 = 0
-        while (flashes := self.__take_step()) < max_flashes:
+        p2 = 0
+        step_count = 0
+        while p2 == 0 or step_count < P1_NBR_STEPS:
             step_count += 1
-            if step_count <= 100:
+            flashes = self.__take_step()
+            if step_count <= P1_NBR_STEPS:
                 p1 += flashes
-        return p1, step_count + 1
+            if p2 == 0 and flashes == max_flashes:
+                p2 = step_count
+        return p1, p2
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
