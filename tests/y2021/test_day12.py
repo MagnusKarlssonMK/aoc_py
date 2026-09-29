@@ -36,6 +36,10 @@ zg-he
 pj-fs
 start-RW"""
 
+TEST_STRING_4 = """start-b
+b-A
+A-end"""
+
 from aoc_py.y2021.day12 import solve_parts
 
 # ----------- Part 1 ------------
@@ -56,6 +60,11 @@ def test_part1_3() -> None:
     assert p1 == "226"
 
 
+def test_part1_4() -> None:
+    p1, _ = solve_parts(TEST_STRING_4, 1)
+    assert p1 == "1"
+
+
 # ----------- Part 2 ------------
 
 
@@ -72,3 +81,10 @@ def test_part2_2() -> None:
 def test_part2_3() -> None:
     _, p2 = solve_parts(TEST_STRING_3, 2)
     assert p2 == "3509"
+
+
+def test_part2_4() -> None:
+    """Only start,b,A,end is a legal path in part 1. In part 2 the single small cave b may
+    be entered a second time, which adds exactly one more path."""
+    _, p2 = solve_parts(TEST_STRING_4, 2)
+    assert p2 == "2"
