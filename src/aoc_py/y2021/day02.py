@@ -1,5 +1,10 @@
 """
 2021 day 2 - Dive!
+
+The submarine starts at the origin and a list of instructions tells it how to move. In part 1 the vertical
+moves directly change the depth, and a forward move only changes the horizontal position. In part 2 the
+vertical moves instead adjust an aim value, and each forward move then travels both horizontally and
+vertically by the current aim. Both parts end by multiplying horizontal and vertical position.
 """
 
 from dataclasses import dataclass
@@ -19,13 +24,15 @@ class Command:
     move: Move
     value: int
 
+    @classmethod
+    def parse_str(cls, rawstr: str) -> Command:
+        move, value = rawstr.split()
+        return cls(Move(move), int(value))
+
 
 class InputData:
-    def __init__(self, s: str) -> None:
-        self.__instructions = [
-            Command(Move(left), int(right))
-            for left, right in [line.split() for line in s.splitlines()]
-        ]
+    def __init__(self, rawstr: str) -> None:
+        self.__instructions = [Command.parse_str(line) for line in rawstr.splitlines()]
 
     def get_p1(self) -> int:
         position = Directions.ORIGIN
