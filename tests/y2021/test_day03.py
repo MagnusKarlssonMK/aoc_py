@@ -1,4 +1,4 @@
-TEST_STRING = """00100
+TEST_STRING_1 = """00100
 11110
 10110
 10111
@@ -11,19 +11,35 @@ TEST_STRING = """00100
 00010
 01010"""
 
+# Four three-bit numbers with an even split at bit 1, so the tie-breaking direction decides both answers.
+TEST_STRING_2 = """010
+110
+101
+100"""
+
 from aoc_py.y2021.day03 import solve_parts
 
 # ----------- Part 1 ------------
 
 
 def test_part1_1() -> None:
-    p1, _ = solve_parts(TEST_STRING, 1)
+    p1, _ = solve_parts(TEST_STRING_1, 1)
     assert p1 == "198"
+
+
+def test_part1_2() -> None:
+    p1, _ = solve_parts(TEST_STRING_2, 1)
+    assert p1 == "6"
 
 
 # ----------- Part 2 ------------
 
 
 def test_part2_1() -> None:
-    _, p2 = solve_parts(TEST_STRING, 2)
+    _, p2 = solve_parts(TEST_STRING_1, 2)
     assert p2 == "230"
+
+
+def test_part2_2() -> None:
+    _, p2 = solve_parts(TEST_STRING_2, 2)
+    assert p2 == "10"

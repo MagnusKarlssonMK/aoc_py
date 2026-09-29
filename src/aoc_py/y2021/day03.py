@@ -1,12 +1,19 @@
 """
 2021 day 3 - Binary Diagnostic
+
+The diagnostic report is a list of binary numbers, all of the same width. Counting how many ones occur in each
+bit position across the whole report reveals the most and least common bit per position, which is enough for
+part 1. For part 2 the same per-position counting is repeated on a shrinking subset: the oxygen rating keeps the
+most common bit at each position and narrows the list, and the CO2 rating keeps the least common bit instead. A
+position where the ones and zeroes are evenly split makes both answers legal, so we consistently break such a tie
+toward one.
 """
 
 
 class InputData:
-    def __init__(self, s: str) -> None:
-        self.__lines = s.splitlines()
-        self.__nbrbits = len(self.__lines[0])
+    def __init__(self, rawstr: str) -> None:
+        self.__lines: list[str] = rawstr.splitlines()
+        self.__nbrbits: int = len(self.__lines[0])
 
     def __get_most_and_least_common(self, inlist: list[str]) -> tuple[str, str]:
         gamma = [0 for _ in range(self.__nbrbits)]
@@ -14,8 +21,8 @@ class InputData:
             for i, c in enumerate(line):
                 gamma[i] += int(c)
         for bit_idx in range(self.__nbrbits):
-            gamma[bit_idx] = min(1, 2 * gamma[bit_idx] // len(inlist))
-        epsilon = [(i + 1) % 2 for i in gamma]
+            gamma[bit_idx] = int(2 * gamma[bit_idx] >= len(inlist))
+        epsilon = [1 - i for i in gamma]
         return "".join(list(map(str, gamma))), "".join(list(map(str, epsilon)))
 
     def get_p1(self) -> int:
