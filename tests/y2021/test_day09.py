@@ -1,8 +1,11 @@
-TEST_STRING = """2199943210
+TEST_STRING_1 = """2199943210
 3987894921
 9856789892
 8767896789
 9899965678"""
+
+TEST_STRING_2 = """9999999
+2529595"""
 
 from aoc_py.y2021.day09 import solve_parts
 
@@ -10,13 +13,23 @@ from aoc_py.y2021.day09 import solve_parts
 
 
 def test_part1_1() -> None:
-    p1, _ = solve_parts(TEST_STRING, 1)
+    p1, _ = solve_parts(TEST_STRING_1, 1)
     assert p1 == "15"
+
+
+def test_part1_2() -> None:
+    p1, _ = solve_parts(TEST_STRING_2, 1)
+    assert p1 == "18"
 
 
 # ----------- Part 2 ------------
 
 
 def test_part2_1() -> None:
-    _, p2 = solve_parts(TEST_STRING, 2)
+    _, p2 = solve_parts(TEST_STRING_1, 2)
     assert p2 == "1134"
+
+
+def test_part2_2() -> None:
+    _, p2 = solve_parts(TEST_STRING_2, 2)
+    assert p2 == "3"

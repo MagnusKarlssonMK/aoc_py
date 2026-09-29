@@ -1,10 +1,11 @@
 """
 2021 day 9 - Smoke Basin
 
-Create methods to find the low point coordinates and basin coordinates of the input grid.
-The latter uses a stripped down BFS to find any adjacent neighbor until value '9' is found.
-This assumes (as also stated in the problem description) that all low points will be
-surrounded by 9:s and not connected to any other low point.
+Create methods to find the low points and basins of the input grid. The latter uses a
+stripped down BFS, growing from a low point over neighbouring cells until value '9' is
+found, since a basin is an area of cells below 9 and so is always bounded by 9:s. Nothing
+stops two low points from sharing a basin, so the flood fill records the cells it claims
+and a low point already inside a claimed basin is skipped rather than counted again.
 """
 
 from collections.abc import Generator
@@ -16,7 +17,7 @@ from aoc_py.util.point import Directions, Point
 class InputData:
     def __init__(self, s: str) -> None:
         self.__grid = Grid(s)
-        self.__lowpoints = {p for p in self.__find_low_points()}
+        self.__lowpoints: list[Point] = list(self.__find_low_points())
 
     def __find_low_points(self) -> Generator[Point]:
         for i, c in enumerate(self.__grid.elements):
@@ -48,9 +49,15 @@ class InputData:
         return sum([int(self.__grid.get_element(p)) + 1 for p in self.__lowpoints])
 
     def get_p2(self) -> int:
-        basin_sizelist = sorted(
-            [len(self.__find_basin_points(p)) for p in self.__lowpoints], reverse=True
-        )
+        basin_sizelist: list[int] = []
+        claimed: set[Point] = set()
+        for p in self.__lowpoints:
+            if p in claimed:
+                continue
+            basin = self.__find_basin_points(p)
+            claimed |= basin
+            basin_sizelist.append(len(basin))
+        basin_sizelist.sort(reverse=True)
         return basin_sizelist[0] * basin_sizelist[1] * basin_sizelist[2]
 
 
