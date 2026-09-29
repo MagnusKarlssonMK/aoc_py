@@ -8,8 +8,8 @@ for both part 1 and 2 can be calculated with one function, taking the window len
 
 
 class InputData:
-    def __init__(self, s: str) -> None:
-        self.__nbrs = list(map(int, s.splitlines()))
+    def __init__(self, rawstr: str) -> None:
+        self.__nbrs: list[int] = list(map(int, rawstr.splitlines()))
 
     def count_depth_increase(self, windowsize: int) -> int:
         return sum(
