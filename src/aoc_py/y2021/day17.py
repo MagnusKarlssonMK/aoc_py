@@ -26,7 +26,7 @@ Y-max = y(V+1) = Y(V) = (V+1)*V/2
 We also assume that the X-axis does not impose any restrictions, since it caps off at 0 and thus it should always be
 possible to find a starting x-velocity such that we hit the target range. This would only be an issue if the target
 range is small and the number of steps low, but since we are effectively trying to use as many steps as possible in
-to maximize the y-axis, this shouldn't be any issue at all.
+order to maximize the y-axis, this shouldn't be any issue at all.
 
 Part 2
 
@@ -49,19 +49,18 @@ Y-axis:
 """
 
 import math
-from typing import override
 
 
 class Steps:
+    """Range of step counts for which a launch velocity is inside the target."""
+
     def __init__(self, minsteps: float) -> None:
         # Note: store values as float to be able to handle infinity values for when x-axis stops inside the range
         self.max: float = minsteps
         self.min: float = minsteps
 
-    @override
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Steps):
-            return NotImplemented
+    def overlaps(self, other: Steps) -> bool:
+        """Return whether the two step ranges share at least one common step count."""
         o_min = max(self.min, other.min)
         o_max = min(self.max, other.max)
         return o_min <= o_max
@@ -126,7 +125,7 @@ class InputData:
         combinations: set[tuple[int, int]] = set()
         for y, yv in yv_val.items():
             for x, xv in xv_val.items():
-                if yv == xv:
+                if yv.overlaps(xv):
                     combinations.add((x, y))
         return len(combinations)
 
