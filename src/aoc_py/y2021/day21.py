@@ -2,11 +2,14 @@
 2021 day 21 - Dirac Dice
 
 Recursive solution, using pre-computed values for part 2 to generate possible rolls and the corresponding number of
-combinations yielding that roll. Also uses memo from functools to get the recursion done in decent time.
+combinations yielding that roll. Part 2 passes a memo dict down the recursion to get it done in decent time.
+The practice die in part 1 is the 100-sided deterministic one, which rolls 1, 2, 3 and so on up to 100 before
+starting over. It is summed here as a plain running total, without wrapping, which is safe because only the landing
+space matters and the wrap subtracts exactly 100 - a multiple of the 10 spaces on the track.
+
 """
 
 from dataclasses import dataclass
-from functools import cache
 from typing import Final
 
 FR_MAP: Final = {3: 1, 4: 3, 5: 6, 6: 7, 7: 6, 8: 3, 9: 1}
@@ -35,10 +38,15 @@ class Gamestate:
             )
             return nextstate.get_practice_score()
 
-    @cache
-    def get_dirac_score(self) -> tuple[int, int]:
+    def get_dirac_score(
+        self, seen: dict[Gamestate, tuple[int, int]] | None = None
+    ) -> tuple[int, int]:
+        if seen is None:
+            seen = {}
+        if (result := seen.get(self)) is not None:
+            return result
         if self.playerscore[1] >= 21:
-            return 0, 1
+            result = 0, 1
         else:
             wins1, wins2 = 0, 0
             for roll, nbr in FR_MAP.items():
@@ -47,10 +55,12 @@ class Gamestate:
                     (self.playerpos[1], newpos),
                     self.diceroll_count,
                     (self.playerscore[1], self.playerscore[0] + newpos),
-                ).get_dirac_score()
+                ).get_dirac_score(seen)
                 wins1 = wins1 + nbr * w[1]
                 wins2 = wins2 + nbr * w[0]
-            return wins1, wins2
+            result = wins1, wins2
+        seen[self] = result
+        return result
 
 
 class InputData:
