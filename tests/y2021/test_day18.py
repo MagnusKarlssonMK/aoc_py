@@ -1,4 +1,4 @@
-TEST_STRING = """[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]
+TEST_STRING_1 = """[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]
 [[[5,[2,8]],4],[5,[[9,9],0]]]
 [6,[[[6,2],[5,6]],[[7,6],[4,7]]]]
 [[[6,[0,7]],[0,9]],[4,[9,[9,0]]]]
@@ -9,19 +9,36 @@ TEST_STRING = """[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]
 [[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]]
 [[[[5,2],5],[8,[3,7]]],[[5,[7,5]],[4,4]]]"""
 
+TEST_STRING_2 = """[1,1]
+[2,2]
+[3,3]
+[4,4]
+[5,5]
+[6,6]"""
+
 from aoc_py.y2021.day18 import solve_parts
 
 # ----------- Part 1 ------------
 
 
 def test_part1_1() -> None:
-    p1, _ = solve_parts(TEST_STRING, 1)
+    p1, _ = solve_parts(TEST_STRING_1, 1)
     assert p1 == "4140"
+
+
+def test_part1_2() -> None:
+    p1, _ = solve_parts(TEST_STRING_2, 1)
+    assert p1 == "1137"
 
 
 # ----------- Part 2 ------------
 
 
 def test_part2_1() -> None:
-    _, p2 = solve_parts(TEST_STRING, 2)
+    _, p2 = solve_parts(TEST_STRING_1, 2)
     assert p2 == "3993"
+
+
+def test_part2_2() -> None:
+    _, p2 = solve_parts(TEST_STRING_2, 2)
+    assert p2 == "140"

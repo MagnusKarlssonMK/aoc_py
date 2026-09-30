@@ -5,9 +5,14 @@ Resisting the temptation to build a tree, instead storing the numbers as a flat 
 (tuple represented by a dataclass to easier access and change the values). Pairs can then be identified by comparing
 levels of adjacent entries when scanning the tuples from left to right. That way it becomes almost trivial to explode
 and split numbers, compared to how it would have been in a tree.
+A pair is nested inside four pairs exactly when its level exceeds MAX_NESTING, as the outermost pair has level one
+and every enclosing pair adds another one to it.
 """
 
 from dataclasses import dataclass
+from typing import Final
+
+MAX_NESTING: Final = 4
 
 
 @dataclass
@@ -39,7 +44,7 @@ class Snailnumber:
         while i < len(self.__nbrs) - 1:
             if (
                 self.__nbrs[i].level == self.__nbrs[i + 1].level
-                and self.__nbrs[i].level > 4
+                and self.__nbrs[i].level > MAX_NESTING
             ):
                 if i > 0:
                     self.__nbrs[i - 1].nbr += self.__nbrs[i].nbr
@@ -75,7 +80,7 @@ class Snailnumber:
         return newnbr
 
     def get_magnitude(self) -> int:
-        crunchnumbers = list(self.__nbrs)
+        crunchnumbers = [SingleNbr(nbr.nbr, nbr.level) for nbr in self.__nbrs]
         i = 0
         while i < len(crunchnumbers) - 1:
             if crunchnumbers[i].level == crunchnumbers[i + 1].level:
@@ -95,8 +100,6 @@ class InputData:
         self.__nbrs = [Snailnumber(line) for line in rawstr.splitlines()]
 
     def get_p1(self) -> int:
-        if len(self.__nbrs) < 2:
-            return 0
         # Add all values
         sumvalue = self.__nbrs[0] + self.__nbrs[1]
         for i in range(2, len(self.__nbrs)):
