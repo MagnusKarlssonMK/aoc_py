@@ -88,6 +88,22 @@ off x=-70369..-16548,y=22648..78696,z=-1892..86821
 on x=-53470..21291,y=-120233..-33476,z=-44150..38147
 off x=-93533..-4276,y=-16170..68771,z=-104985..-24507"""
 
+# Hand-built, to pin the part 1 region filter. The official examples only ever have cuboids
+# that reach coordinate 50, never 51, so nothing stops the region from being widened unnoticed.
+# A cuboid is counted only when all six of its corners are within the region, so this walks a
+# cell along to a corner of the region and then pokes one single cell out through each of the
+# six faces in turn. Each of those six pokes violates exactly one corner, so a filter that
+# forgets to check any one of them would let that one cuboid in and change the answer.
+TEST_STRING_4 = """on x=50..50,y=50..50,z=50..50
+on x=50..51,y=50..50,z=50..50
+on x=50..50,y=50..51,z=50..50
+on x=50..50,y=50..50,z=50..51
+on x=-51..-50,y=-50..-50,z=-50..-50
+on x=-50..-50,y=-51..-50,z=-50..-50
+on x=-50..-50,y=-50..-50,z=-51..-50
+off x=50..51,y=50..50,z=50..50
+"""
+
 from aoc_py.y2021.day22 import solve_parts
 
 # ----------- Part 1 ------------
@@ -108,9 +124,19 @@ def test_part1_3() -> None:
     assert p1 == "474140"
 
 
+def test_part1_4() -> None:
+    p1, _ = solve_parts(TEST_STRING_4, 1)
+    assert p1 == "1"
+
+
 # ----------- Part 2 ------------
 
 
 def test_part2_1() -> None:
     _, p2 = solve_parts(TEST_STRING_3, 2)
     assert p2 == "2758514936282235"
+
+
+def test_part2_2() -> None:
+    _, p2 = solve_parts(TEST_STRING_4, 2)
+    assert p2 == "6"
