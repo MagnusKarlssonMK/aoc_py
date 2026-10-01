@@ -10,7 +10,7 @@ from copy import deepcopy
 
 
 class InputData:
-    def __init__(self, rawstr: str):
+    def __init__(self, rawstr: str) -> None:
         cratestr, procedurestr = rawstr.split("\n\n")
         self.__procedures: list[tuple[int, int, int]] = []
         for line in procedurestr.splitlines():
@@ -19,7 +19,6 @@ class InputData:
         self.__crates: dict[int, list[str]] = {}
         cratelines = cratestr.splitlines()
         crate_indices = [i for i, c in enumerate(cratelines[-1]) if c != " "]
-        print(f"{crate_indices}")
         for row_idx, line in enumerate(reversed(cratelines)):
             if row_idx == 0:
                 for i, _ in enumerate(crate_indices):
@@ -48,6 +47,6 @@ def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     if part in (None, 1):
         p1 = p.run_procedures()
     if part in (None, 2):
-        p2 = p.run_procedures(True)
+        p2 = p.run_procedures(multicrates=True)
 
     return p1, p2
