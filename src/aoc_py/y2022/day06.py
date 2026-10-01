@@ -4,8 +4,8 @@
 
 
 class InputData:
-    def __init__(self, s: str) -> None:
-        self.__datastream = s
+    def __init__(self, rawstr: str) -> None:
+        self.__datastream = rawstr
 
     def get_processed_characters(self, start_len: int = 4) -> int:
         for idx in range(len(self.__datastream) - (start_len - 1)):

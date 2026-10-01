@@ -3,6 +3,8 @@ TEST_STRING_2 = """bvwbjplbgvbhsrlpgdmjqwftvncz"""
 TEST_STRING_3 = """nppdvjthqldpwncqszvftbrmjlhg"""
 TEST_STRING_4 = """nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg"""
 TEST_STRING_5 = """zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw"""
+TEST_STRING_6 = "abcabcd"
+TEST_STRING_7 = "abcdefghijklm\n"
 
 from aoc_py.y2022.day06 import solve_parts
 
@@ -35,8 +37,17 @@ def test_part1_5() -> None:
 
 
 def test_part1_6() -> None:
+    p1, _ = solve_parts(TEST_STRING_6, 1)
+    assert p1 == "7"
+
+
+def test_part1_7() -> None:
+    p1, _ = solve_parts(TEST_STRING_7, 1)
+    assert p1 == "4"
+
+
+def test_part1_8() -> None:
     p1, _ = solve_parts("", 1)
-    # Just for code coverage for when no solution exists
     assert p1 == "-1"
 
 
@@ -66,3 +77,19 @@ def test_part2_4() -> None:
 def test_part2_5() -> None:
     _, p2 = solve_parts(TEST_STRING_5, 2)
     assert p2 == "26"
+
+
+def test_part2_6() -> None:
+    # The only case where part 2 has no 14-character window to find.
+    _, p2 = solve_parts(TEST_STRING_6, 2)
+    assert p2 == "-1"
+
+
+def test_part2_7() -> None:
+    _, p2 = solve_parts(TEST_STRING_7, 2)
+    assert p2 == "14"
+
+
+def test_part2_8() -> None:
+    _, p2 = solve_parts("", 2)
+    assert p2 == "-1"
