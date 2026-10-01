@@ -1,36 +1,24 @@
 """
 2022 day 1 - Calorie Counting
 
-Part 1
-
-Simply parse the input a store it in a list sorted by total calories, and the largest value is the answer.
-
-Part 2
-
-From the same list, just take the sum of the top three.
+Simply parse the input by storing the sum of each block of numbers in a list sorted
+high-to-low. The first (largest) value is then the answer to part 1. For part 2, the
+answer is given by the sum of the first three numbers.
 """
-
-
-class Elf:
-    def __init__(self, calories: list[int]) -> None:
-        self.calories: list[int] = calories
-        self.totalcalories: int = sum(calories)
 
 
 class InputData:
     def __init__(self, rawstr: str) -> None:
-        blocks = rawstr.split("\n\n")
         self.__elfs = sorted(
-            [Elf(list(map(int, elf.splitlines()))) for elf in blocks],
-            key=lambda tot: tot.totalcalories,
+            [sum(map(int, elf.splitlines())) for elf in rawstr.split("\n\n")],
             reverse=True,
         )
 
     def get_p1(self) -> int:
-        return self.__elfs[0].totalcalories
+        return self.__elfs[0]
 
     def get_p2(self) -> int:
-        return sum([self.__elfs[num].totalcalories for num in range(3)])
+        return sum([self.__elfs[num] for num in range(3)])
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
