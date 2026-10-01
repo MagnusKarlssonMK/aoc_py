@@ -3,6 +3,7 @@
 """
 
 from enum import Enum
+from typing import Final
 
 
 class Hand(Enum):
@@ -27,18 +28,20 @@ class Hand(Enum):
                 return self
 
 
+LEFT_MAP: Final = {"A": Hand.ROCK, "B": Hand.PAPER, "C": Hand.SCISSORS}
+RIGHT_MAP: Final = {"X": Hand.ROCK, "Y": Hand.PAPER, "Z": Hand.SCISSORS}
+
+
 class InputData:
     def __init__(self, rawstr: str) -> None:
-        left_map = {"A": Hand.ROCK, "B": Hand.PAPER, "C": Hand.SCISSORS}
         self.__rounds: list[tuple[Hand, str]] = [
-            (left_map[left], right)
+            (LEFT_MAP[left], right)
             for left, right in [line.split() for line in rawstr.splitlines()]
         ]
 
     def get_p1(self) -> int:
-        right_map = {"X": Hand.ROCK, "Y": Hand.PAPER, "Z": Hand.SCISSORS}
         return sum(
-            [opponent.get_score(right_map[you]) for opponent, you in self.__rounds]
+            [opponent.get_score(RIGHT_MAP[you]) for opponent, you in self.__rounds]
         )
 
     def get_p2(self) -> int:
