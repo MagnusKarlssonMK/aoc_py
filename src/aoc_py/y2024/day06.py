@@ -1,5 +1,17 @@
 """
 2024 day 6 - Guard Gallivant
+
+Starts with creating a jump table based on the grid, storing how far in each direction
+the guard can go before either encountering an obstacle or falling out-of-bounds.
+
+Then the base path the guard takes is simulated by moving step-by-step and recording
+each point+direction pair along the way, until the guard walks off the grid boundary.
+The answer to part 1 can then be found by calculating the length of a set of points,
+generated from the point-part of the tuples in the base path list.
+
+Then for part 2, iterate through each consecutive pair in the base path and put a
+temporary obstacle in the second point, then use the jump table to step through the
+grid and see if a loop is established. The number of loops found is the answer to part 2.
 """
 
 from aoc_py.util.grid import Grid
