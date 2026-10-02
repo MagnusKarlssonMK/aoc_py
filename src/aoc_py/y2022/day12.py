@@ -19,14 +19,14 @@ from aoc_py.util.point import Directions, Point
 
 
 class InputData:
-    def __init__(self, s: str):
+    def __init__(self, s: str) -> None:
         self.__grid = Grid(s)
         self.__startpos = self.__grid.find("S")
         self.__endpos = self.__grid.find("E")
         self.__grid.set_point(self.__startpos, "a")
         self.__grid.set_point(self.__endpos, "z")
 
-    def getneigbors(self, p: Point, downhill: bool = False) -> Generator[Point]:
+    def get_neighbors(self, p: Point, downhill: bool = False) -> Generator[Point]:
         current_val = ord(self.__grid.get_element(p))
         for neighbor in [p + d for d in Directions.NEIGHBORS_STRAIGHT]:
             if (neighbor_s := self.__grid.get_element(neighbor)) != "":
@@ -46,7 +46,7 @@ class InputData:
                 return current_steps
             if current_pos in visited:
                 continue
-            for neighbor in self.getneigbors(current_pos):
+            for neighbor in self.get_neighbors(current_pos):
                 if neighbor not in visited:
                     tilequeue.append((neighbor, current_steps + 1))
             visited[current_pos] = current_steps
@@ -62,7 +62,7 @@ class InputData:
                 return current_steps
             if current_pos in visited:
                 continue
-            for neighbor in self.getneigbors(current_pos, True):
+            for neighbor in self.get_neighbors(current_pos, True):
                 if neighbor not in visited:
                     tilequeue.append((neighbor, current_steps + 1))
             visited[current_pos] = current_steps
