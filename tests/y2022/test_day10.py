@@ -1,4 +1,8 @@
-TEST_STRING = """addx 15
+TEST_STRING_1 = """noop
+addx 3
+addx -5"""
+
+TEST_STRING_2 = """addx 15
 addx -11
 addx 6
 addx -3
@@ -151,7 +155,12 @@ from aoc_py.y2022.day10 import solve_parts
 
 
 def test_part1_1() -> None:
-    p1, _ = solve_parts(TEST_STRING, 1)
+    p1, _ = solve_parts(TEST_STRING_1, 1)
+    assert p1 == "0"
+
+
+def test_part1_2() -> None:
+    p1, _ = solve_parts(TEST_STRING_2, 1)
     assert p1 == "13140"
 
 
@@ -159,7 +168,16 @@ def test_part1_1() -> None:
 
 
 def test_part2_1() -> None:
-    _, p2 = solve_parts(TEST_STRING, 2)
+    # Only this program's five cycles get drawn, so row 0 carries a sprite and the
+    # other five rows are empty. The cells the program never reaches stay empty
+    # rather than becoming spaces, which the larger example cannot show because its
+    # 240 cycles fill the screen exactly.
+    _, p2 = solve_parts(TEST_STRING_1, 2)
+    assert p2 == "\n#####\n\n\n\n\n\n"
+
+
+def test_part2_2() -> None:
+    _, p2 = solve_parts(TEST_STRING_2, 2)
     # Need to use \n on a single line to prevent editor from automatically shaving off trailing spaces
     assert (
         p2

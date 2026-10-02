@@ -4,6 +4,9 @@
 
 from dataclasses import dataclass
 from enum import Enum
+from typing import Final
+
+CHECKPOINTS: Final = (20, 60, 100, 140, 180, 220)
 
 
 class Instruction(Enum):
@@ -28,9 +31,8 @@ class InputData:
                 self.__program.append(Line(Instruction(parts[0]), int(parts[1])))
 
     def get_p1(self) -> int:
-        def increment(cycle: int) -> int:
-            intervals = [20, 60, 100, 140, 180, 220]
-            return cycle if cycle in intervals else 0
+        def checkpoint_weight(cycle: int) -> int:
+            return cycle if cycle in CHECKPOINTS else 0
 
         result = 0
         reg_x = 1
@@ -38,12 +40,12 @@ class InputData:
         for p in self.__program:
             if p.instr == Instruction.NOOP:
                 cyclenbr += 1
-                result += reg_x * increment(cyclenbr)
+                result += reg_x * checkpoint_weight(cyclenbr)
             elif p.instr == Instruction.ADDX:
                 cyclenbr += 1
-                result += reg_x * increment(cyclenbr)
+                result += reg_x * checkpoint_weight(cyclenbr)
                 cyclenbr += 1
-                result += reg_x * increment(cyclenbr)
+                result += reg_x * checkpoint_weight(cyclenbr)
                 reg_x += p.value
         return result
 
