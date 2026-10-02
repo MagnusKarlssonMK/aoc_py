@@ -54,6 +54,10 @@ class InputData:
                 count += 1
                 rocks.add(current)
             if current == start:
+                # the source filled up before any grain got below the lowest rock, so
+                # every grain that came to rest counts
+                if p1 < 0:
+                    p1 = count
                 break
         return p1, count
 
