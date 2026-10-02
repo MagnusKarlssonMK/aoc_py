@@ -24,12 +24,11 @@ class InputData:
         rocks: set[Point] = set()
         for joints in self.__rockjoints:
             for j1, j2 in itertools.pairwise(joints):
-                delta = Point(signum(j2.x - j1.x), signum(j2.y - j1.y))
-                p = j1
-                while p != j2:
-                    rocks.add(p)
-                    p += delta
-                rocks.add(p)
+                step_x = signum(j2.x - j1.x)
+                step_y = signum(j2.y - j1.y)
+                steps = max(abs(j2.x - j1.x), abs(j2.y - j1.y))
+                for i in range(steps + 1):
+                    rocks.add(Point(j1.x + step_x * i, j1.y + step_y * i))
         max_y = max([p.y for p in rocks])
         start = Point(500, 0)
         current = start
