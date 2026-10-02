@@ -5,18 +5,16 @@
 
 def get_cbi(inputstr: str) -> int:
     """Analyzes a string starting with '[' in the first character and returns the Closing Bracket Index of the
-    corresponding closing ']' bracket. Returns -1 if not found in string or first character is not a bracket."""
-    if len(inputstr) < 2 or inputstr[0] != "[":
-        return -1
-    count = 0
-    for idx, c in enumerate(inputstr):
-        if c == "[":
+    corresponding closing ']' bracket. Assumes the string is a well-formed packet, so the brackets always balance."""
+    count = 1
+    idx = 0
+    while count:
+        idx += 1
+        if inputstr[idx] == "[":
             count += 1
-        elif c == "]":
+        elif inputstr[idx] == "]":
             count -= 1
-        if count == 0:
-            return idx
-    return -1
+    return idx
 
 
 class ElfList:
@@ -40,7 +38,7 @@ class ElfList:
             else:
                 i += 1
 
-    def issmallerthan(self, other: ElfList) -> int:
+    def compare(self, other: ElfList) -> int:
         for i in range(min(len(self.list), len(other.list))):
             first = self.list[i]
             second = other.list[i]
@@ -52,16 +50,16 @@ class ElfList:
                         return -1
                 else:
                     newlist = ElfList("[" + str(first) + "]")
-                    test = newlist.issmallerthan(second)
+                    test = newlist.compare(second)
                     if test != 0:
                         return test
             elif isinstance(second, int):
                 newlist = ElfList("[" + str(second) + "]")
-                test = first.issmallerthan(newlist)
+                test = first.compare(newlist)
                 if test != 0:
                     return test
             else:
-                test = first.issmallerthan(second)
+                test = first.compare(second)
                 if test != 0:
                     return test
         if len(self.list) < len(other.list):
@@ -71,7 +69,7 @@ class ElfList:
         return 0
 
     def __lt__(self, other: ElfList) -> bool:
-        return self.issmallerthan(other) != -1
+        return self.compare(other) == 1
 
 
 class InputData:
