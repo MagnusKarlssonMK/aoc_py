@@ -24,30 +24,18 @@ class InputData:
         visible: set[Point] = set()
         for y in range(self.__grid.y_max):
             # From left:
-            [
-                visible.add(tree)
-                for tree in self.__generatevisibletrees(-1, y, range(self.__grid.x_max))
-            ]
+            visible.update(self.__generatevisibletrees(-1, y, range(self.__grid.x_max)))
             # From right:
-            [
-                visible.add(tree)
-                for tree in self.__generatevisibletrees(
-                    -1, y, reversed(range(self.__grid.x_max))
-                )
-            ]
+            visible.update(
+                self.__generatevisibletrees(-1, y, reversed(range(self.__grid.x_max)))
+            )
         for x in range(self.__grid.x_max):
             # From above
-            [
-                visible.add(tree)
-                for tree in self.__generatevisibletrees(x, -1, range(self.__grid.y_max))
-            ]
+            visible.update(self.__generatevisibletrees(x, -1, range(self.__grid.y_max)))
             # From below
-            [
-                visible.add(tree)
-                for tree in self.__generatevisibletrees(
-                    x, -1, reversed(range(self.__grid.y_max))
-                )
-            ]
+            visible.update(
+                self.__generatevisibletrees(x, -1, reversed(range(self.__grid.y_max)))
+            )
         return len(visible)
 
     def __generatevisibletrees(
