@@ -2,24 +2,28 @@
 2022 day 9 - Rope Bridge
 """
 
+from typing import Final
+
 from aoc_py.util.math import signum
 from aoc_py.util.point import Directions, Point
 
+DIRMAP: Final = {
+    "U": Directions.UP,
+    "D": Directions.DOWN,
+    "L": Directions.LEFT,
+    "R": Directions.RIGHT,
+}
+
 
 def catchup(p1: Point, p2: Point) -> Point:
+    """Moves p1 one step toward p2, one axis at a time."""
     return Point(p1.x + signum(p2.x), p1.y + signum(p2.y))
 
 
 class InputData:
     def __init__(self, s: str) -> None:
-        dirmap = {
-            "U": Directions.UP,
-            "D": Directions.DOWN,
-            "L": Directions.LEFT,
-            "R": Directions.RIGHT,
-        }
         self.__motions = [
-            (dirmap[left], int(right))
+            (DIRMAP[left], int(right))
             for left, right in [line.split() for line in s.splitlines()]
         ]
 

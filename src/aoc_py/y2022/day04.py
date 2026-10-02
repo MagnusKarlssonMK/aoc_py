@@ -4,6 +4,7 @@
 
 
 def get_nbrs(line: str) -> tuple[int, int, int, int]:
+    """Parses a "a-b,c-d" pair of section ranges into the four bounds (a, b, c, d)."""
     left, right = line.split(",")
     a, b = left.split("-")
     c, d = right.split("-")

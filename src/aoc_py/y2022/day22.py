@@ -74,6 +74,8 @@ class Face:
 
 
 def parse_moves(s: str) -> list[Move]:
+    """Splits a move string such as "10R5L" into alternating forward and turn moves,
+    turning each distance-prefixed turn into a forward move followed by the turn."""
     result: list[Move] = []
     number: list[str] = []
     for char in s:
