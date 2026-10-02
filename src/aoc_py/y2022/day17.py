@@ -3,13 +3,13 @@
 
 Pretty much tetris with side controls determined by the jet stream input.
 Shapes and grid stored in binary format per row in lists and bitshifted / bitmasked to move and check for overlap.
-After every dropped rock, trim the lower part of uncreachable rows by flood-filling from above with a simple BFS,
+After every dropped rock, trim the lower part of unreachable rows by flood-filling from above with a simple BFS,
 and store number of trimmed rows.
 For part 2, the result will eventually enter a cycle after an initial stabilization phase. So, store a hashed value
 based on rock index, jet index and current grid for each dropped rock, and then once a cycle is found, the answer
 can be derived from the stored information.
 As it turns out, a cycle is found even before getting the answer to Part 1, so the same solution can actually be
-used for both anwers. The solution could be optimized to store the result and get the answer to Part 2 immediately,
+used for both answers. The solution could be optimized to store the result and get the answer to Part 2 immediately,
 but it's already fast enough that it isn't really worth the effort.
 Breaking the giant drop_rocks function into smaller pieces would be welcome.
 """
@@ -45,109 +45,108 @@ class Rock:
     pos: Point
 
     def __init__(self, shape: Shape, x: int, y: int) -> None:
-        self.__shape = shape
         self.width, self.__pattern = shape.get_binary_shape()
         self.pos = Point(x, y)
 
-    def get_gridpattern(self, gridwidth: int) -> list[int]:
-        return [val << gridwidth - self.pos.x - self.width for val in self.__pattern]
+    def get_grid_pattern(self, grid_width: int) -> list[int]:
+        return [val << grid_width - self.pos.x - self.width for val in self.__pattern]
 
 
 class InputData:
-    def __init__(self, jetstream: str) -> None:
-        self.__jetstream = [1 if c == ">" else -1 for c in jetstream]
-        self.__cavewidth = 7
+    def __init__(self, jet_stream: str) -> None:
+        self.__jet_stream = [1 if c == ">" else -1 for c in jet_stream]
+        self.__cave_width = 7
         self.__grid: list[int] = []
-        self.__trimmedrows = 0
-        self.__stepcount = 0
+        self.__trimmed_rows = 0
+        self.__step_count = 0
 
-    def drop_rocks(self, totalrocks: int) -> int:
+    def drop_rocks(self, total_rocks: int) -> int:
         self.__grid = []
-        self.__trimmedrows = 0
-        self.__stepcount = 0
+        self.__trimmed_rows = 0
+        self.__step_count = 0
         seen_states: list[int] = []
         seen_trims: list[tuple[int, int]] = []
-        maxheight = 0
-        for rock_nbr in range(totalrocks):
-            currentrock_idx = rock_nbr % len(Shape)
-            currentrock = Rock(Shape(currentrock_idx), 2, maxheight + 3)
+        max_height = 0
+        for rock_nbr in range(total_rocks):
+            current_rock_idx = rock_nbr % len(Shape)
+            current_rock = Rock(Shape(current_rock_idx), 2, max_height + 3)
             while True:
                 # Move sideways if possible
-                x_delta = self.__jetstream[self.__stepcount % len(self.__jetstream)]
+                x_delta = self.__jet_stream[self.__step_count % len(self.__jet_stream)]
                 if (
                     0
-                    <= x_delta + currentrock.pos.x
-                    <= self.__cavewidth - currentrock.width
+                    <= x_delta + current_rock.pos.x
+                    <= self.__cave_width - current_rock.width
                 ):
-                    movedrock: list[int] = []
-                    for idx, xval in enumerate(
-                        currentrock.get_gridpattern(self.__cavewidth)
+                    moved_rock: list[int] = []
+                    for idx, x_val in enumerate(
+                        current_rock.get_grid_pattern(self.__cave_width)
                     ):
                         if x_delta > 0:
-                            movedrock.append(xval >> 1)
+                            moved_rock.append(x_val >> 1)
                         else:
-                            movedrock.append(xval << 1)
-                        if currentrock.pos.y + idx < len(self.__grid) and (
-                            self.__grid[currentrock.pos.y + idx] & movedrock[-1] > 0
+                            moved_rock.append(x_val << 1)
+                        if current_rock.pos.y + idx < len(self.__grid) and (
+                            self.__grid[current_rock.pos.y + idx] & moved_rock[-1] > 0
                         ):
                             break
                     else:  # If we didn't break the loop, there was no collision - accept the new x-position
-                        currentrock.pos = Point(
-                            currentrock.pos.x + x_delta, currentrock.pos.y
+                        current_rock.pos = Point(
+                            current_rock.pos.x + x_delta, current_rock.pos.y
                         )
-                self.__stepcount += 1
+                self.__step_count += 1
                 # Try to move down; if not possible, lock the rock in place in the grid and break the loop
-                if currentrock.pos.y > maxheight:
-                    currentrock.pos = currentrock.pos + Directions.UP
+                if current_rock.pos.y > max_height:
+                    current_rock.pos = current_rock.pos + Directions.UP
                 else:
-                    for idx, xval in enumerate(
-                        currentrock.get_gridpattern(self.__cavewidth)
+                    for idx, x_val in enumerate(
+                        current_rock.get_grid_pattern(self.__cave_width)
                     ):
-                        if currentrock.pos.y == 0 or (
-                            currentrock.pos.y - 1 + idx < len(self.__grid)
-                            and (self.__grid[currentrock.pos.y - 1 + idx] & xval > 0)
+                        if current_rock.pos.y == 0 or (
+                            current_rock.pos.y - 1 + idx < len(self.__grid)
+                            and (self.__grid[current_rock.pos.y - 1 + idx] & x_val > 0)
                         ):
                             break
                     else:
-                        currentrock.pos = currentrock.pos + Directions.UP
+                        current_rock.pos = current_rock.pos + Directions.UP
                         continue
                     # Couldn't move down - lock it in to the grid
-                    for idx, xval in enumerate(
-                        currentrock.get_gridpattern(self.__cavewidth)
+                    for idx, x_val in enumerate(
+                        current_rock.get_grid_pattern(self.__cave_width)
                     ):
-                        if currentrock.pos.y + idx < len(self.__grid):
-                            self.__grid[currentrock.pos.y + idx] |= xval
+                        if current_rock.pos.y + idx < len(self.__grid):
+                            self.__grid[current_rock.pos.y + idx] |= x_val
                         else:
-                            self.__grid.append(xval)
+                            self.__grid.append(x_val)
                     # Trim the grid
-                    self.__trimgrid()
-                    maxheight = len(self.__grid)
+                    self.__trim_grid()
+                    max_height = len(self.__grid)
                     break
             state = hash(
                 (
-                    currentrock_idx,
-                    self.__stepcount % len(self.__jetstream),
+                    current_rock_idx,
+                    self.__step_count % len(self.__jet_stream),
                     tuple(self.__grid),
                 )
             )
             if state in seen_states:
                 offset: int = seen_states.index(state)
                 cycle_len = rock_nbr - offset
-                trim_per_cycle = self.__trimmedrows - seen_trims[offset][0]
+                trim_per_cycle = self.__trimmed_rows - seen_trims[offset][0]
                 nbr_cycles = (
-                    totalrocks - 1 - offset
+                    total_rocks - 1 - offset
                 ) // cycle_len  # Cached list is zero-indexed, rock counter is not.
-                idx = offset + (totalrocks - 1 - offset) % cycle_len
+                idx = offset + (total_rocks - 1 - offset) % cycle_len
                 return (
                     seen_trims[idx][0]
                     + seen_trims[idx][1]
                     + (nbr_cycles * trim_per_cycle)
                 )
             seen_states.append(state)
-            seen_trims.append((self.__trimmedrows, len(self.__grid)))
-        return self.__trimmedrows + len(self.__grid)
+            seen_trims.append((self.__trimmed_rows, len(self.__grid)))
+        return self.__trimmed_rows + len(self.__grid)
 
-    def __trimgrid(self) -> None:
+    def __trim_grid(self) -> None:
         # Floodfill the grid from the top, one row above the highest row to guarantee clear space, and then trim
         # anything below rows we can't reach
         seen: set[tuple[int, int]] = set()
@@ -164,15 +163,15 @@ class InputData:
             ]:  # There should never be a need to go up
                 new_x = x + dx
                 new_y = y + dy
-                if (0 <= new_x < self.__cavewidth and new_y > 0) and (
+                if (0 <= new_x < self.__cave_width and new_y > 0) and (
                     new_y >= len(self.__grid)
-                    or self.__grid[new_y] & 2 ** (self.__cavewidth - new_x - 1) == 0
+                    or self.__grid[new_y] & 2 ** (self.__cave_width - new_x - 1) == 0
                 ):
                     queue.append((new_x, new_y))
         min_y = min([y for _, y in seen])
         while min_y > 1:
             _ = self.__grid.pop(0)
-            self.__trimmedrows += 1
+            self.__trimmed_rows += 1
             min_y -= 1
 
 
