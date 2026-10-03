@@ -2,14 +2,15 @@
 2022 day 24 - Blizzard Basin
 
 Blizzards are stored per direction and their position at any minute is derived from the minute number, so the map itself
-is never advanced. The expedition state is then (position, minute), and an A* search over that state space finds the
-shortest crossing, using the manhattan distance to the target as an admissible heuristic. Part 2 makes the crossing
-three times - there, back, and there again - with each leg starting at the minute the previous one finished. The
-blizzard map repeats with period lcm(width, height), but that period is longer than the crossings, so it is not
-exploited. A path is assumed to exist; the search relies on that instead of handling an exhausted frontier.
+is never advanced. Because that map repeats with period lcm(width, height), the expedition state is (position, minute
+mod period) and an A* search over that finite space finds the shortest crossing, using the manhattan distance to the
+target as an admissible heuristic. Part 2 makes the crossing three times - there, back, and there again - with each leg
+starting at the minute the previous one finished. If any leg is unreachable the finite frontier empties and the crossing
+is reported as -1.
 """
 
 from heapq import heappop, heappush
+from math import lcm
 from typing import Final
 
 from aoc_py.util.point import Directions, Point
@@ -32,6 +33,7 @@ class InputData:
         lines = rawstr.splitlines()
         self.__width: int = len(lines[0]) - 2  # Don't include the walls
         self.__height: int = len(lines) - 2
+        self.__period: int = lcm(self.__width, self.__height)
         for y, line in enumerate(lines):
             for x, c in enumerate(line):
                 if c == "#":
@@ -57,13 +59,14 @@ class InputData:
         queue: list[tuple[int, Point, int]] = []
         heappush(queue, (0, start, startstep))
         seen: set[tuple[Point, int]] = set()
-        while True:
+        while queue:
             _, point, steps = heappop(queue)
             if point == end:
                 return steps
-            if (point, steps) in seen:
+            state = (point, steps % self.__period)
+            if state in seen:
                 continue
-            seen.add((point, steps))
+            seen.add(state)
             for d in [*Directions.NEIGHBORS_STRAIGHT, Directions.ORIGIN]:
                 next_step = point + d
                 if (
@@ -77,11 +80,14 @@ class InputData:
                         queue,
                         (steps + 1 + next_step.manhattan(end), next_step, steps + 1),
                     )
+        return -1
 
     def get_there_and_back_again(self) -> tuple[int, int]:
         a = self.__shortest_path(self.__startpoint, self.__exitpoint, 0)
         b = self.__shortest_path(self.__exitpoint, self.__startpoint, a)
         c = self.__shortest_path(self.__startpoint, self.__exitpoint, b)
+        if -1 in (a, b, c):
+            return -1, -1
         return a, c
 
 
