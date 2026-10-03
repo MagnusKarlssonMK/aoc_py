@@ -1,5 +1,8 @@
 """
 2015 day 1 - Not Quite Lisp
+
+Each parenthesis is stored as a +1/-1 step and summed. Part 1 is the total; part 2 walks the steps, tracking the
+running floor until it first drops below zero.
 """
 
 
