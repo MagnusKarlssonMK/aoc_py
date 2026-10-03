@@ -1,5 +1,10 @@
 """
 2022 day 18 - Boiling Boulders
+
+Each cube face without a neighbouring cube contributes one unit of surface area, giving part 1 directly.
+For part 2 the faces that border enclosed air are removed: a flood-fill from just outside the bounding box
+marks every air cell connected to the outside, so an exposed face whose air neighbour is never reached must
+border an interior pocket.
 """
 
 from collections.abc import Generator
@@ -16,68 +21,54 @@ class Point3d:
         for d in ((0, 0, 1), (0, 0, -1), (0, 1, 0), (0, -1, 0), (1, 0, 0), (-1, 0, 0)):
             yield self + Point3d(*d)
 
-    def get_additional_air(self) -> Generator[Point3d]:
-        for d in (
-            (0, 1, 1),
-            (0, 1, -1),
-            (0, -1, 1),
-            (0, -1, -1),
-            (1, 0, 1),
-            (-1, 0, 1),
-            (1, 0, -1),
-            (-1, 0, -1),
-            (1, 1, 0),
-            (-1, 1, 0),
-            (1, -1, 0),
-            (-1, -1, 0),
-        ):
-            yield self + Point3d(*d)
-
     def __add__(self, other: Point3d) -> Point3d:
         return Point3d(self.x + other.x, self.y + other.y, self.z + other.z)
 
 
 class InputData:
     def __init__(self, rawstr: str) -> None:
-        self.__adj: dict[Point3d, set[Point3d]] = {}
-        for point in [
-            Point3d(*list(map(int, line.split(",")))) for line in rawstr.splitlines()
-        ]:
-            self.__adj[point] = set()
-        start = Point3d(999, 999, 999)
-        air: set[Point3d] = set()
-        for point in self.__adj:
+        self.__exposed: dict[Point3d, set[Point3d]] = {}
+        for line in rawstr.splitlines():
+            self.__exposed[Point3d(*map(int, line.split(",")))] = set()
+        for point in self.__exposed:
             for adj in point.get_adjacent():
-                if adj not in self.__adj:
-                    self.__adj[point].add(adj)
-                    air.add(adj)
-                    if adj.x < start.x:
-                        start = adj
-            for additional_air in point.get_additional_air():
-                if additional_air not in self.__adj:
-                    air.add(additional_air)
-        # Use BFS on the air from the start point which is guaranteed to be exterior, and any unreachable points are
-        # interior pockets.
-        queue = [start]
-        seen: set[Point3d] = set()
+                if adj not in self.__exposed:
+                    self.__exposed[point].add(adj)
+        # Flood-fill the exterior from just outside the bounding box. Every exposed face whose air
+        # neighbour is never reached borders an enclosed pocket and must not count for part 2.
+        lower = Point3d(
+            min(p.x for p in self.__exposed) - 1,
+            min(p.y for p in self.__exposed) - 1,
+            min(p.z for p in self.__exposed) - 1,
+        )
+        upper = Point3d(
+            max(p.x for p in self.__exposed) + 1,
+            max(p.y for p in self.__exposed) + 1,
+            max(p.z for p in self.__exposed) + 1,
+        )
+        seen: set[Point3d] = {lower}
+        queue = [lower]
         while queue:
             current = queue.pop(0)
-            if current in seen:
-                continue
-            seen.add(current)
-            for adj_air in current.get_adjacent():
-                if adj_air in air:
-                    queue.append(adj_air)
-            air.remove(current)
-        # Calculate number of points representing enclosed air
-        self.__enclosed_air = 0
-        for point in self.__adj:
-            for a in air:
-                if a in self.__adj[point]:
-                    self.__enclosed_air += 1
+            for adj in current.get_adjacent():
+                if (
+                    lower.x <= adj.x <= upper.x
+                    and lower.y <= adj.y <= upper.y
+                    and lower.z <= adj.z <= upper.z
+                    and adj not in self.__exposed
+                    and adj not in seen
+                ):
+                    seen.add(adj)
+                    queue.append(adj)
+        self.__enclosed_air = sum(
+            1
+            for point in self.__exposed
+            for a in self.__exposed[point]
+            if a not in seen
+        )
 
     def get_surface_area(self, remove_interior: bool = False) -> int:
-        result = sum([len(adj) for adj in list(self.__adj.values())])
+        result = sum([len(adj) for adj in list(self.__exposed.values())])
         if remove_interior:
             result -= self.__enclosed_air
         return result
