@@ -1,4 +1,4 @@
-TEST_STRING = """1=-0-2
+TEST_STRING_1 = """1=-0-2
 12111
 2=0=
 21
@@ -12,19 +12,47 @@ TEST_STRING = """1=-0-2
 1=
 122"""
 
+# A sum with a carry out of the most significant digit, which the official example never produces.
+TEST_STRING_2 = """2
+2"""
+
+# The same, but carrying a negative -1 out of the most significant digit instead.
+TEST_STRING_3 = """=
+="""
+
 from aoc_py.y2022.day25 import solve_parts
 
 # ----------- Part 1 ------------
 
 
 def test_part1_1() -> None:
-    p1, _ = solve_parts(TEST_STRING, 1)
+    p1, _ = solve_parts(TEST_STRING_1, 1)
     assert p1 == "2=-1=0"
+
+
+def test_part1_2() -> None:
+    p1, _ = solve_parts(TEST_STRING_2, 1)
+    assert p1 == "1-"
+
+
+def test_part1_3() -> None:
+    p1, _ = solve_parts(TEST_STRING_3, 1)
+    assert p1 == "-1"
 
 
 # ----------- Part 2 ------------
 
 
 def test_part2_1() -> None:
-    _, p2 = solve_parts(TEST_STRING, 2)
+    _, p2 = solve_parts(TEST_STRING_1, 2)
+    assert p2 == "-"
+
+
+def test_part2_2() -> None:
+    _, p2 = solve_parts(TEST_STRING_2, 2)
+    assert p2 == "-"
+
+
+def test_part2_3() -> None:
+    _, p2 = solve_parts(TEST_STRING_3, 2)
     assert p2 == "-"
