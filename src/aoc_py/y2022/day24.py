@@ -1,48 +1,47 @@
 """
 2022 day 24 - Blizzard Basin
 
-To avoid having to continuously update the list of blizzards, instead store the blizzards in a per-direction dict,
-and calculate dynamically whether a certain point will be occupied by at least one blizzard at a certain minute.
-Use A* to traverse the map and find the shortest path, using the manhattan distance to the target as heuristic. The
-time spent is effectively a third dimension in the space, since the possible neighbors changes with time, so we need
-to include both position and time as key for the visited nodes.
-The map state is cyclic since the winds will eventually return to the start position (lcm of width, height), but the
-cycle is longer than the time spent to traverse the map, so there isn't much of a benefit to optimize making use of the
-cycle.
+Blizzards are stored per direction and their position at any minute is derived from the minute number, so the map itself
+is never advanced. The expedition state is then (position, minute), and an A* search over that state space finds the
+shortest crossing, using the manhattan distance to the target as an admissible heuristic. Part 2 makes the crossing
+three times - there, back, and there again - with each leg starting at the minute the previous one finished. The
+blizzard map repeats with period lcm(width, height), but that period is longer than the crossings, so it is not
+exploited. A path is assumed to exist; the search relies on that instead of handling an exhausted frontier.
 """
 
 from heapq import heappop, heappush
+from typing import Final
 
 from aoc_py.util.point import Directions, Point
+
+_BLIZZARD_DIRECTIONS: Final[dict[str, Point]] = {
+    ">": Directions.RIGHT,
+    "<": Directions.LEFT,
+    "^": Directions.UP,
+    "v": Directions.DOWN,
+}
 
 
 class InputData:
     def __init__(self, rawstr: str) -> None:
-        dirmap = {
-            ">": Directions.RIGHT,
-            "<": Directions.LEFT,
-            "^": Directions.UP,
-            "v": Directions.DOWN,
-        }
         self.__startpoint = Point(-1, -1)
         self.__exitpoint = Point(-1, -1)
-        self.__walls: set[Point] = set()
         self.__blizzards: dict[Point, set[Point]] = {
             d: set() for d in Directions.NEIGHBORS_STRAIGHT
         }
         lines = rawstr.splitlines()
-        self.__width = len(lines[0]) - 2  # Don't include the walls
-        self.__height = len(lines) - 2
+        self.__width: int = len(lines[0]) - 2  # Don't include the walls
+        self.__height: int = len(lines) - 2
         for y, line in enumerate(lines):
             for x, c in enumerate(line):
                 if c == "#":
-                    self.__walls.add(Point(x, y))
-                elif y == 0 and c == ".":
+                    continue
+                if y == 0 and c == ".":
                     self.__startpoint = Point(x, y)
                 elif y == self.__height + 1 and c == ".":
                     self.__exitpoint = Point(x, y)
-                elif c in dirmap:
-                    self.__blizzards[dirmap[c]].add(Point(x, y))
+                elif c in _BLIZZARD_DIRECTIONS:
+                    self.__blizzards[_BLIZZARD_DIRECTIONS[c]].add(Point(x, y))
 
     def __is_occupied_at_step(self, point: Point, step: int) -> bool:
         if point == self.__startpoint or point == self.__exitpoint:
@@ -58,23 +57,15 @@ class InputData:
         queue: list[tuple[int, Point, int]] = []
         heappush(queue, (0, start, startstep))
         seen: set[tuple[Point, int]] = set()
-        while queue:
+        while True:
             _, point, steps = heappop(queue)
             if point == end:
                 return steps
             if (point, steps) in seen:
                 continue
             seen.add((point, steps))
-            for next_step in [
-                point + d
-                for d in [
-                    Directions.UP,
-                    Directions.RIGHT,
-                    Directions.DOWN,
-                    Directions.LEFT,
-                    Directions.ORIGIN,
-                ]
-            ]:
+            for d in [*Directions.NEIGHBORS_STRAIGHT, Directions.ORIGIN]:
+                next_step = point + d
                 if (
                     (
                         0 < next_step.y <= self.__height
@@ -86,7 +77,6 @@ class InputData:
                         queue,
                         (steps + 1 + next_step.manhattan(end), next_step, steps + 1),
                     )
-        return -1
 
     def get_there_and_back_again(self) -> tuple[int, int]:
         a = self.__shortest_path(self.__startpoint, self.__exitpoint, 0)
