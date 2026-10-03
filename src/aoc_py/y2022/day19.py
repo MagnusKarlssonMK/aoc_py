@@ -1,21 +1,25 @@
 """
 2022 day 19 - Not Enough Minerals
 
-Gets the job done, but definitely not fast. Attempts to optimize the state branches by
-- Only continuing a branch if it can theoretically improve the current best
-- Don't build anything in the last minute, and only build geode robots (if possible) in the second last minute,
-  as there won't be any time left to use the additional resources.
-- Keep track of when choosing not to build anything even when we could, and don't build that robot again until we
-  spend a resource it uses to build something else ('skip flag' in state).
-- Throw away robots and resources that won't be of any use with the remaining time, to increase the chances of finding
-  overlap with already seen branches.
+Searches the build orders that open the most geodes for each blueprint. Rather than simulating every minute,
+the search fast-forwards: for each robot type it works out how long the factory must wait until that robot is
+affordable, jumps ahead collecting resources the whole time, then builds it.
+
+The resulting memoised depth-first branch-and-bound is pruned by
+- Capping every resource at the most that could still be spent (its largest single-robot cost times the minutes
+  left), so states differing only in an unspendable surplus collapse onto the same memo entry.
+- Never building more robots of a type than the largest amount of its mineral any robot costs, since robots
+  beyond that can never be spent.
+- An optimistic upper bound (geodes already open plus the existing geode robots for the remaining minutes plus a
+  geode robot built every remaining minute), abandoning a branch as soon as it can no longer beat the best result.
 """
 
 import math
-from collections import deque
-from collections.abc import Generator
-from dataclasses import dataclass
 from enum import Enum
+from functools import cache
+from typing import Final
+
+MISSING_COST: Final = 10**9  # cost given to robot types a blueprint doesn't mention
 
 
 class Minerals(Enum):
@@ -29,188 +33,27 @@ class Blueprint:
     def __init__(self, rawstr: str) -> None:
         bpid, costs = rawstr.split(": ")
         self.id: int = int(bpid.strip("Blueprint "))
-        self.costs: dict[Minerals, list[tuple[int, Minerals]]] = {}
-        self.maxcosts: dict[Minerals, int] = {}
+        # Per robot the (ore, clay, obsidian, geode) cost. Missing robot types get an impossible cost.
+        self.cost: dict[Minerals, tuple[int, int, int, int]] = {
+            mineral: (MISSING_COST, MISSING_COST, MISSING_COST, MISSING_COST)
+            for mineral in Minerals
+        }
+        self.maxcosts: dict[Minerals, int] = {mineral: 0 for mineral in Minerals}
         for cost in costs.strip(".").split(". "):
             dest, source = cost.split(" robot costs ")
-            dest = Minerals(dest.split()[1])
-            self.costs[dest] = []
+            robot = Minerals(dest.split()[1])
+            amounts = {mineral: 0 for mineral in Minerals}
             for s in source.split(" and "):
                 nbr, mineral = s.split()
-                nbr = int(nbr)
                 mineral = Minerals(mineral)
-                self.costs[dest].append((nbr, mineral))
-                if mineral in self.maxcosts:
-                    self.maxcosts[mineral] = max(self.maxcosts[mineral], nbr)
-                else:
-                    self.maxcosts[mineral] = nbr
-
-    def get_affordable(self, resources: dict[Minerals, int]) -> Generator[Minerals]:
-        for robottype, costs in self.costs.items():
-            if all(resources[mat] >= count for count, mat in costs):
-                yield robottype
-
-    def get_maxcost(self, mineral: Minerals) -> int:
-        if mineral in self.maxcosts:
-            return self.maxcosts[mineral]
-        return 0
-
-
-@dataclass(frozen=True)
-class MiniState:
-    time_remaining: int = 0
-    ore: tuple[int, int] = (0, 1)  # Mineral count, robot count
-    clay: tuple[int, int] = (0, 0)
-    obsidian: tuple[int, int] = (0, 0)
-    geode: tuple[int, int] = (0, 0)
-
-
-@dataclass(frozen=True)
-class State:
-    time_remaining: int = 0
-    ore: tuple[int, int, bool] = (
-        0,
-        1,
-        False,
-    )  # Mineral count, robot count, skip indicator
-    clay: tuple[int, int, bool] = (0, 0, False)
-    obsidian: tuple[int, int, bool] = (0, 0, False)
-    geode: tuple[int, int, bool] = (0, 0, False)
-
-    def get_ministate(self) -> MiniState:
-        return MiniState(
-            self.time_remaining,
-            (self.ore[0], self.ore[1]),
-            (self.clay[0], self.clay[1]),
-            (self.obsidian[0], self.obsidian[1]),
-            (self.geode[0], self.geode[1]),
-        )
-
-    def trim_state(self, bp: Blueprint) -> State:
-        # Yank any overflowing minerals and robots that can't be used with the remaining time, not including geodes.
-        ore_robots = min(self.ore[1], bp.maxcosts[Minerals.ORE])
-        clay_robots = min(self.clay[1], bp.maxcosts[Minerals.CLAY])
-        obs_robots = min(self.obsidian[1], bp.maxcosts[Minerals.OBSIDIAN])
-        ore_count = min(
-            self.ore[0],
-            self.time_remaining * bp.maxcosts[Minerals.ORE]
-            - ore_robots * (self.time_remaining - 1),
-        )
-        clay_count = min(
-            self.clay[0],
-            self.time_remaining * bp.maxcosts[Minerals.CLAY]
-            - clay_robots * (self.time_remaining - 1),
-        )
-        obs_count = min(
-            self.obsidian[0],
-            self.time_remaining * bp.maxcosts[Minerals.OBSIDIAN]
-            - obs_robots * (self.time_remaining - 1),
-        )
-        ore_flag = self.ore[2] or ore_robots < self.ore[1]
-        clay_flag = self.clay[2] or clay_robots < self.clay[1]
-        obs_flag = self.obsidian[2] or obs_robots < self.obsidian[1]
-        return State(
-            self.time_remaining,
-            (ore_count, ore_robots, ore_flag),
-            (clay_count, clay_robots, clay_flag),
-            (obs_count, obs_robots, obs_flag),
-            self.geode,
-        )
-
-    def generate_next_states(self, bp: Blueprint) -> Generator[State]:
-        if self.time_remaining > 0:
-            per_resource = {
-                Minerals.ORE: self.ore,
-                Minerals.CLAY: self.clay,
-                Minerals.OBSIDIAN: self.obsidian,
-                Minerals.GEODE: self.geode,
-            }
-            can_afford_robot = [
-                robot
-                for robot in Minerals
-                if all(per_resource[mat][0] >= count for count, mat in bp.costs[robot])
-            ]
-            # Option 1 - don't build anything, mark any mineral where we could afford a robot as 'skipped'
-            yield State(
-                self.time_remaining - 1,
-                (
-                    self.ore[0] + self.ore[1],
-                    self.ore[1],
-                    Minerals.ORE in can_afford_robot,
-                ),
-                (
-                    self.clay[0] + self.clay[1],
-                    self.clay[1],
-                    Minerals.CLAY in can_afford_robot,
-                ),
-                (
-                    self.obsidian[0] + self.obsidian[1],
-                    self.obsidian[1],
-                    Minerals.OBSIDIAN in can_afford_robot,
-                ),
-                (
-                    self.geode[0] + self.geode[1],
-                    self.geode[1],
-                    Minerals.GEODE in can_afford_robot,
-                ),
+                amounts[mineral] = int(nbr)
+                self.maxcosts[mineral] = max(self.maxcosts[mineral], int(nbr))
+            self.cost[robot] = (
+                amounts[Minerals.ORE],
+                amounts[Minerals.CLAY],
+                amounts[Minerals.OBSIDIAN],
+                amounts[Minerals.GEODE],
             )
-            # Option 2 - build the things we can afford
-            if (
-                self.time_remaining == 1
-            ):  # Don't bother building anything with only 1 minute left
-                return
-            for build_robot in can_afford_robot:
-                if (
-                    per_resource[build_robot][2]  # Check skip indicator
-                    or (self.time_remaining == 2 and build_robot != Minerals.GEODE)
-                ):  # Only build geode robot with
-                    continue  # 2 minutes left
-                # Move the state data to a temporary dict to more easily keep track of updated values
-                tmp: dict[Minerals, tuple[int, int, bool]] = {
-                    m: (
-                        per_resource[m][0] + per_resource[m][1],
-                        per_resource[m][1],
-                        per_resource[m][2],
-                    )
-                    for m in per_resource
-                }
-                consumed_minerals: set[Minerals] = set()
-                for amount, mineral in bp.costs[build_robot]:
-                    tmp[mineral] = (
-                        tmp[mineral][0] - amount,
-                        tmp[mineral][1],
-                        tmp[mineral][2],
-                    )
-                    consumed_minerals.add(mineral)
-                tmp[build_robot] = (
-                    tmp[build_robot][0],
-                    tmp[build_robot][1] + 1,
-                    tmp[build_robot][2],
-                )
-                # Reset any skip flags for minerals whose robots costs minerals that were consumed
-                for m, v in tmp.items():
-                    costs = [c for _, c in bp.costs[m]]
-                    if any(x in costs for x in consumed_minerals):
-                        tmp[m] = v[0], v[1], False
-                yield State(
-                    self.time_remaining - 1,
-                    (tmp[Minerals.ORE][0], tmp[Minerals.ORE][1], tmp[Minerals.ORE][2]),
-                    (
-                        tmp[Minerals.CLAY][0],
-                        tmp[Minerals.CLAY][1],
-                        tmp[Minerals.CLAY][2],
-                    ),
-                    (
-                        tmp[Minerals.OBSIDIAN][0],
-                        tmp[Minerals.OBSIDIAN][1],
-                        tmp[Minerals.OBSIDIAN][2],
-                    ),
-                    (
-                        tmp[Minerals.GEODE][0],
-                        tmp[Minerals.GEODE][1],
-                        tmp[Minerals.GEODE][2],
-                    ),
-                )
 
 
 class InputData:
@@ -218,49 +61,92 @@ class InputData:
         self.__blueprints = [Blueprint(line) for line in rawstr.splitlines()]
 
     def get_p1(self, timeleft: int) -> int:
-        qualitylevels: list[int] = []
-        for i, bp in enumerate(self.__blueprints):
-            geodes = self.__get_bp_quantity(i, timeleft)
-            qualitylevels.append(geodes * bp.id)
-        return sum(qualitylevels)
+        return sum(
+            self.__get_bp_quantity(i, timeleft) * bp.id
+            for i, bp in enumerate(self.__blueprints)
+        )
 
     def get_p2(self, timeleft: int) -> int:
-        quantities: list[int] = []
-        for bpidx in range(3):
-            quantities.append(self.__get_bp_quantity(bpidx, timeleft))
-        return math.prod(quantities)
+        return math.prod(
+            self.__get_bp_quantity(i, timeleft)
+            for i in range(min(3, len(self.__blueprints)))
+        )
 
     def __get_bp_quantity(self, bpidx: int, time: int) -> int:
-        init_state = State(time_remaining=time)
-        queue = deque([init_state])
-        seen: set[MiniState] = set()
-        max_geode = 0
-        while queue:
-            currentstate = queue.pop()
-            if currentstate.time_remaining <= 0:
-                max_geode = max(max_geode, currentstate.geode[0])
-                continue
-            currentstate = currentstate.trim_state(self.__blueprints[bpidx])
-            ministate = currentstate.get_ministate()
+        bp = self.__blueprints[bpidx]
+        costs = [bp.cost[mineral] for mineral in Minerals]
+        # The most of each mineral a single robot costs; geodes are never spent, so never capped.
+        max_spend = [bp.maxcosts[mineral] for mineral in Minerals]
+        best = 0
+
+        @cache
+        def search(
+            time_remaining: int,
+            ore: int,
+            clay: int,
+            obsidian: int,
+            geode: int,
+            ore_robots: int,
+            clay_robots: int,
+            obsidian_robots: int,
+            geode_robots: int,
+        ) -> None:
+            nonlocal best
+            best = max(best, geode + geode_robots * time_remaining)
+            if time_remaining <= 0:
+                return
             if (
-                ministate in seen
-            ):  # Use the state representation without skip indicator for 'seen' check
-                continue
-            seen.add(ministate)
-            if max_geode > 0:
-                theoretical_best = (
-                    currentstate.geode[0]
-                    + currentstate.time_remaining * currentstate.geode[1]
-                    + (currentstate.time_remaining * (currentstate.time_remaining - 1))
-                    // 2
-                )
-                if theoretical_best <= max_geode:
-                    continue
-            for nextstate in currentstate.generate_next_states(
-                self.__blueprints[bpidx]
+                geode
+                + geode_robots * time_remaining
+                + time_remaining * (time_remaining - 1) // 2
+                <= best
             ):
-                queue.append(nextstate)
-        return max_geode
+                return
+            resources = (ore, clay, obsidian, geode)
+            robots = (ore_robots, clay_robots, obsidian_robots, geode_robots)
+            # Build the most valuable robot first, so a good result is found early and prunes harder.
+            # Robot/mineral index order is ore, clay, obsidian, geode.
+            for idx in (3, 2, 1, 0):
+                if idx != 3 and robots[idx] >= max_spend[idx]:
+                    continue
+                # Minutes until this robot is affordable, including the minute spent building it.
+                build_minutes = 1
+                feasible = True
+                for m in range(4):
+                    if costs[idx][m] == 0:
+                        continue
+                    if robots[m] == 0:
+                        if resources[m] < costs[idx][m]:
+                            feasible = False
+                            break
+                    elif resources[m] < costs[idx][m]:
+                        wait = -(-(costs[idx][m] - resources[m]) // robots[m])
+                        build_minutes = max(build_minutes, wait + 1)
+                if not feasible or build_minutes > time_remaining:
+                    continue
+                remaining = time_remaining - build_minutes
+                new_resources = [
+                    resources[m] + build_minutes * robots[m] - costs[idx][m]
+                    for m in range(4)
+                ]
+                for m in range(3):  # geodes are never spent, so they are never capped
+                    new_resources[m] = min(new_resources[m], max_spend[m] * remaining)
+                new_robots = list(robots)
+                new_robots[idx] += 1
+                search(
+                    remaining,
+                    new_resources[0],
+                    new_resources[1],
+                    new_resources[2],
+                    new_resources[3],
+                    new_robots[0],
+                    new_robots[1],
+                    new_robots[2],
+                    new_robots[3],
+                )
+
+        search(time, 0, 0, 0, 0, 1, 0, 0, 0)
+        return best
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
