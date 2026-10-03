@@ -1,8 +1,13 @@
 """
 2022 day 20 - Grove Positioning System
+
+Every number is tagged with its original position so that repeated values stay distinct. Decrypting walks the
+original positions in order, cuts each number out of the circle and reinserts it the number of places given by
+its own value, wrapping around modulo the length of the list without it. Part 2 first multiplies every number by
+the encryption key and then mixes ten times. The grove coordinates are the values 1000, 2000 and 3000 places past
+the 0.
 """
 
-from collections import deque
 from typing import Final
 
 
@@ -14,37 +19,30 @@ class InputData:
     def __init__(self, s: str) -> None:
         self.__startnbrs = list(map(int, s.splitlines()))
 
-    def __mix(self, count: int = 1) -> list[int]:
-        nbrs = deque(list(enumerate(list(self.__startnbrs))))
-        nbrs_len = len(nbrs)
+    def __mix(self, values: list[int], count: int = 1) -> list[int]:
+        tagged: list[tuple[int, int]] = list(enumerate(values))
+        nbrs_len = len(values)
         for _ in range(count):
             for idx in range(nbrs_len):
-                while nbrs[0][0] != idx:
-                    nbrs.rotate(-1)
-                i, v = nbrs.popleft()
-                nbrs.rotate(-(v % (nbrs_len - 1)))
-                nbrs.append((i, v))
-        return [v for _, v in nbrs]
+                value = values[idx]
+                pos = tagged.index((idx, value))
+                del tagged[pos]
+                tagged.insert((pos + value) % (nbrs_len - 1), (idx, value))
+        return [value for _, value in tagged]
+
+    def __grove_sum(self, mixed_nbrs: list[int]) -> int:
+        zero = mixed_nbrs.index(0)
+        return sum(
+            mixed_nbrs[(zero + n) % len(mixed_nbrs)]
+            for n in InputData.__GROVE_COORDINATES
+        )
 
     def get_p1(self) -> int:
-        mixed_nbrs = self.__mix()
-        return sum(
-            [
-                mixed_nbrs[(mixed_nbrs.index(0) + n) % len(mixed_nbrs)]
-                for n in InputData.__GROVE_COORDINATES
-            ]
-        )
+        return self.__grove_sum(self.__mix(self.__startnbrs))
 
     def get_p2(self) -> int:
-        for i, n in enumerate(self.__startnbrs):
-            self.__startnbrs[i] = n * InputData.__ENCRYPTION_KEY
-        mixed_nbrs = self.__mix(InputData.__MIX_COUNT)
-        return sum(
-            [
-                mixed_nbrs[(mixed_nbrs.index(0) + n) % len(mixed_nbrs)]
-                for n in InputData.__GROVE_COORDINATES
-            ]
-        )
+        scaled = [n * InputData.__ENCRYPTION_KEY for n in self.__startnbrs]
+        return self.__grove_sum(self.__mix(scaled, InputData.__MIX_COUNT))
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
