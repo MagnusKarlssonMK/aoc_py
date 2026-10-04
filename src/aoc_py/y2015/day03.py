@@ -1,5 +1,9 @@
 """
 2015 day 3 - Perfectly Spherical Houses in a Vacuum
+
+Each character is looked up in a map from arrow to direction and turned into a step. Part 1 walks the steps once
+with Santa and counts the distinct positions she visits. Part 2 does the same with a second robot taking every
+other turn, starting with Santa, and counts the positions visited by either of them.
 """
 
 from typing import Final
