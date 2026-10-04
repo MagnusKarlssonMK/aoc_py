@@ -3,6 +3,19 @@
 
 Convert the input to integers by subtracting the "offset" from 'a', to make it easier
 to work with during the password generation.
+
+A valid password holds no i, l or o, contains a straight of three increasing letters, and contains at least two
+different letters that are doubled. Part 1 wants the next valid password after the input and part 2 the one after
+that, so a single search that keeps stepping forward answers both, and part 2 costs only the distance from the first
+answer to the second rather than a second pass over everything below it.
+
+The search treats the last character as the least significant digit and steps it upwards, carrying into the character
+before it and wrapping from z back to a. A step that would land on a forbidden letter steps over it instead of
+returning it, which drops about one candidate in nine before is_password_valid ever looks at it. That check cannot be
+skipped in turn, because the input itself nearly always contains forbidden letters.
+
+Nothing shorter than five characters can be valid, so an input that short is answered with the sentinel rather than
+searched for.
 """
 
 from typing import Final
@@ -10,6 +23,9 @@ from typing import Final
 OFFSET: Final = ord("a")
 RANGE: Final = ord("z") - OFFSET
 FORBIDDEN: Final = (ord("i") - OFFSET, ord("l") - OFFSET, ord("o") - OFFSET)
+# The shortest password that can possibly be valid: a straight of three plus two doubled letters, where each doubled
+# pair can share at most one position with the straight because no two letters inside a straight are equal.
+MIN_LENGTH: Final = 5
 
 
 def is_password_valid(pwd: list[int]) -> bool:
@@ -60,6 +76,8 @@ class InputData:
         self.__password = [ord(c) - OFFSET for c in s]
 
     def get_new_passwords(self) -> tuple[str, str]:
+        if len(self.__password) < MIN_LENGTH:
+            return "-1", "-1"
         pwd1 = list(self.__password)
         while not is_password_valid(pwd1):
             pwd1 = get_next_password(pwd1)
