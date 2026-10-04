@@ -1,5 +1,9 @@
 """
 2015 day 2 - I Was Told There Would Be No Math
+
+Each line is one present, parsed as three integers sorted ascending so the shortest side comes first. Part 1
+is 3*l*w + 2*h*(w+l) per present, which is the surface area plus the extra wrapping paper for the smallest face.
+Part 2 is 2*(l+w) + l*w*h, the shortest ribbon that wraps it plus its volume.
 """
 
 
