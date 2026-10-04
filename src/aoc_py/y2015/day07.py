@@ -1,7 +1,15 @@
 """
 2015 day 7 - Some Assembly Required
 
-Store the wires in a dict and use operator class to represent gates, then get the answer recursively.
+Store the wires in a dict and use operator class to represent gates, then get the answer recursively. A wire is
+either a bare value, a NOT, or a binary gate, and each of its operands is itself either a literal or the name of
+another wire, resolved on demand and memoised so shared sub-circuits are only walked once.
+
+Signals are 16 bit, so NOT and the left shift mask with 0xFFFF. AND, OR and the right shift need no mask, since
+neither operand can push them past the width in the first place.
+
+Part 2 is the same circuit with b forced to the part 1 answer, so the memo is cleared and reseeded with that value
+before a is evaluated again. Both parts are always evaluated, since the second one needs the first.
 """
 
 from dataclasses import dataclass
