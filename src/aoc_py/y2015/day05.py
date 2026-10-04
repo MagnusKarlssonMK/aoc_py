@@ -3,12 +3,20 @@
 
 Part 1
 
-Just scan each string to see if they follow the rules, quit immediately if one of the naughty words are found.
+Scan each line once, counting vowels and watching for a doubled letter, and give up on the line as soon as one of
+the disallowed pairs ab, cd, pq or xy turns up. A line is nice when it has three or more vowels and at least one
+doubled letter.
 
 Part 2
 
-First search each string to check the second rule for repeated with one distance, if not found then quit, else
-continue to check the first rule by using the python 'count' function which counts non-overlapping occurrences.
+The vowel rule is dropped and the other two are different: a letter that repeats with exactly one letter between
+it, and two occurrences of the same pair of letters that do not overlap. The repeat check looks two characters
+back, which is what "exactly one letter between them" means, and gives up early on the line if it fails. The pair
+check leans on str.count, which counts non-overlapping occurrences, so a count above one means the pair occurs
+twice without overlapping itself.
+
+Note that a letter repeating three characters apart, with two letters in between, does not satisfy the repeat
+rule. Reading it that way is an easy mistake, and admitting it turns the real answer from 55 into 80.
 """
 
 
