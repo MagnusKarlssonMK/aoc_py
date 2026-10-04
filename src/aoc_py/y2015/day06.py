@@ -1,7 +1,12 @@
 """
 2015 day 6 - Probably a Fire Hazard
 
-Use numpy arrays to make things run decently fast.
+Use numpy arrays to make things run decently fast. Each instruction is parsed into a verb and an inclusive
+rectangle, and applied as a single slice write. Part 1 keeps a flat on or off flag per light, so turning on sets
+one, turning off sets zero, and toggling adds one and takes the result modulo two, and the answer counts the
+lights that are on. Part 2 keeps a brightness count instead, where turning on adds one, turning off subtracts one
+but never drops below zero, and toggling adds two, and the answer is the total brightness rather than a number of
+lit lights.
 """
 
 from enum import Enum
@@ -58,7 +63,7 @@ class InputData:
                     grid[instr.x1 : instr.x2 + 1, instr.y1 : instr.y2 + 1] += 1
                 case Operation.TURN_OFF:
                     grid[instr.x1 : instr.x2 + 1, instr.y1 : instr.y2 + 1] -= 1
-                    grid.clip(min=0, out=grid)
+                    _ = grid.clip(min=0, out=grid)
                 case Operation.TOGGLE:
                     grid[instr.x1 : instr.x2 + 1, instr.y1 : instr.y2 + 1] += 2
         return int(grid.sum())
