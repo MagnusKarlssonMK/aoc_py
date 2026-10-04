@@ -7,6 +7,23 @@ positions of the people seated so far, and only add an expansion of that combina
 people in the middle (who will not be affected by any further additions) yields a better result.
 
 This works quite well and much faster than brute-forcing with permutations
+
+Part 1 asks for the highest total happiness around the table, and part 2 for the same once you have added yourself as
+an extra guest who gains nothing from anyone. Each direction of each pair is stored separately, and __get_happiness
+adds up, for every guest, what they gain from the person sitting on each side of them. The extra guest goes in under
+the name YOU, which is the puzzle's own word for you, so it cannot clash with one of the real guests.
+
+Fixing one guest as the head of the table loses nothing, since a circle can be rotated to start anywhere. Which guest
+set.pop happens to return depends on iteration order, but that only changes how much work is done, not the answer: the
+seating is still enumerated up to rotation.
+
+The accumulator starts at None rather than 0 for the same reason the search itself needs no lower bound. A table where
+every pair of guests gets on badly has a negative optimum, and starting from 0 would report 0 rather than it.
+
+Anything short of three guests returns -1. The first pair of guests is queued directly rather than passed through
+__record, so a two-guest table never gets a seating recorded and the accumulator is never filled. That costs nothing in
+practice, since with two guests both neighbours are the same person and each pair of them counts twice, which is not a
+seating the puzzle ever asks about.
 """
 
 from collections import deque
@@ -36,6 +53,8 @@ class InputData:
         people = set(self.__people)
         if addself:
             people.add(InputData.__MYSELF)
+        if not people:
+            return -1
         first = people.pop()
         best_seen: dict[
             tuple[str, str], list[tuple[set[str], int]]
@@ -57,12 +76,14 @@ class InputData:
                     ):
                         continue
                     queue.append((new_last, new_middle, new_happiness))
-        maxhappy = 0
+        maxhappy: int | None = None
         # Go through the 'seen' data and find the max happiness where everyone is seated
         for value in best_seen.values():
             for middle, happy in value:
                 if len(middle) == len(people) - 1:
-                    maxhappy = max(maxhappy, happy)
+                    maxhappy = happy if maxhappy is None else max(maxhappy, happy)
+        if maxhappy is None:
+            return -1
         return maxhappy
 
     @staticmethod
