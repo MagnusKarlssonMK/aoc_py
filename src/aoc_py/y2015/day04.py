@@ -1,5 +1,9 @@
 """
 2015 day 4 - The Ideal Stocking Stuffer
+
+Each suffix, counting up from zero, is appended to the secret key and md5'd, and the loop stops at the first hash
+that starts with the requested number of zeroes. Part 1 asks for five zeroes and part 2 for six, so part 2 needs
+roughly 16 times as many hashes on average.
 """
 
 from hashlib import md5
