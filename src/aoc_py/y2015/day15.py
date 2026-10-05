@@ -4,6 +4,23 @@
 Generates the different quantity combinations through recursion, with just an additional constraint
 for part 2. Calculates the results for both parts in one go, since all combinations anyhow need to be
 explored for both.
+
+Part 1 asks for the best score over every way of splitting 100 teaspoons between the ingredients, and part 2 for
+the best score among the splits that land on exactly 500 calories. A score is the product of the four properties,
+each one clamped at zero before it is multiplied in, so a recipe that turns negative on any single property scores
+nothing at all rather than scoring negatively.
+
+That clamp is also why the running maximum starts at 0 and is not merely a placeholder. Every score is a product of
+non-negative terms, so no score can be negative and 0 is both reachable and a true floor. Day 13 seeded an accumulator
+with 0 and that was a real bug, because a seating total can be negative and the search found it, then discarded it.
+Here there is nothing valid below 0 for the accumulator to hide.
+
+The last ingredient is never chosen. Whatever is left over once the others have been given their quantities is
+assigned to it, which is what keeps the search from walking the same split several times over.
+
+The number of leaves is C(100 + n - 1, n - 1), which is 176,851 for the four ingredients this puzzle uses and takes
+about a third of a second. Five ingredients would be 4,598,126 leaves and six would be past 96 million, so the shape
+suits this puzzle and would not suit a wider one.
 """
 
 
@@ -63,11 +80,13 @@ class InputData:
                 scores = self.__solve_recipe(remaining - q, quantities)
                 max_score_p1 = max(max_score_p1, scores[0])
                 max_score_p2 = max(max_score_p2, scores[1])
-                quantities.pop()
+                _ = quantities.pop()
 
             return max_score_p1, max_score_p2
 
     def get_scores(self) -> tuple[int, int]:
+        if not self.__ingredients:
+            return -1, -1
         return self.__solve_recipe(self.__TOTAL_INGREDIENTS, [])
 
 
