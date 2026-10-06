@@ -1,8 +1,11 @@
 """
 2016 day 5 - How About a Nice Game of Chess?
 
-Iterate with an increasing index value and use hashlib to calculate the md5 checksums to generate the passwords.
-Takes a lot of iterations, i.e. doorbreaking is NOT fast.
+Append an increasing index to the door id and md5 it, keeping the checksums that start with five zeroes. Part 1
+builds the password from the sixth character of the first eight such hashes. Part 2 reads the sixth character as
+the position to fill and the seventh as the character to place, skipping positions out of range or already taken,
+and stops once all eight are filled. Both parts scan from index zero, and real input takes seconds of hashing
+since only about one hash in a million qualifies.
 """
 
 import hashlib
@@ -31,8 +34,8 @@ class InputData:
             hashed = hashlib.md5((self.__door_id + str(index)).encode()).hexdigest()
             if hashed.startswith("00000") and hashed[5].isdigit():
                 pos = int(hashed[5])
-                if pos < InputData.__PASSWORD_LEN and pwd[int(pos)] == "_":
-                    pwd[int(pos)] = hashed[6]
+                if pos < InputData.__PASSWORD_LEN and pwd[pos] == "_":
+                    pwd[pos] = hashed[6]
             index += 1
         return "".join(pwd)
 
