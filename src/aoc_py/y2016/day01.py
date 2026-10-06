@@ -20,15 +20,13 @@ class Rotation(Enum):
 
 class InputData:
     def __init__(self, s: str) -> None:
-        self.__position = Directions.ORIGIN
-        self.__direction = Directions.UP
         self.__instructions = [
             (Rotation(line[0]), int(line[1:])) for line in s.split(", ")
         ]
 
     def get_shortest_distance(self, findrepeat: bool = False) -> int:
-        pos = self.__position
-        d = self.__direction
+        pos = Directions.ORIGIN
+        d = Directions.UP
         seen: set[Point] = set()
         for rotation, steps in self.__instructions:
             if rotation == Rotation.LEFT:
