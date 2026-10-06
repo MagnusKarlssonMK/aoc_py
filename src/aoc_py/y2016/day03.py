@@ -2,7 +2,7 @@
 2016 day 3 - Squares With Three Sides
 
 Mostly a parsing exercise, especially for Part 2. Also realizing that the condition for valid triangle can be boiled
-down to just checking the sum of the two smallest sides agains the largest side; there is no need to check all
+down to just checking the sum of the two smallest sides against the largest side; there is no need to check all
 combinations.
 """
 
@@ -32,10 +32,10 @@ class InputData:
                     buffer[i] = []
 
     def get_p1(self) -> int:
-        return sum([1 if t.is_valid() else 0 for t in self.__triangles_row])
+        return sum(t.is_valid() for t in self.__triangles_row)
 
     def get_p2(self) -> int:
-        return sum([1 if t.is_valid() else 0 for t in self.__triangles_col])
+        return sum(t.is_valid() for t in self.__triangles_col)
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
