@@ -1,5 +1,12 @@
 """
 2015 day 25 - Let It Snow
+
+The manual's code grid is filled one diagonal at a time from bottom-left to top-right: diagonal d holds (d, 1),
+(d-1, 2), ..., (1, d), and each cell takes the next code of the sequence. The sequence starts at 20151125 and
+each successive code is the previous one times 252533, modulo 33554393. Row and column therefore only decide
+where a cell sits in that order, so a triangular number gives the cell's 0-based index and a single modular
+exponentiation produces its code, rather than generating every code up to that position. The requested row and
+column are the only input.
 """
 
 
@@ -15,24 +22,14 @@ class InputData:
         self.__col = int(col)
 
     def get_code(self) -> int:
-        """Uses triangular number calculation (n*(n+1))/2 to get the index, and then modular-pow for generating the code."""
+        """Uses triangular number calculation (n*(n+1))/2 to get the index, and then modular exponentiation for generating the code."""
         n = self.__col + self.__row - 1
         triangle_row = (n * (n + 1)) // 2
         index = triangle_row - self.__row
 
         return (
-            self.__START_CODE * mod_pow(self.__MULTIPLIER, index, self.__DIVISOR)
+            self.__START_CODE * pow(self.__MULTIPLIER, index, self.__DIVISOR)
         ) % self.__DIVISOR
-
-
-def mod_pow(base: int, exp: int, modulus: int) -> int:
-    result = 1
-    while exp > 0:
-        if exp & 1 == 1:
-            result = (result * base) % modulus
-        base = (base * base) % modulus
-        exp >>= 1
-    return result
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
