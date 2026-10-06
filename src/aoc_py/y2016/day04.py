@@ -1,5 +1,11 @@
 """
 2016 day 4 - Security Through Obscurity
+
+Each room line holds dash separated words, a sector id, and a checksum in brackets. The room is real when the
+checksum is the five letters occurring most often in its name, ties broken alphabetically, so part 1 sums the
+sector ids of the real rooms. Part 2 shifts every letter of the name forward by the sector id and looks for the
+room that decodes to northpole object storage; only a real room may answer, and when nothing matches the answer
+is -1 rather than some plausible looking sector id.
 """
 
 
@@ -69,12 +75,12 @@ class InputData:
 
     def solve(self) -> tuple[int, int]:
         p1 = 0
-        p2 = 0
+        p2 = -1
         TARGET = ["northpole", "object", "storage"]
         for room in self.__rooms:
             s_id = room.validate()
             p1 += s_id
-            if room.decode_check(TARGET):
+            if s_id and room.decode_check(TARGET):
                 p2 = s_id
         return p1, p2
 

@@ -25,3 +25,29 @@ def test_part1_1() -> None:
 def test_part2_1() -> None:
     _, p2 = solve_parts(TEST_STRING_2, 2)
     assert p2 == "548"
+
+
+def test_part2_2() -> None:
+    _, p2 = solve_parts(TEST_STRING_1, 2)
+    assert p2 == "-1"
+
+
+def test_part2_3() -> None:
+    # Same name and sector as the room in test_part2_1, but the checksum fails, so it may not answer.
+    _, p2 = solve_parts("lmprfnmjc-mzhcar-qrmpyec-548[decoy]", 2)
+    assert p2 == "-1"
+
+
+def test_part2_4() -> None:
+    # Real room with the right number of words but the wrong word lengths for the target.
+    _, p2 = solve_parts("abc-def-ghij-1[abcde]", 2)
+    assert p2 == "-1"
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts() -> None:
+    # Trailing newline: the runner strips it, but splitting must not turn it into an empty room.
+    p1, p2 = solve_parts(TEST_STRING_2 + "\n")
+    assert (p1, p2) == ("2062", "548")
