@@ -83,6 +83,8 @@ class InputData:
         self.__instructions = [[Directions(c) for c in line] for line in s.splitlines()]
 
     def get_bathroom_code(self, advanced_layout: bool = False) -> str:
+        if not self.__instructions:
+            return "-1"
         code: list[str] = []
         currentpos = "5"
         layout = InputData.__LAYOUTS[1 if advanced_layout else 0]
