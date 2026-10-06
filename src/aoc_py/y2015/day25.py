@@ -1,9 +1,5 @@
 """
 2015 day 25 - Let It Snow
-
-A simple function to translate the input coordinate to code number according to the diagonally generated table in the
-description text. This is then used to determine how many times to re-calculate the starting value, which will give
-the answer.
 """
 
 
@@ -18,19 +14,25 @@ class InputData:
         self.__row = int(row)
         self.__col = int(col)
 
-    def __get_code_nbr(self) -> int:
-        """Calculates the value according to the diagonally generated table."""
-        nbr = sum(n for n in range(self.__col + 1))
-        nbr += sum(n for n in range(self.__col, self.__col + self.__row - 1))
-        return nbr
-
     def get_code(self) -> int:
-        """Performs X recalculations of the start code, where X is given by the code number."""
-        code_nbr = self.__get_code_nbr()
-        code = InputData.__START_CODE
-        for _ in range(code_nbr - 1):
-            code = (code * InputData.__MULTIPLIER) % InputData.__DIVISOR
-        return code
+        """Uses triangular number calculation (n*(n+1))/2 to get the index, and then modular-pow for generating the code."""
+        n = self.__col + self.__row - 1
+        triangle_row = (n * (n + 1)) // 2
+        index = triangle_row - self.__row
+
+        return (
+            self.__START_CODE * mod_pow(self.__MULTIPLIER, index, self.__DIVISOR)
+        ) % self.__DIVISOR
+
+
+def mod_pow(base: int, exp: int, modulus: int) -> int:
+    result = 1
+    while exp > 0:
+        if exp & 1 == 1:
+            result = (result * base) % modulus
+        base = (base * base) % modulus
+        exp >>= 1
+    return result
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
