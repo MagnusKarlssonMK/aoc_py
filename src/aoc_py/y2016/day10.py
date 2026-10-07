@@ -1,12 +1,12 @@
 """
 2016 day 10 - Balance Bots
 
-Slightly confusing description and input. Split the instructions into bot connection definitions (rows starting with
-'bot') and actual instructions (rows starting with 'value'). Store bots in a dict, and put the instructions on a
-queue. When adding an instruction into a bot, it will spit out new instructions if it reaches two stored values,
-and then add those to the instruction queue. Monitor the bot outputs to see when the 61/17 combo shows up for the
-answer to Part 1. Once the queue is emptied, the answer to part 2 is found by multiplyeing the values stored in
-the first three outputs.
+'value' lines feed a starting chip to a bot, 'bot' lines wire each bot's low and high destinations
+(another bot or an output). Draining that instruction queue as a FIFO, a bot holding two chips emits
+its low and high give-instructions and clears its slots; receiving bots enqueue theirs in turn. Part 1
+is the bot that compares the target pair -- 17/61 for real input, 5/2 for the statement example,
+which the value-line count tells apart. Part 2 multiplies the first chip landed in outputs 0, 1 and 2
+once the queue runs dry.
 """
 
 from collections.abc import Generator
@@ -51,6 +51,7 @@ class InputData:
         self.__instructions: list[Instruction] = []
         self.__bots: dict[int, Bot] = {}
         self.__outputs: dict[int, list[int]] = {}
+        self.__answer: int = -1
         for line in s.splitlines():
             tokens = line.split()
             if tokens[0] == "value":
@@ -67,16 +68,16 @@ class InputData:
                         int(tokens[11]),
                     ),
                 )
+        self._simulate()
 
-    def get_comparing_bot_id(self) -> int:
+    def _simulate(self) -> None:
         val1 = 17
         val2 = 61
         if len(self.__instructions) < 8:
-            # Assume test input
+            # The statement example compares 5 and 2 instead.
             val1 = 5
             val2 = 2
         queue = list(self.__instructions)
-        answer = -1
         while queue:
             newinstr = queue.pop(0)
             if newinstr.to_bot.node == Node.BOT:
@@ -85,25 +86,26 @@ class InputData:
                     queue.append(n)
                     compared.append(n.value)
                 if val1 in compared and val2 in compared:
-                    answer = newinstr.to_bot.number
+                    self.__answer = newinstr.to_bot.number
             else:
                 if newinstr.to_bot.number not in self.__outputs:
                     self.__outputs[newinstr.to_bot.number] = [newinstr.value]
                 else:
                     self.__outputs[newinstr.to_bot.number].append(newinstr.value)
-        return answer
 
-    def get_output_prod(self) -> int:
+    def get_p1(self) -> int:
+        return self.__answer
+
+    def get_p2(self) -> int:
         return self.__outputs[0][0] * self.__outputs[1][0] * self.__outputs[2][0]
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1 = p2 = "-1"
     p = InputData(inputdata)
-    r1 = p.get_comparing_bot_id()
     if part in (None, 1):
-        p1 = str(r1)
+        p1 = str(p.get_p1())
     if part in (None, 2):
-        p2 = str(p.get_output_prod())
+        p2 = str(p.get_p2())
 
     return p1, p2
