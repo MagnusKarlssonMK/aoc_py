@@ -1,5 +1,10 @@
 """
 2016 day 9 - Explosives in Cyberspace
+
+A marker (AxB) consumes the next A characters as payload and repeats them B times: part 1 counts the
+payload raw as A*B without looking inside it, part 2 decompresses it first -- recursing into any
+markers in the payload -- and counts the result B times. Everything else counts as one literal
+character. Walk the string with a file pointer, using find() to locate each marker's closing paren.
 """
 
 
@@ -10,15 +15,11 @@ def get_decompressed_len(filedata: str, recurse: bool) -> int:
     while fp < filesize:
         if filedata[fp] == "(":
             fp += 1
-            marker = []
-            while fp < filesize:
-                if (d := filedata[fp]) != ")":
-                    marker.append(d)
-                    fp += 1
-                else:
-                    break
-            fp += 1
-            m = "".join(marker)
+            end = filedata.find(")", fp)
+            if end == -1:
+                end = filesize
+            m = filedata[fp:end]
+            fp = end + 1
             a, b = m.split("x", 1)
             a = int(a)
             b = int(b)

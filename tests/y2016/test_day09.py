@@ -63,3 +63,16 @@ def test_part2_3() -> None:
 def test_part2_4() -> None:
     _, p2 = solve_parts(TEST_STRING_8, 2)
     assert p2 == "445"
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts() -> None:
+    # Part 1 here is 27x12: the marker swallows the whole rest of the line as payload.
+    assert solve_parts(TEST_STRING_7) == ("324", "241920")
+
+
+def test_unterminated_marker() -> None:
+    # No closing paren: the marker runs to the end of the string, so there is no payload left.
+    assert solve_parts("(3x3") == ("9", "0")
