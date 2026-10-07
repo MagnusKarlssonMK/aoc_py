@@ -1,8 +1,9 @@
 """
 2016 day 6 - Signals and Noise
 
-Pretty much just walk through the codes and store the character count in a dictionary for each position. This can then
-be sorted (increasing or decreasing depending on part 1 or 2) to generate the result.
+Count the characters of every column into a dict of dicts, then pick each column's winner with max (part 1) or min
+(part 2) over the character counts. Dicts keep insertion order and max/min return the first extremal item, so a
+tie goes to whichever character appeared first in that column.
 """
 
 
@@ -11,7 +12,7 @@ class InputData:
         self.__codes = s.splitlines()
 
     def decode_signal(self) -> tuple[str, str]:
-        counter: list[dict[str, int]] = [{} for _, _ in enumerate(self.__codes[0])]
+        counter: list[dict[str, int]] = [{} for _ in self.__codes[0]]
         for code in self.__codes:
             for i, c in enumerate(code):
                 if c not in counter[i]:
