@@ -1,9 +1,10 @@
 """
 2016 day 7 - Internet Protocol Version 7
 
-Use regex to split the IP addresses in segments based on the brackets; the first segment and every other segment after
-that will be a supernet, while the second segment and every other after that will be a hypernet.
-From there on it's mostly just string parsing, with a sliding window over the strings to scan them for the patterns.
+Split each address on its brackets: replace "[" with "]", split on "]", the even segments are the supernets
+(parts outside brackets) while the odd ones are the hypernets (inside brackets). Part 1 counts addresses with
+an ABBA -- equal first and last of four characters, equal middle two, different first two -- in a supernet and
+none in any hypernet; part 2 those with an ABA in a supernet whose mirrored BAB sits in a hypernet.
 """
 
 from collections.abc import Generator
@@ -27,18 +28,15 @@ def get_aba(word: str) -> Generator[str]:
 
 
 def get_bab(word: str) -> Generator[str]:
-    for i in range(len(word) - 2):
-        if word[i] == word[i + 2] and word[i] != word[i + 1]:
-            yield word[i + 1] + word[i] + word[i + 1]
+    for aba in get_aba(word):
+        yield aba[1] + aba[0] + aba[1]
 
 
 class IpAddress:
     def __init__(self, ip: str) -> None:
-        self.__supernets: list[str] = []
-        self.__hypernets: list[str] = []
         parts = ip.replace("[", "]").split("]")
-        self.__supernets = parts[0::2]
-        self.__hypernets = parts[1::2]
+        self.__supernets: list[str] = parts[0::2]
+        self.__hypernets: list[str] = parts[1::2]
 
     def supports_tls(self) -> bool:
         for word in self.__hypernets:
