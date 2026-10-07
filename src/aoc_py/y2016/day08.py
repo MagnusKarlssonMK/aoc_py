@@ -1,8 +1,10 @@
 """
 2016 day 8 - Two-Factor Authentication
 
-Pretty much just do the pixel transformations according to the instructions, use numpy to make the rotation operations
-a bit easier.
+Apply every instruction to a numpy grid of pixels: rect lights an a x b block from the top left, rotating a column
+shifts it down and rotating a row shifts it right, both wrapping around -- np.roll does exactly that. Fewer than
+five instructions means the statement's example is running, which draws on a 7x3 screen; anything else gets the
+real 50x6 screen.
 """
 
 from dataclasses import dataclass
@@ -51,13 +53,13 @@ class InputData:
                 case Operation.RECT:
                     self.__grid[0 : instr.val2, 0 : instr.val1] = 1
                 case Operation.ROTATE_COLUMN:
-                    col = self.__grid[:, instr.val1]
-                    rotated = list(col[-instr.val2 :]) + list(col[: -instr.val2])
-                    self.__grid[:, instr.val1] = rotated
+                    self.__grid[:, instr.val1] = np.roll(
+                        self.__grid[:, instr.val1], instr.val2
+                    )
                 case Operation.ROTATE_ROW:
-                    row = self.__grid[instr.val1, :]
-                    rotated = list(row[-instr.val2 :]) + list(row[: -instr.val2])
-                    self.__grid[instr.val1, :] = rotated
+                    self.__grid[instr.val1, :] = np.roll(
+                        self.__grid[instr.val1, :], instr.val2
+                    )
         return int(np.sum(self.__grid))
 
     def draw_screen(self) -> str:
