@@ -1,5 +1,5 @@
 """
-"016 day 11 - Radioisotope Thermoelectric Generators
+2016 day 11 - Radioisotope Thermoelectric Generators
 
 Basically a BFS solution, where the most important realization to get decent speed is that the isotope names are not
 important in terms of state space, so instead we throw away the names and store the isotopes as pairs of current
@@ -8,7 +8,6 @@ different permutations of isotopes in the same overall state, just different nam
 For part 2, simply add 2 isotopes with both generators and microchips on the first floor and run again.
 """
 
-import re
 from collections.abc import Generator
 from copy import deepcopy
 from dataclasses import dataclass
@@ -96,10 +95,19 @@ class InputData:
         items: dict[str, list[int]] = {}
         for floor, line in enumerate(rawstr.splitlines()):
             self.__topfloor = floor
-            for i in re.findall(r" (\w+) generator", line):
-                items.setdefault(i, [0, 0])[0] = floor
-            for i in re.findall(r" (\w+)-compatible microchip", line):
-                items.setdefault(i, [0, 0])[1] = floor
+            body = (
+                line.partition("contains")[2]
+                .replace(", and ", ", ")
+                .replace(" and ", ", ")
+            )
+            for item in body.split(", "):
+                parts = item.rstrip(".").split()
+                if parts and parts[-1] == "generator":
+                    items.setdefault(parts[-2], [0, 0])[0] = floor
+                elif parts and parts[-1] == "microchip":
+                    items.setdefault(parts[-2].removesuffix("-compatible"), [0, 0])[
+                        1
+                    ] = floor
         self.__isotopes = [Isotope(m, g) for g, m in items.values()]
         # Note: the actual item names are not important (in terms of state space, the item pairs are interchangeable)
 
