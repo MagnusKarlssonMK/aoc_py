@@ -1,27 +1,25 @@
 """
 2016 day 16 - Dragon Checksum
 
-Basically a brute-force solution, gets part 2 done in a second or so.
-There are some fancier solutions out there, I might return to check those out some rainy day...
+Expand the data with dragon_curve until it is at least the requested size, take the prefix and repeatedly fold
+adjacent pairs into a checksum until the length is odd (or one). Straightforward string solution; part 2 still
+finishes in a couple of seconds.
 """
+
+PART1_DISK_SIZE = 272
+PART2_DISK_SIZE = 35651584
+
+COMPLEMENT = str.maketrans("01", "10")
 
 
 def dragon_curve(a: str) -> str:
-    b = "".join(["1" if c == "0" else "0" for c in reversed(a)])
-    return a + "0" + b
+    return a + "0" + a[::-1].translate(COMPLEMENT)
 
 
 def checksum(a: str) -> str:
-    if len(a) % 2 != 0:
-        return a
-    else:
-        b = ""
-        for i in range(0, len(a), 2):
-            if a[i] == a[i + 1]:
-                b += "1"
-            else:
-                b += "0"
-        return checksum(b)
+    while len(a) > 1 and len(a) % 2 == 0:
+        a = "".join("1" if x == y else "0" for x, y in zip(a[::2], a[1::2]))
+    return a
 
 
 class InputData:
@@ -39,8 +37,8 @@ def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1 = p2 = "-1"
     p = InputData(inputdata)
     if part in (None, 1):
-        p1 = str(p.get_checksum(272))
+        p1 = str(p.get_checksum(PART1_DISK_SIZE))
     if part in (None, 2):
-        p2 = str(p.get_checksum(35651584))
+        p2 = str(p.get_checksum(PART2_DISK_SIZE))
 
     return p1, p2
