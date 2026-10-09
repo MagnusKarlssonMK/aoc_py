@@ -39,10 +39,8 @@ class Password:
     pwd: str
 
     def swap_pos(self, idx1: int, idx2: int) -> None:
-        p = [c for c in self.pwd]
-        tmp = p[idx1]
-        p[idx1] = p[idx2]
-        p[idx2] = tmp
+        p = list(self.pwd)
+        p[idx1], p[idx2] = p[idx2], p[idx1]
         self.pwd = "".join(p)
 
     def swap_letter(self, c1: str, c2: str) -> None:
