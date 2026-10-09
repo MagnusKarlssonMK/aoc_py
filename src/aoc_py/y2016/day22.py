@@ -8,8 +8,6 @@ possible pair combinations of the nodes and count how many are fulfilling the co
 
 Part 2
 
-Uhhhh.... So.... I guess this is kind of the equivalent of getting Rick-rolled in AoC...
-
 All pairs in part 1 contain the same empty node (x=15, y=29 in my case). So for part 2 we first need to move that empty
 node to the top right corner, and the path is partially blocked by a line of full nodes. Once there we can move the
 'G' node to the left by stepping around it, so moving it one tile costs 5 steps. This is easiest done by simply printing
