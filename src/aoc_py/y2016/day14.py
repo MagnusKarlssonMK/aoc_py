@@ -7,16 +7,15 @@ that same character
 - then check if it has 3 repeated characters, and if so, add its index to a dict of pending keys for validation. Only
 add it to the first found character, in case there's more than one triple.
 
-Use a hasher with a cache for at least some chance of reducing time for the ridiculous number of hashings required for
-Part 2. It's still really quite slow though, Part 2 takes around a minute to complete.
+Each candidate index is hashed exactly once, so there is nothing to gain from memoizing hashes. Part 2 stretches every
+candidate 2017 times and takes around ten seconds; the tests therefore stub get_md5 with crafted digests instead (see
+tests/y2016/test_day14.py).
 """
 
 import hashlib
 import re
-from functools import lru_cache
 
 
-@lru_cache(None)
 def get_md5(inputstr: str, stretch: int = 0) -> str:
     result = inputstr
     for _ in range(stretch + 1):
@@ -25,18 +24,19 @@ def get_md5(inputstr: str, stretch: int = 0) -> str:
 
 
 class InputData:
+    __KEY_COUNT = 64
+
     def __init__(self, salt: str) -> None:
         self.__salt = salt
 
     def get_64th_index(self, stretch: int = 0) -> int:
-        nbr = 64
         index = 0
         keys: set[int] = set()
         triples: dict[str, set[int]] = {}
-        while len(keys) < nbr:
+        while len(keys) < InputData.__KEY_COUNT:
             h = get_md5(self.__salt + str(index), stretch)
             # Find any 5-repetitions (check the 5's first to avoid having a hash validate itself,
-            # since it will also b a 3)
+            # since it will also be a 3)
             for c in re.findall(r"(.)\1{4}", h):
                 if c in triples:
                     for t in triples.pop(c):
@@ -51,7 +51,7 @@ class InputData:
             index += 1
         # Note: the key validation probably validates more than one key, so there's likely more than 64 keys in the set.
         # I.e. we can't just take the max value of the set, we need to sort it and get the answer by index.
-        return sorted(keys)[nbr - 1]
+        return sorted(keys)[InputData.__KEY_COUNT - 1]
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
