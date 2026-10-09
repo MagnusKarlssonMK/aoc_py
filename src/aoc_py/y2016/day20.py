@@ -3,21 +3,19 @@
 
 Parse the input into tuples of low & high and sort the list. The sorting function will default to sort by first
 element (i.e. lowest boundary) with no key specified.
-Then start with a list of values +1 higher than the upper bound of each blocked range, and check one by one if it's
-inside any blocked range; if it is, there is another blocked range overlapping, so we discard the current candidate
-and try the next.
-Similar deal for part 2, making use of the sorted list and keeping track of the upper bound we've checked for allowed
-numbers while counting numbers not covered by blocked intervals.
+For part 1, start with a candidate of 0 and walk the sorted ranges: as soon as the candidate falls below a range's
+low it is not blocked, otherwise it is bumped to just past the range's high.
+For part 2, count the addresses not covered by any blocked interval while tracking the highest blocked address seen
+so far (starting at -1 so that a gap before the first range still includes address 0).
 """
+
+MAX_IP = 2**32 - 1
 
 
 class InputData:
     def __init__(self, s: str) -> None:
         self.__blocklist = sorted(
-            [
-                (int(low), int(high))
-                for low, high in [line.split("-") for line in s.splitlines()]
-            ]
+            tuple(map(int, line.split("-"))) for line in s.splitlines()
         )
 
     def get_p1(self) -> int:
@@ -31,12 +29,12 @@ class InputData:
 
     def get_p2(self) -> int:
         allowed_total = 0
-        highest_allowed = 0
+        highest_blocked = -1
         for low, high in self.__blocklist:
-            if highest_allowed < low:
-                allowed_total += low - highest_allowed - 1
-            highest_allowed = max(high, highest_allowed)
-        allowed_total += 2**32 - 1 - highest_allowed
+            if highest_blocked < low:
+                allowed_total += low - highest_blocked - 1
+            highest_blocked = max(high, highest_blocked)
+        allowed_total += MAX_IP - highest_blocked
         return allowed_total
 
 
