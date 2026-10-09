@@ -87,55 +87,52 @@ class InputData:
         while True:
             regs = Registers()
             regs.set_reg("a", i)
-            toggle_list = [False for _ in range(len(self.__program))]
+            toggle_list = [False] * len(self.__program)
             sp = 0
             program_states: list[
                 tuple[int, tuple[Instruction, ...], tuple[int, ...]]
             ] = []
 
             while 0 <= sp < len(self.__program):
+                instruction = self.__program[sp]
                 instr: Operation = (
-                    self.__program[sp].instr
+                    instruction.instr
                     if not toggle_list[sp]
-                    else self.__program[sp].get_toggled_op()
+                    else instruction.get_toggled_op()
                 )
 
                 match instr:
                     case Operation.CPY:
-                        regs.set_reg(
-                            self.__program[sp].arg2,
-                            regs.get_val(self.__program[sp].arg1),
-                        )
+                        regs.set_reg(instruction.arg2, regs.get_val(instruction.arg1))
                     case Operation.INC:
-                        regs.inc_reg(self.__program[sp].arg1)
+                        regs.inc_reg(instruction.arg1)
                     case Operation.DEC:
-                        regs.dec_reg(self.__program[sp].arg1)
+                        regs.dec_reg(instruction.arg1)
                     case Operation.JNZ:
-                        a1 = regs.get_val(self.__program[sp].arg1)
-                        a2 = regs.get_val(self.__program[sp].arg2)
+                        a1 = regs.get_val(instruction.arg1)
+                        a2 = regs.get_val(instruction.arg2)
                         if a1 != 0:
                             sp += a2
                             continue
                     case Operation.TGL:
-                        x = regs.get_val(self.__program[sp].arg1)
-                        x += sp
+                        x = regs.get_val(instruction.arg1) + sp
                         if 0 <= x < len(self.__program):
                             toggle_list[x] = not toggle_list[x]
                     case Operation.MUL:
-                        a2 = regs.get_val(self.__program[sp].arg2)
-                        a3 = regs.get_val(self.__program[sp].arg3)
-                        v = regs.get_reg(self.__program[sp].arg1) + (a2 * a3)
-                        regs.set_reg(self.__program[sp].arg1, v)
+                        a2 = regs.get_val(instruction.arg2)
+                        a3 = regs.get_val(instruction.arg3)
+                        v = regs.get_reg(instruction.arg1) + (a2 * a3)
+                        regs.set_reg(instruction.arg1, v)
                     case Operation.ADD:
-                        a1 = regs.get_val(self.__program[sp].arg1)
-                        v = regs.get_reg(self.__program[sp].arg2) + a1
-                        regs.set_reg(self.__program[sp].arg2, v)
+                        a1 = regs.get_val(instruction.arg1)
+                        v = regs.get_reg(instruction.arg2) + a1
+                        regs.set_reg(instruction.arg2, v)
                     case Operation.DIV:
-                        v = regs.get_val(self.__program[sp].arg1)
-                        regs.set_reg(self.__program[sp].arg1, v // 2)
-                        regs.set_reg(self.__program[sp].arg2, v % 2)
+                        v = regs.get_val(instruction.arg1)
+                        regs.set_reg(instruction.arg1, v // 2)
+                        regs.set_reg(instruction.arg2, v % 2)
                     case Operation.OUT:
-                        transmitted = regs.get_val(self.__program[sp].arg1)
+                        transmitted = regs.get_val(instruction.arg1)
                         if transmitted != (len(program_states) % 2):
                             break
                         p_state = (sp, tuple(self.__program), tuple(regs.regs.values()))
@@ -143,7 +140,7 @@ class InputData:
                             return i
                         program_states.append(p_state)
                 sp += 1
-            i = i + 1
+            i += 1
 
     def __optimize_program(self) -> None:
         # First, check for possible substitutions with new Mul operation
