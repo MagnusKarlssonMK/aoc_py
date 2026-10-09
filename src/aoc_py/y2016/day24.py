@@ -11,12 +11,14 @@ Based on this we can then do BFS with keeping a sorted list of the visited numbe
 For part 2, simply modify the stop condition of the BFS to also require the current point to be 0.
 """
 
+from collections import deque
+
 
 class InputData:
     def __init__(self, rawstr: str) -> None:
+        grid = rawstr.splitlines()
         adj_list: dict[tuple[int, int], set[tuple[int, int]]] = {}
         nbrs: dict[tuple[int, int], int] = {}
-        grid = rawstr.splitlines()
         for r, row in enumerate(grid):
             for c, col in enumerate(row):
                 if col != "#":
@@ -25,18 +27,19 @@ class InputData:
                     if (r, c) not in adj_list:
                         adj_list[(r, c)] = set()
                     for dr, dc in ((1, 0), (0, 1)):
-                        if grid[r + dr][c + dc] != "#":
-                            adj_list[(r, c)].add((r + dr, c + dc))
-                            if (r + dr, c + dc) not in adj_list:
-                                adj_list[(r + dr, c + dc)] = set()
-                            adj_list[(r + dr, c + dc)].add((r, c))
+                        nr, nc = r + dr, c + dc
+                        if nr < len(grid) and nc < len(row) and grid[nr][nc] != "#":
+                            adj_list[(r, c)].add((nr, nc))
+                            if (nr, nc) not in adj_list:
+                                adj_list[(nr, nc)] = set()
+                            adj_list[(nr, nc)].add((r, c))
         self.__nbrs: dict[int, set[tuple[int, int]]] = {}  # nbr -> {(nbr, steps), ...}
         nbrs_seen: dict[tuple[int, int], tuple[int, bool]] = {}
         for nbr, value in nbrs.items():
             points_seen: set[tuple[int, int]] = set()
-            queue: list[tuple[tuple[int, int], int, bool]] = [(nbr, 0, False)]
+            queue: deque[tuple[tuple[int, int], int, bool]] = deque([(nbr, 0, False)])
             while queue:
-                point, steps, stepover = queue.pop(0)
+                point, steps, stepover = queue.popleft()
                 # Stepover to keep track of when we have already seen at least one number on this path, to avoid
                 # adding direct edges later when it's really an indirect path through another number
                 if point in points_seen:
@@ -59,11 +62,11 @@ class InputData:
     def get_shortest_path(self, returntozero: bool = False) -> int:
         seen_states = {}
         shortest_path = None
-        queue: list[tuple[int, int, tuple[int, ...]]] = [
-            (0, 0, (0,))
-        ]  # point, steps, seenpoints(sorted)
+        queue: deque[tuple[int, int, tuple[int, ...]]] = deque(
+            [(0, 0, (0,))]
+        )  # point, steps, seenpoints(sorted)
         while queue:
-            currentpoint, steps, currentseen = queue.pop(0)
+            currentpoint, steps, currentseen = queue.popleft()
             if (
                 (currentpoint, currentseen) in seen_states
                 and steps >= seen_states[(currentpoint, currentseen)]
@@ -77,12 +80,12 @@ class InputData:
                     shortest_path = min(shortest_path, steps)
                 else:
                     shortest_path = steps
-            for p, n in self.__nbrs[currentpoint]:
+            for p, n in self.__nbrs.get(currentpoint, ()):
                 cs = set(currentseen)
                 cs.add(p)
                 cs = tuple(sorted(cs))
                 queue.append((p, steps + n, cs))
-        if not shortest_path:
+        if shortest_path is None:
             shortest_path = -1  # Should never happen, just to keep linter happy
         return shortest_path
 
