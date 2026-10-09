@@ -3,21 +3,20 @@
 
 Part 1
 
-Just parse the data into a dict representing the nodes keyed with (x, y) of each node. Then go through the
-possible pair combinations of the nodes and count how many are fulfilling the conditions for transfer.
+Parse the data into a dict of nodes keyed by (x, y). Then count the ordered pairs where a non-empty node's data would
+fit in another node's available space.
 
 Part 2
 
-All pairs in part 1 contain the same empty node (x=15, y=29 in my case). So for part 2 we first need to move that empty
-node to the top right corner, and the path is partially blocked by a line of full nodes. Once there we can move the
-'G' node to the left by stepping around it, so moving it one tile costs 5 steps. This is easiest done by simply printing
-the grid and then calculate the answer by hand, but to keep it at least a little bit as a programming exercise:
-1. Find the closest path from the empty node to G with a quick BFS, just to get a generic solution to handle the full
-nodes.
-2. Add the row length multiplied by 5 for the cost of moving G to the top left.
+The empty node (used == 0) is the only node that can move data around, so the plan is:
+1. BFS the empty node up to the goal node G at the top-right corner, treating nodes whose used is larger than the empty
+   node's capacity as walls.
+2. Once it is there, shifting G one column to the left takes 5 moves (the empty node has to loop around it), so add
+   5 * (max_x - 1) for walking G to the top-left.
 """
 
 import re
+from collections import deque
 from dataclasses import dataclass
 from itertools import combinations
 
@@ -55,28 +54,28 @@ class InputData:
         return count
 
     def get_p2(self) -> int:
-        # Step 1 - find nbr of steps to move zero-node to G
-        g_steps = 0
+        # Step 1 - BFS the empty node to G, avoiding nodes too full for it to absorb.
         node_g = self.__max_x, 0
-        seen: set[tuple[int, int]] = set()
-        queue = [(self.__zeronode, 0)]
+        hole_size = self.__nodes[self.__zeronode].size
+        seen = {self.__zeronode}
+        queue = deque([(self.__zeronode, 0)])
+        g_steps = 0
         while queue:
-            nextnode, steps = queue.pop(0)
+            nextnode, steps = queue.popleft()
             if nextnode == node_g:
                 g_steps = steps
                 break
-            if nextnode in seen:
-                continue
-            seen.add(nextnode)
             for d in ((-1, 0), (1, 0), (0, -1)):  # No reason to ever go +1 in y
                 n = nextnode[0] + d[0], nextnode[1] + d[1]
                 if (
                     n in self.__nodes
-                    and self.__nodes[n].used < self.__nodes[self.__zeronode].size
+                    and n not in seen
+                    and self.__nodes[n].used <= hole_size
                 ):
+                    seen.add(n)
                     queue.append((n, steps + 1))
 
-        # Step 2 - add the cost for moving G to top left
+        # Step 2 - add the cost for moving G to the top left (one tile costs 5 moves).
         return g_steps + (5 * (self.__max_x - 1))
 
 
