@@ -1,56 +1,70 @@
 """
 2016 day 13 - A Maze of Twisty Little Cubicles
 
-Simple BFS solution, and implementing the neighbor generator function in a point class.
-The only difference between Part 1 & 2 is in the stop condition for the search function; in part 1 we are looking
-for a specific target node, while for part 2 we want to walk 50 steps and then check number of seen nodes.
+Simple BFS solution, with the wall/open test and neighbor generation implemented as free functions.
+Parts 1 & 2 share the same BFS walk; they only differ in the stop condition: Part 1 searches for a
+specific target node, while Part 2 counts all nodes reachable within a step limit.
 """
 
+from collections import deque
 from collections.abc import Generator
 
 from aoc_py.util.point import Directions, Point
 
+TARGET = Point(31, 39)
+STEP_LIMIT = 50
+
+
+def is_open(x: int, y: int, keyval: int) -> bool:
+    """Returns True when (x, y) is open space for the given favorite number."""
+    val = (x * x) + (3 * x) + (2 * x * y) + y + (y * y) + keyval
+    return val.bit_count() % 2 == 0
+
 
 def get_neighbors(p: Point, keyval: int) -> Generator[Point]:
-    """Generates possible neighbors that are open space according to the specified algorithm."""
-    for n in [p + d for d in Directions.NEIGHBORS_STRAIGHT]:
-        x = n.x
-        y = n.y
-        if x < 0 or y < 0:
-            continue
-        val = (x * x) + (3 * x) + (2 * x * y) + y + (y * y) + keyval
-        if val.bit_count() % 2 == 0:
-            yield Point(x, y)
+    """Generates the straight-line neighbors of p that are open space and inside the building."""
+    for n in (p + d for d in Directions.NEIGHBORS_STRAIGHT):
+        if n.x >= 0 and n.y >= 0 and is_open(n.x, n.y, keyval):
+            yield n
 
 
 class InputData:
     def __init__(self, s: str) -> None:
         self.__favorite_nbr = int(s)
 
-    def get_count(self, targetpoint: Point, steplimit: int) -> int:
-        """BFS to find either the least number of steps to reach the target point (steplimit = 0), or count the
-        number of reachable nodes within [steplimit > 0] steps."""
-        currentpoint = Point(1, 1)
-        seen: set[Point] = set()
-        queue: list[tuple[Point, int]] = [(currentpoint, 0)]
+    def _walk(self, steplimit: int | None) -> Generator[tuple[Point, int]]:
+        """BFS from (1, 1), yielding each point once together with its shortest distance."""
+        start = Point(1, 1)
+        seen: set[Point] = {start}
+        queue: deque[tuple[Point, int]] = deque([(start, 0)])
         while queue:
-            currentpoint, steps = queue.pop(0)
-            if not steplimit and currentpoint == targetpoint:
-                return steps
-            if currentpoint in seen or (steplimit and steps > steplimit):
+            currentpoint, steps = queue.popleft()
+            yield currentpoint, steps
+            if steplimit is not None and steps >= steplimit:
                 continue
-            seen.add(currentpoint)
             for p in get_neighbors(currentpoint, self.__favorite_nbr):
-                queue.append((p, steps + 1))
-        return len(seen)
+                if p not in seen:
+                    seen.add(p)
+                    queue.append((p, steps + 1))
+
+    def get_shortest_path(self, targetpoint: Point) -> int:
+        """Returns the fewest number of steps from (1, 1) to targetpoint."""
+        for currentpoint, steps in self._walk(None):
+            if currentpoint == targetpoint:
+                return steps
+        return -1
+
+    def get_reachable_count(self, steplimit: int) -> int:
+        """Returns the number of distinct points reachable from (1, 1) within steplimit steps."""
+        return sum(1 for _ in self._walk(steplimit))
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1 = p2 = "-1"
     p = InputData(inputdata)
     if part in (None, 1):
-        p1 = str(p.get_count(Point(31, 39), 0))
+        p1 = str(p.get_shortest_path(TARGET))
     if part in (None, 2):
-        p2 = str(p.get_count(Point(0, 0), 50))
+        p2 = str(p.get_reachable_count(STEP_LIMIT))
 
     return p1, p2
