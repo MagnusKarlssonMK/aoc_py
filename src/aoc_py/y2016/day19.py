@@ -12,33 +12,36 @@ those numbers, the winning number is incremented by 1, while in the second half 
 """
 
 
-def get_winning_elf(nbr_elfs: int) -> int:
-    # Note: the bin() conversion adds 0b at the start of the string; we want to skip those two characters.
-    return int(bin(nbr_elfs)[3:] + bin(nbr_elfs)[2], 2)
+class InputData:
+    def __init__(self, s: str) -> None:
+        self.__nbr_elves = int(s)
 
+    def get_p1(self) -> int:
+        # Note: the bin() conversion adds 0b at the start of the string; we want to skip those two characters.
+        b = bin(self.__nbr_elves)
+        return int(b[3:] + b[2], 2)
 
-def get_winning_elf_opposite(nbr_elfs: int) -> int:
-    if nbr_elfs <= 2:
-        return 1
-    # Find the largest power of 3 smaller than the number of elfs
-    b3_p = 1
-    while 3 * b3_p < nbr_elfs:
-        b3_p *= 3
-    # If nbr of elfs in the 'lower half' of the interval between base-3 values, the anwer starts on 1 and increases by 1
-    if nbr_elfs <= 2 * b3_p:
-        return nbr_elfs - b3_p
-    else:  # If the nbr of elfs is in the 'upper half', the answer increases by 2 for each number
-        if (rem := nbr_elfs % b3_p) == 0:
-            rem = b3_p
-        return nbr_elfs - b3_p + rem
+    def get_p2(self) -> int:
+        if self.__nbr_elves <= 2:
+            return 1
+        # Find the largest power of 3 smaller than the number of elves
+        pow3 = 1
+        while 3 * pow3 < self.__nbr_elves:
+            pow3 *= 3
+        # If the number of elves is in the 'lower half' of the interval between base-3 values, the answer starts
+        # on 1 and increases by 1; in the 'upper half' the answer increases by 2 for each number.
+        if self.__nbr_elves <= 2 * pow3:
+            return self.__nbr_elves - pow3
+        rem = (self.__nbr_elves - 1) % pow3 + 1
+        return self.__nbr_elves - pow3 + rem
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1 = p2 = "-1"
-    nbr = int(inputdata)
+    p = InputData(inputdata)
     if part in (None, 1):
-        p1 = str(get_winning_elf(nbr))
+        p1 = str(p.get_p1())
     if part in (None, 2):
-        p2 = str(get_winning_elf_opposite(nbr))
+        p2 = str(p.get_p2())
 
     return p1, p2
