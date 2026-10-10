@@ -23,6 +23,10 @@ def test_part1_4() -> None:
     assert p1 == "9"
 
 
+def test_part1_solve_parts() -> None:
+    assert solve_parts("1122", 1) == ("3", "-1")
+
+
 # ----------- Part 2 ------------
 
 
@@ -49,3 +53,21 @@ def test_part2_4() -> None:
 def test_part2_5() -> None:
     _, p2 = solve_parts("12131415", 2)
     assert p2 == "4"
+
+
+def test_part2_solve_parts() -> None:
+    assert solve_parts("1212", 2) == ("-1", "6")
+
+
+# ----------- Edge cases ------------
+
+
+def test_single_digit_wraparound() -> None:
+    assert solve_parts("5") == ("5", "5")
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts() -> None:
+    assert solve_parts("1122") == ("3", "0")

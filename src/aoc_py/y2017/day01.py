@@ -13,16 +13,14 @@ Just change the offset in the peek-ahead from 1 to half the length of the number
 
 class InputData:
     def __init__(self, s: str) -> None:
-        self.__nbrs = [int(c) for c in s]
+        self.__digits = [int(c) for c in s]
 
     def get_captcha(self, halfway: bool = False) -> int:
-        offset = 1 if not halfway else len(self.__nbrs) // 2
+        offset = 1 if not halfway else len(self.__digits) // 2
         return sum(
-            [
-                nbr
-                for i, nbr in enumerate(self.__nbrs)
-                if nbr == self.__nbrs[(i + offset) % len(self.__nbrs)]
-            ]
+            digit
+            for i, digit in enumerate(self.__digits)
+            if digit == self.__digits[(i + offset) % len(self.__digits)]
         )
 
 
