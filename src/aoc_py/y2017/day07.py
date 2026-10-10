@@ -3,12 +3,12 @@
 
 Part 1
 
-Store the program tree in a dict, with each node containig its weight, leafs and parent. The node without a parent
+Store the program tree in a dict, with each node containing its weight, leaves and parent. The node without a parent
 is the answer.
 
 Part 2
 
-Make a recursive weight calculation of the tree, where each program checks the weight of its leafs (if any),
+Make a recursive weight calculation of the tree, where each program checks the weight of its leaves (if any),
 and calculates and reports the required correction if discovered.
 """
 
@@ -18,7 +18,7 @@ from dataclasses import dataclass
 @dataclass
 class Program:
     weight: int
-    leafs: set[str]
+    leaves: set[str]
     parent: str = ""
 
 
@@ -28,12 +28,10 @@ class InputData:
         self.__root: str = ""
         for line in s.splitlines():
             tokens = line.split()
-            leafs = {w.strip(",") for w in tokens[3:]}
-            self.__programs[tokens[0]] = Program(
-                int(tokens[1].strip("(").strip(")")), leafs
-            )
+            leaves = {w.strip(",") for w in tokens[3:]}
+            self.__programs[tokens[0]] = Program(int(tokens[1].strip("()")), leaves)
         for p, item in self.__programs.items():
-            for leaf in item.leafs:
+            for leaf in item.leaves:
                 self.__programs[leaf].parent = p
         for p in self.__programs:
             if self.__programs[p].parent == "":
@@ -47,29 +45,23 @@ class InputData:
         return c
 
     def __get_weight_and_correction(self, program: str) -> tuple[int, int]:
-        leafweights = {}
-        leafcorrections = []
-        if not self.__programs[program].leafs:
-            # Node without leafs
+        leafweights: dict[int, list[str]] = {}
+        leafcorrections: list[int] = []
+        if not self.__programs[program].leaves:
+            # Node without leaves
             return self.__programs[program].weight, 0
 
-        for leaf in self.__programs[program].leafs:
+        for leaf in self.__programs[program].leaves:
             w, c = self.__get_weight_and_correction(leaf)
-            if w not in leafweights:
-                leafweights[w] = [leaf]
-            else:
-                leafweights[w].append(leaf)
+            leafweights.setdefault(w, []).append(leaf)
             leafcorrections.append(c)
 
+        total_of_leaves = sum(w * len(nodes) for w, nodes in leafweights.items())
         if (corr := sum(leafcorrections)) > 0:
             # A node further down the tree has reported a correction, just propagate upwards
-            return (
-                self.__programs[program].weight
-                + (sum(leafweights) * sum([len(v) for v in leafweights.values()])),
-                corr,
-            )
+            return self.__programs[program].weight + total_of_leaves, corr
         elif len(leafweights) > 1:
-            # These leafs are not balanced; figure out which one is bad and calculate the required correction
+            # These leaves are not balanced; figure out which one is bad and calculate the required correction
             correctweight = -1
             badweight = -1
             badnode = ""
@@ -81,13 +73,11 @@ class InputData:
                     badnode = val[0]
             return (
                 self.__programs[program].weight
-                + (correctweight * sum([len(v) for v in leafweights.values()])),
+                + correctweight * len(self.__programs[program].leaves),
                 correctweight - (badweight - self.__programs[badnode].weight),
             )
-        # else - all leafs have reported the same weight and are thus balanced
-        return self.__programs[program].weight + (
-            sum(leafweights) * sum([len(v) for v in leafweights.values()])
-        ), 0
+        # else - all leaves have reported the same weight and are thus balanced
+        return self.__programs[program].weight + total_of_leaves, 0
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
