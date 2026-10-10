@@ -3,12 +3,12 @@
 
 Part 1
 
-Simply take the sum of the difference between the last and the first value of each list.
+Each row is sorted, so simply take the sum of the difference between the last (max) and the first (min) value of
+each row.
 
 Part 2
 
-Instead use itertools to find the combination of numbers in each list that yields an even division, and
-accumulate the sum of the result of those divisions.
+Instead use itertools to find the unique pair in each row that divides evenly, and accumulate the quotients.
 """
 
 from itertools import combinations
@@ -16,17 +16,17 @@ from itertools import combinations
 
 class InputData:
     def __init__(self, s: str) -> None:
-        self.__nbrs = [sorted(int(n) for n in line.split()) for line in s.splitlines()]
+        self.__rows = [sorted(int(n) for n in line.split()) for line in s.splitlines()]
 
     def get_p1(self) -> int:
-        return sum([line[-1] - line[0] for line in self.__nbrs])
+        return sum(line[-1] - line[0] for line in self.__rows)
 
     def get_p2(self) -> int:
         result = 0
-        for line in self.__nbrs:
-            for p1, p2 in sorted(combinations(line, 2)):
-                if p2 % p1 == 0:
-                    result += p2 // p1
+        for line in self.__rows:
+            for small, large in combinations(line, 2):
+                if large % small == 0:
+                    result += large // small
                     break
         return result
 
