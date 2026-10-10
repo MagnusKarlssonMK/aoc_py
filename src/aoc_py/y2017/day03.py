@@ -11,54 +11,55 @@ is still low enough that this is a somewhat reasonable approach in terms of exec
 
 Part 2
 
-Pretty much the same thing, just with a small modification for how to keep track of the current number while
-building the spiral.
+Pretty much the same thing, but the value of each cell is the sum of the already-written values of its eight
+neighbours. Both parts share a generator that walks the spiral outward from the center.
 """
+
+from collections.abc import Iterator
+from itertools import islice
 
 from aoc_py.util.point import Directions, Point
 
 
 class InputData:
     def __init__(self, s: str) -> None:
-        self.__nbr = int(s)
+        self.__target = int(s)
+
+    def __spiral(self) -> Iterator[Point]:
+        # Walk the spiral counter-clockwise, turning left whenever the cell to the left is already visited.
+        head = Directions.ORIGIN
+        direction = Directions.DOWN
+        visited: set[Point] = {head}
+        yield head
+        while True:
+            left = direction.rotate_left()
+            if head + left in visited:
+                head += direction
+            else:
+                direction = left
+                head += left
+            visited.add(head)
+            yield head
 
     def get_p1(self) -> int:
-        head = Directions.ORIGIN
-        direction = Directions.DOWN
-        value = 1
-        visited: set[Point] = {head}
-        while value < self.__nbr:
-            left_direction = direction.rotate_left()
-            left_point = head + left_direction
-            if left_point in visited:
-                head += direction
-            else:
-                direction = left_direction
-                head = left_point
-            visited.add(head)
-            value += 1
-        return head.manhattan(Directions.ORIGIN)
+        point = next(islice(self.__spiral(), self.__target - 1, None))
+        return point.manhattan(Directions.ORIGIN)
 
     def get_p2(self) -> int:
-        head = Directions.ORIGIN
-        direction = Directions.DOWN
+        values: dict[Point, int] = {}
         value = 1
-        visited: dict[Point, int] = {head: value}
-        while value < self.__nbr:
-            left_direction = direction.rotate_left()
-            left_point = head + left_direction
-            if left_point in visited:
-                head += direction
-            else:
-                direction = left_direction
-                head = left_point
-            value = sum(
-                [
-                    visited.get(n, 0)
-                    for n in [head + d for d in Directions.NEIGHBORS_ALL]
-                ]
+        points = self.__spiral()
+        while value < self.__target:
+            point = next(points)
+            value = (
+                1
+                if point == Directions.ORIGIN
+                else sum(
+                    values.get(n, 0)
+                    for n in (point + d for d in Directions.NEIGHBORS_ALL)
+                )
             )
-            visited[head] = value
+            values[point] = value
         return value
 
 
