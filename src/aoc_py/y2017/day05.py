@@ -11,16 +11,26 @@ class InputData:
     def __init__(self, s: str) -> None:
         self.__instr = list(map(int, s.splitlines()))
 
-    def get_exit_step_count(self, stranger: bool = False) -> int:
+    def get_p1(self) -> int:
         program = list(self.__instr)
-        sp = 0
-        count = 0
-        while 0 <= sp < len(program):
+        size = len(program)
+        sp = count = 0
+        while 0 <= sp < size:
             count += 1
-            val = program[sp]
-            step = -1 if (stranger and val >= 3) else 1
-            program[sp] += step
-            sp += val
+            offset = program[sp]
+            program[sp] += 1
+            sp += offset
+        return count
+
+    def get_p2(self) -> int:
+        program = list(self.__instr)
+        size = len(program)
+        sp = count = 0
+        while 0 <= sp < size:
+            count += 1
+            offset = program[sp]
+            program[sp] = offset - 1 if offset >= 3 else offset + 1
+            sp += offset
         return count
 
 
@@ -28,8 +38,8 @@ def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1 = p2 = "-1"
     p = InputData(inputdata)
     if part in (None, 1):
-        p1 = str(p.get_exit_step_count())
+        p1 = str(p.get_p1())
     if part in (None, 2):
-        p2 = str(p.get_exit_step_count(True))
+        p2 = str(p.get_p2())
 
     return p1, p2
