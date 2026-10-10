@@ -1,26 +1,24 @@
 """
 2017 day 8 - I Heard You Like Registers
 
-Kind of trivial by mapping the input on the operator functions, and extracting the register names into a set during the
-parsing of the input.
-Just run through the program and get the answer to part 1 from the register with the max value at that time.
-For part 2, simply keep track of the max value during the execution of the program. We can get both answers during
-one runthrough of the program.
+Map the input tokens onto operator functions, and collect the register names into a set while parsing.
+Run through the program once: part 1 is the largest register value at the end, part 2 is the largest
+value seen at any point during the run. Both answers come from a single pass.
 """
 
 import operator as op
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Final
+from typing import Final
 
 
 @dataclass(frozen=True)
 class Instr:
     reg: str
-    opr: Callable[[Any, Any], Any]
+    opr: Callable[[int, int], int]
     val: int
     cond_reg: str
-    cond_opr: Callable[[Any, Any], Any]
+    cond_opr: Callable[[int, int], bool]
     cond_val: int
 
 
@@ -53,20 +51,21 @@ class InputData:
             )
             self.__regs.update((r, cr))
 
-    def get_largest_reg_value(self) -> tuple[int, int]:
+    def get_maxima(self) -> tuple[int, int]:
+        """Return the largest register value at the end, and the largest value seen during the run."""
         regs = {r: 0 for r in self.__regs}
-        maxval = 0
+        peak = 0
         for i in self.__instr:
             if i.cond_opr(regs[i.cond_reg], i.cond_val):
                 regs[i.reg] = i.opr(regs[i.reg], i.val)
-                maxval = max(maxval, regs[i.reg])
-        return max(regs.values()), maxval
+                peak = max(peak, regs[i.reg])
+        return max(regs.values()), peak
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1 = p2 = "-1"
     p = InputData(inputdata)
-    r1, r2 = p.get_largest_reg_value()
+    r1, r2 = p.get_maxima()
     if part in (None, 1):
         p1 = str(r1)
     if part in (None, 2):
