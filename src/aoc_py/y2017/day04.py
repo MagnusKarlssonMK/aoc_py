@@ -8,25 +8,23 @@ length of the set will be smaller than the length of the list.
 
 Part 2
 
-For each line, make a set of characters for every word, and check all combinations of those words to see if
-there is any overlap.
+For each line, make a set of the sorted letters of every word - anagrams collapse to the same entry, so comparing the
+set size with the word count detects any two words that are anagrams.
 """
 
 
 class InputData:
     def __init__(self, s: str) -> None:
-        self.__passphrases = [w.split() for w in [line for line in s.splitlines()]]
+        self.__phrases = [line.split() for line in s.splitlines()]
 
     def get_p1(self) -> int:
-        return sum([1 for line in self.__passphrases if len(line) == len(set(line))])
+        return sum(len(line) == len(set(line)) for line in self.__phrases)
 
     def get_p2(self) -> int:
-        result = 0
-        for line in self.__passphrases:
-            sortedwords = ["".join(sorted(word)) for word in line]
-            if len(sortedwords) == len(set(sortedwords)):
-                result += 1
-        return result
+        return sum(
+            len(line) == len({"".join(sorted(word)) for word in line})
+            for line in self.__phrases
+        )
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:

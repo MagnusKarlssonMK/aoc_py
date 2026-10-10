@@ -18,9 +18,39 @@ def test_part1_1() -> None:
     assert p1 == "2"
 
 
+def test_part1_solve_parts() -> None:
+    assert solve_parts(TEST_STRING_1, 1) == ("2", "-1")
+
+
 # ----------- Part 2 ------------
 
 
 def test_part2_1() -> None:
     _, p2 = solve_parts(TEST_STRING_2, 2)
     assert p2 == "3"
+
+
+def test_part2_solve_parts() -> None:
+    assert solve_parts(TEST_STRING_2, 2) == ("-1", "3")
+
+
+# ----------- Edge cases ------------
+
+
+def test_anagram_only() -> None:
+    assert solve_parts("abc cba") == ("1", "0")
+
+
+def test_duplicate_word() -> None:
+    assert solve_parts("aa aa") == ("0", "0")
+
+
+def test_empty_input() -> None:
+    assert solve_parts("") == ("0", "0")
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts() -> None:
+    assert solve_parts(TEST_STRING_2) == ("5", "3")
