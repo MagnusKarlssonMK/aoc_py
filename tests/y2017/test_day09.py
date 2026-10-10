@@ -43,6 +43,10 @@ def test_part1_8() -> None:
     assert p1 == "3"
 
 
+def test_part1_solve_parts() -> None:
+    assert solve_parts("{{<a!>},{<a!>},{<a!>},{<ab>}}", 1) == ("3", "-1")
+
+
 # ----------- Part 2 ------------
 
 
@@ -79,3 +83,14 @@ def test_part2_6() -> None:
 def test_part2_7() -> None:
     _, p2 = solve_parts('<{o"i!a,<{i<a>', 2)
     assert p2 == "10"
+
+
+def test_part2_solve_parts() -> None:
+    assert solve_parts('<{o"i!a,<{i<a>', 2) == ("-1", "10")
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts() -> None:
+    assert solve_parts("{{{},{},{{}}}}") == ("16", "0")
