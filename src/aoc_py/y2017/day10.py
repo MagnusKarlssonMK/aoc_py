@@ -1,38 +1,39 @@
 """
 2017 day 10 - Knot Hash
+
+Each reversal is applied to the front of the list, with the current position tracked by rotating the whole list
+instead. A final right-rotation of the accumulated offset returns the list to its true order.
 """
 
-from typing import Any
 
-
-def rotate_left(x: list[Any], steps: int) -> None:
+def rotate_left(x: list[int], steps: int) -> None:
     if x:
         steps %= len(x)
         x[:] = x[steps:] + x[:steps]
 
 
-def rotate_right(x: list[Any], steps: int) -> None:
+def rotate_right(x: list[int], steps: int) -> None:
     rotate_left(x, -steps)
 
 
-def reverse_slice(x: list[Any], start: int, stop: int) -> None:
+def reverse_slice(x: list[int], start: int, stop: int) -> None:
     x[start:stop] = reversed(x[start:stop])
 
 
 def generate_hash(lengths: list[int], buffersize: int, rounds: int) -> list[int]:
-    nbrs: list[int] = [i for i in range(buffersize)]
-    current_position = 0
-    skipsize = 0
+    numbers: list[int] = list(range(buffersize))
+    total_steps = 0
+    skip = 0
 
     for _ in range(rounds):
         for length in lengths:
-            n = length + skipsize
-            reverse_slice(nbrs, 0, length)
-            rotate_left(nbrs, n % buffersize)
-            current_position += n
-            skipsize += 1
-    rotate_right(nbrs, current_position % buffersize)
-    return list(nbrs)
+            steps = length + skip
+            reverse_slice(numbers, 0, length)
+            rotate_left(numbers, steps % buffersize)
+            total_steps += steps
+            skip += 1
+    rotate_right(numbers, total_steps % buffersize)
+    return numbers
 
 
 class InputData:
@@ -43,8 +44,8 @@ class InputData:
         lengths: list[int] = (
             [] if not self.__inputstr else [int(c) for c in self.__inputstr.split(",")]
         )
-        nbrs = generate_hash(lengths, buffer_len, 1)
-        return nbrs[0] * nbrs[1]
+        numbers = generate_hash(lengths, buffer_len, 1)
+        return numbers[0] * numbers[1]
 
     def get_p2(self, buffer_len: int) -> str:
         lengths: list[int] = [ord(c) for c in self.__inputstr]
