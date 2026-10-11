@@ -16,3 +16,15 @@ def test_part1_1() -> None:
 def test_part2_1() -> None:
     _, p2 = solve_parts(TEST_STRING, 2)
     assert p2 == "66"
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts() -> None:
+    assert solve_parts(TEST_STRING) == ("138", "66")
+
+
+def test_meta_out_of_range() -> None:
+    # The root's only metadata value (2) references a child that doesn't exist.
+    assert solve_parts("1 1 0 1 5 2") == ("7", "0")
