@@ -17,11 +17,8 @@ class InputData:
         for y in range(1, InputData.__GRIDSIZE + 1):
             for x in range(1, InputData.__GRIDSIZE + 1):
                 rackid = x + 10
-                power = str((rackid * y + self.__serialnbr) * rackid)
-                if len(power) >= 3:
-                    power = int(power[-3]) - 5
-                else:
-                    power = -5
+                p = (rackid * y + self.__serialnbr) * rackid
+                power = (p // 100) % 10 - 5  # hundreds digit, or 0 if shorter
                 self.__grid[y][x] = (
                     power
                     + self.__grid[y - 1][x]
@@ -32,16 +29,18 @@ class InputData:
     def __get_best_fuelcell(
         self, fuelcell_size: int
     ) -> tuple[int, int, int]:  # [x, y, power]
+        grid = self.__grid
         max_power = 0
         max_fuelcell_x, max_fuelcell_y = 0, 0
+        d = fuelcell_size - 1
+        pairs = [
+            (x - 1, x + d) for x in range(1, InputData.__GRIDSIZE + 1 - fuelcell_size)
+        ]
         for y in range(1, InputData.__GRIDSIZE + 1 - fuelcell_size):
-            for x in range(1, InputData.__GRIDSIZE + 1 - fuelcell_size):
-                power = (
-                    self.__grid[y - 1][x - 1]
-                    + self.__grid[y + fuelcell_size - 1][x + fuelcell_size - 1]
-                    - self.__grid[y + fuelcell_size - 1][x - 1]
-                    - self.__grid[y - 1][x + fuelcell_size - 1]
-                )
+            row_lo = grid[y - 1]
+            row_hi = grid[y + d]
+            for x, (x_lo, x_hi) in enumerate(pairs, 1):
+                power = row_lo[x_lo] + row_hi[x_hi] - row_hi[x_lo] - row_lo[x_hi]
                 if power > max_power:
                     max_power = power
                     max_fuelcell_x, max_fuelcell_y = x, y
