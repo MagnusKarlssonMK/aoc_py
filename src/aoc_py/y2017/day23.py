@@ -11,6 +11,7 @@ it. But since I don't know if all inputs are structured exactly like this, it mi
 
 from dataclasses import dataclass
 from enum import Enum
+from math import isqrt
 
 
 class Operation(Enum):
@@ -55,12 +56,13 @@ class InputData:
             t = line.split()
             self.__instr.append(Instr(Operation(t[0]), *t[1:]))
 
-    def get_p1(self) -> int:
+    def __run(self, regs: Register, stop_on_other_register: bool) -> int:
         sp = 0
-        regs = Register(self.__registers)
         mulcount = 0
         while 0 <= sp < len(self.__instr):
             i = self.__instr[sp]
+            if stop_on_other_register and i.attr1 not in ("a", "b", "c"):
+                break
             match i.op:
                 case Operation.SET:
                     regs.set_value(i.attr1, regs.get_value(i.attr2))
@@ -76,32 +78,19 @@ class InputData:
             sp += 1
         return mulcount
 
+    def get_p1(self) -> int:
+        return self.__run(Register(self.__registers), False)
+
     def get_p2(self) -> int:
-        sp = 0
         regs = Register(self.__registers, 1)
         # Run the program just to get the initial values for B and C, then stop.
-        while 0 <= sp < len(self.__instr):
-            i = self.__instr[sp]
-            if i.attr1 not in ("a", "b", "c"):
-                break
-            match i.op:
-                case Operation.SET:
-                    regs.set_value(i.attr1, regs.get_value(i.attr2))
-                case Operation.SUB:
-                    regs.sub_value(i.attr1, regs.get_value(i.attr2))
-                case Operation.MUL:
-                    regs.mul_value(i.attr1, regs.get_value(i.attr2))
-                case Operation.JNZ:
-                    if regs.get_value(i.attr1) != 0:
-                        sp += regs.get_value(i.attr2)
-                        continue
-            sp += 1
+        self.__run(regs, True)
 
         # b_jump grabbed directly from the input, this assumes that the jump is located on this specific row
         b_jump = abs(int(self.__instr[-2].attr2))
         h = 0
         for b in range(regs.get_value("b"), regs.get_value("c") + 1, b_jump):
-            for i in range(2, b):
+            for i in range(2, isqrt(b) + 1):
                 if b % i == 0:
                     h += 1
                     break
