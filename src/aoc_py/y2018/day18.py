@@ -83,35 +83,27 @@ class InputData:
         self.__grid = new_grid
         self.__value = trees_total * lumber_total
 
-    def __get_value(self) -> int:
-        return self.__value
-
-    def __get_keyval(self) -> bytes:
-        return bytes(self.__grid)
-
     def get_total_resource_value(self) -> tuple[int, int]:
-        p1 = p2 = 0
         time = 0
-        seen: dict[bytes, tuple[int, int]] = {}
+        seen: dict[bytes, int] = {}
+        values: list[int] = []
         while True:
             time += 1
             self.__step_minute()
-            value = self.__get_value()
-            keyval = self.__get_keyval()
-            if time == InputData.P1_TIME:
-                p1 = value
+            values.append(self.__value)
+            keyval = bytes(self.__grid)
             if keyval in seen:
-                cycle = time - seen[keyval][0]
+                cycle = time - seen[keyval]
                 offset = time - cycle
-                p2_time = offset + ((InputData.P2_TIME - offset) % cycle)
-                for v in seen:
-                    if seen[v][0] == p2_time:
-                        p2 = seen[v][1]
-                        break
                 break
-            else:
-                seen[keyval] = time, value
-        return p1, p2
+            seen[keyval] = time
+
+        def value_at(minute: int) -> int:
+            if minute <= time:
+                return values[minute - 1]
+            return values[offset + ((minute - offset) % cycle) - 1]
+
+        return value_at(InputData.P1_TIME), value_at(InputData.P2_TIME)
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
