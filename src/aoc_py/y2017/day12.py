@@ -1,24 +1,28 @@
 """
 2017 day 12 - Digital Plumber
+
+Programs form an undirected graph through their pipes. The answer to part 1 is the size of the connected
+component containing program 0, and part 2 counts all connected components.
 """
 
 
 class InputData:
     def __init__(self, s: str) -> None:
-        self.__numbers = [
-            list(map(int, right.split(", ")))
-            for _, right in [line.split(" <-> ") for line in s.splitlines()]
-        ]
+        self.__numbers: list[list[int]] = []
+        for line in s.splitlines():
+            _, right = line.split(" <-> ")
+            self.__numbers.append([int(n) for n in right.split(", ")])
 
-    def solve(self) -> tuple[int, int]:
+    def get_group_counts(self) -> tuple[int, int]:
+        """Return the size of program 0's group, and the total number of groups."""
         size = len(self.__numbers)
-        seen = [False for _ in range(size)]
-        program_groups = []
+        seen = [False] * size
+        group_sizes = []
         for i in range(size):
             if not seen[i]:
                 seen[i] = True
-                program_groups.append(self.__search_programs(seen, i))
-        return program_groups[0], len(program_groups)
+                group_sizes.append(self.__search_programs(seen, i))
+        return group_sizes[0], len(group_sizes)
 
     def __search_programs(self, seen: list[bool], index: int) -> int:
         total = 1
@@ -31,8 +35,7 @@ class InputData:
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1 = p2 = "-1"
-    p = InputData(inputdata)
-    r1, r2 = p.solve()
+    r1, r2 = InputData(inputdata).get_group_counts()
     if part in (None, 1):
         p1 = str(r1)
     if part in (None, 2):
