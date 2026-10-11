@@ -40,3 +40,14 @@ def test_part1_5() -> None:
 def test_part2_2() -> None:
     _, p2 = solve_parts(TEST_STRING_1, 2)
     assert p2 == "74765078"
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts() -> None:
+    assert solve_parts(TEST_STRING_1) == ("8317", "74765078")
+
+
+def test_minimal() -> None:
+    assert solve_parts("9 players; last marble is worth 25 points") == ("32", "22563")
