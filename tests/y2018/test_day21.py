@@ -38,6 +38,8 @@ eqrr 3 0 1
 addr 1 4 4
 seti 2 5 4"""
 
+import pytest
+
 from aoc_py.y2018.day21 import solve_parts
 
 # ----------- Part 1 ------------
@@ -54,3 +56,17 @@ def test_part1_1() -> None:
 def test_part2_1() -> None:
     _, p2 = solve_parts(TEST_STRING, 2)
     assert p2 == "3688"
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts() -> None:
+    assert solve_parts(TEST_STRING) == ("56", "3688")
+
+
+def test_bad_layout() -> None:
+    # A program that doesn't match the disassembled layout is rejected loudly
+    # instead of producing a silently wrong answer.
+    with pytest.raises(ValueError, match="unrecognized day 21 program layout"):
+        solve_parts("#ip 0\nseti 0 0 0")
