@@ -3,7 +3,7 @@
 
 Pretty much just walking a path and recording letters along the way. Only switch direction when encountering a '+' node,
 otherwise keep walking in current direction and record the character if it is not a pipe. Count how many steps it takes
-to get to the end.
+to get to the end. get_path_and_steps returns the letters found and the number of steps taken.
 """
 
 from aoc_py.util.grid import Grid
@@ -14,7 +14,7 @@ class InputData:
     def __init__(self, s: str) -> None:
         self.__grid = Grid(s)
 
-    def get_path(self) -> tuple[str, int]:
+    def get_path_and_steps(self) -> tuple[str, int]:
         current = self.__grid.find("|")
         direction = Directions.DOWN
         path: list[str] = []
@@ -25,11 +25,11 @@ class InputData:
             v = self.__grid.get_element(current)
             match v:
                 case "+":
-                    left = current + direction.rotate_left()
-                    if self.__grid.get_element(left) not in ["", " "]:
-                        direction = direction.rotate_left()
-                    else:
+                    turn = direction.rotate_left()
+                    if self.__grid.get_element(current + turn) in ("", " "):
                         direction = direction.rotate_right()
+                    else:
+                        direction = turn
                 case " ":
                     break
                 case "-" | "|":
@@ -41,11 +41,10 @@ class InputData:
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1 = p2 = "-1"
-    p = InputData(inputdata)
-    r1, r2 = p.get_path()
+    path, steps = InputData(inputdata).get_path_and_steps()
     if part in (None, 1):
-        p1 = r1
+        p1 = path
     if part in (None, 2):
-        p2 = str(r2)
+        p2 = str(steps)
 
     return p1, p2
