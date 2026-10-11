@@ -62,13 +62,13 @@ class InputData:
                 continue
             seen.add(state)
             tail, head, side = state
-            tail = tuple(sorted(list(tail) + [head]))
-            maxstr = max(maxstr, sum([self.__adj[t][0] for t in tail]))
+            tail = tuple(sorted(tail + (head,)))
+            maxstr = max(maxstr, sum(self.__adj[t][0] for t in tail))
             if len(tail) > len(longest):
                 longest = tail
             elif len(tail) == len(longest):
-                tailstr = sum([self.__adj[t][0] for t in tail])
-                l_str = sum([self.__adj[t][0] for t in longest])
+                tailstr = sum(self.__adj[t][0] for t in tail)
+                l_str = sum(self.__adj[t][0] for t in longest)
                 if tailstr > l_str:
                     longest = tail
             for nxt in self._get_connectors(head, side):
@@ -78,7 +78,7 @@ class InputData:
                     queue.append((tail, nxt, 2))
                 if head in self.__adj[nxt][2]:
                     queue.append((tail, nxt, 1))
-        return maxstr, sum([self.__adj[t][0] for t in longest])
+        return maxstr, sum(self.__adj[t][0] for t in longest)
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
