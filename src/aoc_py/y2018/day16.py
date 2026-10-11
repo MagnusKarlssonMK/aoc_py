@@ -80,7 +80,7 @@ class InputData:
 
     def get_p1(self) -> int:
         return sum(
-            [1 for sample in self.__samples if len(sample.get_matching_ops()) >= 3]
+            1 for sample in self.__samples if len(sample.get_matching_ops()) >= 3
         )
 
     def get_p2(self) -> int:
@@ -88,11 +88,9 @@ class InputData:
         candidates: dict[int, set[str]] = {}
         for sample in self.__samples:
             for m in sample.get_matching_ops():
-                if sample.instr.op not in candidates:
-                    candidates[sample.instr.op] = set()
-                candidates[sample.instr.op].add(m)
+                candidates.setdefault(sample.instr.op, set()).add(m)
         # Figure out the exact mapping sudoku style
-        op_mapping = {}
+        op_mapping: dict[int, str] = {}
         while candidates:
             for known_nbr in [c for c in candidates if len(candidates[c]) == 1]:
                 op_mapping[known_nbr] = candidates[known_nbr].pop()

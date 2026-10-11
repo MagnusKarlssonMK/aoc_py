@@ -95,9 +95,31 @@ def test_part1_1() -> None:
     assert p1 == "14"
 
 
+def test_part1_official_example() -> None:
+    # The classic one-sample example: exactly 3 opcodes match (mulr, addi, seti).
+    # The trailing program line is just there to satisfy the input format.
+    p1, _ = solve_parts(
+        """Before: [3, 2, 1, 1]
+9 2 1 2
+After:  [3, 2, 2, 1]
+
+
+0 0 0 0""",
+        1,
+    )
+    assert p1 == "1"
+
+
 # ----------- Part 2 ------------
 
 
 def test_part2_1() -> None:
     _, p2 = solve_parts(TEST_STRING, 2)
     assert p2 == "40055"
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts() -> None:
+    assert solve_parts(TEST_STRING) == ("14", "40055")
