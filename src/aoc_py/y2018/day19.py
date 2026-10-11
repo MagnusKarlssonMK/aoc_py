@@ -8,15 +8,19 @@ Simply emulating the program is enough.
 Part 2
 
 The program needs to be optimized here. The problematic area is between lines 2-12 (in my input), which
-is doing some sort of modulo operation extremely inefficiently. So, insert a piece of code that effectively replaces
-those lines and does the same job. I've tried to make it reasonably generic by extracting the used registers from the
-input, but it will not work for other inputs if the specific lines in the program doing this work are different.
+is doing a divisor-sum loop extremely inefficiently. When the instructions at positions 3, 4 and 7 have the
+expected shape (mulr / eqrr / addr), the used registers are extracted from the input and the loop is replaced
+by a direct computation; any other program is left to pure emulation.
 
 The same optimization can be used in the common function for both parts, and seems to give quite a large performance
 boost also for part 1.
 """
 
-OP_CODES = {
+from collections.abc import Callable
+
+_OpFunc = Callable[[list[int], int, int], int]
+
+OP_CODES: dict[str, _OpFunc] = {
     "addr": lambda op, a, b: op[a] + op[b],
     "addi": lambda op, a, b: op[a] + b,
     "mulr": lambda op, a, b: op[a] * op[b],
@@ -44,13 +48,29 @@ class InputData:
             (OP_CODES[op], int(a), int(b), int(c))
             for op, a, b, c in [line.split() for line in lines[1:]]
         ]
+        prog = self.__program
+        # The slow divisor-sum loop is only patched when the program is long enough
+        # and the instructions at positions 3, 4 and 7 have the expected shape
+        # (the tuples hold the OP_CODES lambda singletons, so identity checks work).
+        # Any other program is emulated as-is.
+        if (
+            len(prog) > 13
+            and prog[3][0] is OP_CODES["mulr"]
+            and prog[4][0] is OP_CODES["eqrr"]
+            and prog[7][0] is OP_CODES["addr"]
+        ):
+            self.__patchregs: tuple[int, int, int] | None = (
+                prog[3][1],
+                prog[4][2],
+                prog[7][2],
+            )
+        else:
+            self.__patchregs = None
 
     def get_reg_zero_val(self, startvalue: int = 0) -> int:
-        registers = [0 for _ in range(6)]
+        registers = [0] * 6
         registers[0] = startvalue
-        patchreg1 = self.__program[3][1]
-        patchreg2 = self.__program[4][2]
-        patchreg3 = self.__program[7][2]
+        patchregs = self.__patchregs
         ip = 0
         while 0 <= ip < len(self.__program):
             registers[self.__ip_reg] = ip
@@ -59,8 +79,9 @@ class InputData:
             ip = registers[self.__ip_reg] + 1
 
             # Patching the really slow part of the program - this assumes that the troublesome lines are in the
-            # area between lines 2 - 12 in the program
-            if ip == 2 and registers[patchreg1] != 0:
+            # area between lines 2 - 12 in the program, and that __init__ recognized the loop's shape
+            if ip == 2 and patchregs is not None and registers[patchregs[0]] != 0:
+                patchreg1, patchreg2, patchreg3 = patchregs
                 while registers[patchreg1] <= registers[patchreg2]:
                     if registers[patchreg2] % registers[patchreg1] == 0:
                         registers[patchreg3] += registers[patchreg1]

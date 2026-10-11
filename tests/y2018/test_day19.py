@@ -34,3 +34,25 @@ def test_part1_1() -> None:
 def test_part2_1() -> None:
     _, p2 = solve_parts(TEST_STRING, 2)
     assert p2 == "1345"
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts() -> None:
+    assert solve_parts(TEST_STRING) == ("2340", "1345")
+
+
+def test_official_example() -> None:
+    # A short program that doesn't match the patched divisor-loop shape, so it
+    # runs through pure emulation; both parts halt with the same register 0.
+    assert solve_parts(
+        """#ip 0
+seti 5 0 1
+seti 6 0 2
+addi 0 1 0
+addr 1 2 3
+setr 1 0 0
+seti 8 0 4
+seti 1 0 5"""
+    ) == ("6", "6")
