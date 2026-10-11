@@ -18,3 +18,17 @@ def test_part1_1() -> None:
 def test_part2_1() -> None:
     _, p2 = solve_parts(TEST_STRING, 2)
     assert p2 == "3"
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts() -> None:
+    assert solve_parts(TEST_STRING) == ("4", "3")
+
+
+def test_part2_no_match() -> None:
+    # Every claim overlaps someone, so no intact claim exists.
+    p1, p2 = solve_parts("#1 @ 0,0: 2x2\n#2 @ 0,0: 1x1\n#3 @ 1,1: 1x1")
+    assert p1 == "2"
+    assert p2 == "-1"

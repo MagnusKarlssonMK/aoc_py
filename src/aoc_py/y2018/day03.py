@@ -1,11 +1,11 @@
 """
 2018 day 3 - No Matter How You Slice It
 
-Not very efficient solution since it stores and interates over every single coordinate. It might be possible to
+Not very efficient solution since it stores and iterates over every single coordinate. It might be possible to
 create a solution just based on corners, but it would be MUCH more complicated.
 
-Simply stores the claimed squares as coordinates in a counter dict, and gets the answer to Part 1 by counting how many
-squares have been counted more than once.
+Simply stores the claimed squares as packed coordinates in a counter dict, and gets the answer to Part 1 by counting
+how many squares have been counted more than once.
 While doing that, mark up the claims that don't have overlap just to prune what we need to check for Part 2. Then
 go over those once more and find which one still doesn't have overlap after the entire dict has been built.
 """
@@ -33,40 +33,33 @@ class InputData:
         self.__claims = [Claim(line) for line in s.splitlines()]
 
     def get_overlap_and_id(self) -> tuple[int, int]:
-        seen: dict[Point, int] = {}
+        seen: dict[int, int] = {}
         possible: list[int] = []
         for i, c in enumerate(self.__claims):
             overlap = False
             for x in range(c.corner.x, c.corner.x + c.x_len):
                 for y in range(c.corner.y, c.corner.y + c.y_len):
-                    p = Point(x, y)
-                    if p not in seen:
-                        seen[p] = 1
+                    k = (x << 10) + y  # fabric is 1000x1000, so y fits in 10 bits
+                    if k not in seen:
+                        seen[k] = 1
                     else:
-                        seen[p] += 1
+                        seen[k] += 1
                         overlap = True
             if not overlap:
                 possible.append(i)
-        overlap_count = sum([1 for s in seen if seen[s] > 1])
+        overlap_count = sum(1 for s in seen if seen[s] > 1)
 
-        while possible:
-            i = possible.pop(0)
-            for x in range(
-                self.__claims[i].corner.x,
-                self.__claims[i].corner.x + self.__claims[i].x_len,
-            ):
-                for y in range(
-                    self.__claims[i].corner.y,
-                    self.__claims[i].corner.y + self.__claims[i].y_len,
-                ):
-                    p = Point(x, y)
-                    if seen[p] > 1:
+        for i in possible:
+            c = self.__claims[i]
+            for x in range(c.corner.x, c.corner.x + c.x_len):
+                for y in range(c.corner.y, c.corner.y + c.y_len):
+                    if seen[(x << 10) + y] > 1:
                         break
                 else:
                     continue
                 break
             else:
-                return overlap_count, self.__claims[i].id
+                return overlap_count, c.id
         return overlap_count, -1
 
 
