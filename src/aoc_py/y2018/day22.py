@@ -10,21 +10,17 @@ in the square defined by the start and target nodes.
 
 Part 2
 
-Find the shortest path with a Dijkstra algorithm, using a combination of point
-and equipped tool as nodes. Attempt to limit the state space by keeping track
-of the 'worst case', i.e. having to swap gears every remaining square for the
-manhattan distance from current point to target. Also using a weighted time for
-the pq, adding 'best case scenario' to the remaining squares from manhattan
-distance to the time used for queue prioritization only, to try to steer the
-states towards the target node. This basically turns the algorithm into A*,
-since the added weight acts as heuristic.
+Find the shortest path with an A* search over (x, y, tool) states, with a cost of
+1 per step and 7 per tool swap, and the manhattan distance to the target as the
+heuristic. The hot path represents states as plain ints and tuples rather than
+Point/Node objects, since the hashing of those dominates the search.
 """
 
-from dataclasses import dataclass
 from enum import Enum
 from heapq import heappop, heappush
+from typing import Final
 
-from aoc_py.util.point import Directions, Point
+from aoc_py.util.point import Point
 
 
 class Tool(Enum):
@@ -39,18 +35,20 @@ class Type(Enum):
     NARROW = 2
 
 
-@dataclass(frozen=True)
-class Node:
-    point: Point
-    tool: Tool
-
-    def __lt__(self, other: Node) -> bool:
-        return self.point < other.point
-
-
 class InputData:
     __SWAP_COST = 7
     __STEP_COST = 1
+    # Per region type: the tool it forbids, and the two tools it allows (as Tool values).
+    __FORBIDDEN: Final = {
+        Type.ROCKY: Tool.NEITHER.value,
+        Type.WET: Tool.TORCH.value,
+        Type.NARROW: Tool.GEAR.value,
+    }
+    __ALLOWED: Final = {
+        Type.ROCKY: (Tool.TORCH.value, Tool.GEAR.value),
+        Type.WET: (Tool.GEAR.value, Tool.NEITHER.value),
+        Type.NARROW: (Tool.TORCH.value, Tool.NEITHER.value),
+    }
 
     def __init__(self, rawstr: str) -> None:
         lines = rawstr.splitlines()
@@ -58,6 +56,7 @@ class InputData:
         self.__target = Point(*list(map(int, lines[1].split(": ")[1].split(","))))
         self.__start = Point(0, 0)
         self.__geoindex: dict[Point, int] = {}
+        self.__regiontype: dict[tuple[int, int], Type] = {}
 
     def __get_geoindex(self, p: Point) -> int:
         if p in self.__geoindex:
@@ -78,95 +77,65 @@ class InputData:
     def __get_erosionlevel(self, p: Point) -> int:
         return (self.__depth + self.__get_geoindex(p)) % 20183
 
-    def __get_region_type(self, p: Point) -> Type:
-        return Type(self.__get_erosionlevel(p) % 3)
+    def __get_region_type(self, x: int, y: int) -> Type:
+        region = self.__regiontype.get((x, y))
+        if region is None:
+            region = Type(self.__get_erosionlevel(Point(x, y)) % 3)
+            self.__regiontype[(x, y)] = region
+        return region
 
     def get_p1(self) -> int:
         return sum(
-            [
-                self.__get_region_type(Point(x, y)).value
-                for x in range(self.__target.x + 1)
-                for y in range(self.__target.y + 1)
-            ]
+            self.__get_region_type(x, y).value
+            for x in range(self.__target.x + 1)
+            for y in range(self.__target.y + 1)
         )
-
-    def __get_worstcase(self, p: Point) -> int:
-        return (
-            self.__target.manhattan(p) * (InputData.__STEP_COST + InputData.__SWAP_COST)
-        ) + InputData.__SWAP_COST
-
-    def __get_bestcase(self, p: Point) -> int:
-        return self.__target.manhattan(p) * InputData.__STEP_COST
 
     def get_p2(self) -> int:
-        toolnotallowed = {
-            Type.ROCKY: Tool.NEITHER,
-            Type.WET: Tool.TORCH,
-            Type.NARROW: Tool.GEAR,
-        }
-        pqueue: list[tuple[int, int, Node, Node]] = []
-        heappush(
-            pqueue,
-            (
-                self.__get_bestcase(self.__start),
-                0,
-                Node(self.__start, Tool.TORCH),
-                Node(Point(-1, -1), Tool.TORCH),
-            ),
-        )
-        target = Node(self.__target, Tool.TORCH)
-        visited: dict[Node, int] = {target: self.__get_worstcase(self.__start)}
+        tx, ty = self.__target.x, self.__target.y
+        goal_tool = Tool.TORCH.value
+        forbidden = InputData.__FORBIDDEN
+        allowed = InputData.__ALLOWED
+        swap_cost = InputData.__SWAP_COST
+        step_cost = InputData.__STEP_COST
+        region_type = self.__get_region_type
+
+        start = (self.__start.x, self.__start.y, goal_tool)
+        # Queue entries are (weight + heuristic, time spent, x, y, tool).
+        pqueue: list[tuple[int, int, int, int, int]] = [(tx + ty, 0, *start)]
+        dist: dict[tuple[int, int, int], int] = {start: 0}
+        timespent = 0
         while pqueue:
-            _, timespent, current, previous = heappop(pqueue)
-            if current == target:
-                visited[current] = timespent
+            _, timespent, x, y, tool = heappop(pqueue)
+            if x == tx and y == ty and tool == goal_tool:
                 break
-            if (worstcase := timespent + self.__get_worstcase(current.point)) < visited[
-                target
-            ]:
-                visited[target] = worstcase
-            if timespent + self.__get_bestcase(current.point) >= visited[target] or (
-                current in visited and timespent >= visited[current]
-            ):
+            if timespent > dist[(x, y, tool)]:
                 continue
-            visited[current] = timespent
-            if current.point != previous.point:
-                # Add the option to swap tools unless that's what we came from doing
-                newtool = next(
-                    t
-                    for t in Tool
-                    if t
-                    not in (
-                        current.tool,
-                        toolnotallowed[self.__get_region_type(current.point)],
-                    )
-                )
+            # Add the option to swap to the other tool allowed in this region.
+            first, second = allowed[region_type(x, y)]
+            newtool = second if tool == first else first
+            newkey = (x, y, newtool)
+            newtime = timespent + swap_cost
+            if newtime < dist.get(newkey, newtime + 1):
+                dist[newkey] = newtime
                 heappush(
                     pqueue,
-                    (
-                        timespent
-                        + InputData.__SWAP_COST
-                        + self.__get_bestcase(current.point),
-                        timespent + InputData.__SWAP_COST,
-                        Node(current.point, newtool),
-                        Node(current.point, current.tool),
-                    ),
+                    (newtime + abs(x - tx) + abs(y - ty), newtime, x, y, newtool),
                 )
-            # for np in current.point.get_adjacent():
-            for np in [current.point + d for d in Directions.NEIGHBORS_STRAIGHT]:
-                if np.x < 0 or np.y < 0 or (np, current.tool) == previous:
+            # Move into each adjacent valid region while keeping the current tool.
+            for dx, dy in ((1, 0), (0, 1), (-1, 0), (0, -1)):
+                nx, ny = x + dx, y + dy
+                if nx < 0 or ny < 0 or tool == forbidden[region_type(nx, ny)]:
                     continue
-                if current.tool != toolnotallowed[self.__get_region_type(np)]:
+                newkey = (nx, ny, tool)
+                newtime = timespent + step_cost
+                if newtime < dist.get(newkey, newtime + 1):
+                    dist[newkey] = newtime
                     heappush(
                         pqueue,
-                        (
-                            timespent + InputData.__STEP_COST + self.__get_bestcase(np),
-                            timespent + InputData.__STEP_COST,
-                            Node(np, current.tool),
-                            Node(current.point, current.tool),
-                        ),
+                        (newtime + abs(nx - tx) + abs(ny - ty), newtime, nx, ny, tool),
                     )
-        return visited[target]
+        return timespent
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
