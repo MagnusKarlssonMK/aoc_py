@@ -1,18 +1,24 @@
 """
 2017 day 22 - Sporifica Virus
 
-Represent the grid with a set of infected points, and store non-clean points in a dict with its state. While performing
-the bursts, add the point or update its state if the point the virus is on is no longer clean, or remove it from the
-dict if it becomes clean.
+The grid is stored as a dict mapping a packed (x, y) integer key to a NodeState; keys that are absent are CLEAN. The
+virus position is kept as two plain integers and its direction as a (dx, dy) pair, so a burst is only integer
+arithmetic and a dict lookup instead of allocating Point objects for the position and for every rotation. Because
+part 2 performs 10,000,000 bursts, the burst logic is also inlined into the loop rather than being a method call.
 """
 
-from copy import deepcopy
-from enum import Enum
+from enum import IntEnum
+from typing import Final
 
-from aoc_py.util.point import Directions, Point
+# The y coordinate is packed into the low bits of the key. Since the virus only ever moves one step per burst, 2**25
+# is comfortably larger than the maximum |y| reachable in 10,000,000 bursts, so the packing is collision free.
+_KEY_SHIFT: Final = 25
+
+PART1_BURSTS: Final = 10_000
+PART2_BURSTS: Final = 10_000_000
 
 
-class NodeState(Enum):
+class NodeState(IntEnum):
     CLEAN = 0
     WEAKENED = 1
     INFECTED = 2
@@ -21,73 +27,61 @@ class NodeState(Enum):
 
 class InputData:
     def __init__(self, rawstr: str) -> None:
-        self.__infected: dict[Point, NodeState] = {}
+        self.__grid: dict[int, NodeState] = {}
         lines = rawstr.splitlines()
         for y, line in enumerate(lines):
             for x, c in enumerate(line):
                 if c == "#":
-                    self.__infected[Point(x, y)] = NodeState.INFECTED
-        self.__virus_pos: Point = Point(len(lines) // 2, len(lines[0]) // 2)
-        self.__virus_dir = Directions.UP
-        self.__startvalues = (
-            deepcopy(self.__infected),
-            deepcopy(self.__virus_pos),
-            deepcopy(self.__virus_dir),
-        )
-
-    def __reset(self):
-        self.__infected = deepcopy(self.__startvalues[0])
-        self.__virus_pos = deepcopy(self.__startvalues[1])
-        self.__virus_dir = deepcopy(self.__startvalues[2])
-
-    def __perform_burst(self) -> bool:
-        current_infected: bool = self.__virus_pos in self.__infected
-        if current_infected:
-            self.__virus_dir = self.__virus_dir.rotate_right()
-            self.__infected.pop(self.__virus_pos)
-        else:
-            self.__virus_dir = self.__virus_dir.rotate_left()
-            self.__infected[self.__virus_pos] = NodeState.INFECTED
-        self.__virus_pos += self.__virus_dir
-        return not current_infected
-
-    def __perform_evolved_burst(self) -> bool:
-        current_state = self.__infected.get(self.__virus_pos, NodeState.CLEAN)
-        newstate = None
-        match current_state:
-            case NodeState.CLEAN:
-                self.__virus_dir = self.__virus_dir.rotate_left()
-                newstate = NodeState.WEAKENED
-            case NodeState.WEAKENED:
-                newstate = NodeState.INFECTED
-            case NodeState.INFECTED:
-                self.__virus_dir = self.__virus_dir.rotate_right()
-                newstate = NodeState.FLAGGED
-            case NodeState.FLAGGED:
-                self.__virus_dir = self.__virus_dir.rotate_right().rotate_right()
-                newstate = NodeState.CLEAN
-        if newstate != NodeState.CLEAN:
-            self.__infected[self.__virus_pos] = newstate
-        else:
-            self.__infected.pop(self.__virus_pos)
-        self.__virus_pos += self.__virus_dir
-        return newstate == NodeState.INFECTED
+                    self.__grid[(x << _KEY_SHIFT) + y] = NodeState.INFECTED
+        self.__start = (len(lines) // 2, len(lines[0]) // 2)
 
     def get_infected_count(self, bursts: int, evolved: bool = False) -> int:
+        grid = dict(self.__grid)
+        x, y = self.__start
+        dx, dy = 0, -1  # Start facing up.
+        count = 0
         if not evolved:
-            result = sum([1 for _ in range(bursts) if self.__perform_burst()])
+            # A clean node becomes infected and an infected node becomes clean, turning left and right respectively.
+            for _ in range(bursts):
+                key = (x << _KEY_SHIFT) + y
+                if key in grid:
+                    dx, dy = -dy, dx  # Turn right.
+                    del grid[key]
+                else:
+                    dx, dy = dy, -dx  # Turn left.
+                    grid[key] = NodeState.INFECTED
+                    count += 1
+                x += dx
+                y += dy
         else:
-            result = sum([1 for _ in range(bursts) if self.__perform_evolved_burst()])
-        self.__reset()
-        return result
+            clean, weakened, infected, flagged = NodeState
+            get = grid.get
+            for _ in range(bursts):
+                key = (x << _KEY_SHIFT) + y
+                state = get(key, clean)
+                if state == clean:
+                    dx, dy = dy, -dx  # Turn left.
+                    grid[key] = weakened
+                elif state == weakened:
+                    grid[key] = infected
+                    count += 1
+                elif state == infected:
+                    dx, dy = -dy, dx  # Turn right.
+                    grid[key] = flagged
+                else:
+                    dx, dy = -dx, -dy  # Reverse direction.
+                    del grid[key]
+                x += dx
+                y += dy
+        return count
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1 = p2 = "-1"
     p = InputData(inputdata)
     if part in (None, 1):
-        p1 = str(p.get_infected_count(10_000))
+        p1 = str(p.get_infected_count(PART1_BURSTS))
     if part in (None, 2):
-        p2 = str(p.get_infected_count(10_000_000, True))
+        p2 = str(p.get_infected_count(PART2_BURSTS, True))
 
     return p1, p2
