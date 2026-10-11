@@ -9,28 +9,26 @@ box containing the points is the smallest.
 import re
 from dataclasses import dataclass
 
-from aoc_py.util.point import Point
 
-
-@dataclass
+@dataclass(slots=True)
 class Position:
-    pos: Point
-    vel: Point
+    x: int
+    y: int
+    vx: int
+    vy: int
 
     @classmethod
     def parse_str(cls, s: str) -> Position:
         nbrs = list(map(int, re.findall(r"-?\d+", s)))
-        pos = Point(nbrs[0], nbrs[1])
-        vel = Point(nbrs[2], nbrs[3])
-        return Position(pos, vel)
+        return Position(nbrs[0], nbrs[1], nbrs[2], nbrs[3])
 
     def step(self) -> Position:
-        return Position(self.pos + self.vel, self.vel)
+        return Position(self.x + self.vx, self.y + self.vy, self.vx, self.vy)
 
 
 def get_bounds(positions: list[Position]) -> tuple[int, int, int, int]:
-    xs = [p.pos.x for p in positions]
-    ys = [p.pos.y for p in positions]
+    xs = [p.x for p in positions]
+    ys = [p.y for p in positions]
     return min(xs), max(xs), min(ys), max(ys)
 
 
@@ -43,7 +41,7 @@ def render_grid(positions: list[Position]) -> str:
     min_x, max_x, min_y, max_y = get_bounds(positions)
     grid = [["." for _ in range(max_x - min_x + 1)] for _ in range(max_y - min_y + 1)]
     for p in positions:
-        grid[p.pos.y - min_y][p.pos.x - min_x] = "#"
+        grid[p.y - min_y][p.x - min_x] = "#"
     return "\n" + "\n".join("".join(g) for g in grid)
 
 
@@ -57,7 +55,7 @@ class InputData:
         seconds = 0
         message = ""
         while True:
-            newpositions = [positions[i].step() for i, _ in enumerate(positions)]
+            newpositions = [p.step() for p in positions]
             newarea = get_box_area(newpositions)
             if newarea < area:
                 area = newarea

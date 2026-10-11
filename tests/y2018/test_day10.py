@@ -58,3 +58,14 @@ def test_part1_1() -> None:
 def test_part2_1() -> None:
     _, p2 = solve_parts(TEST_STRING, 2)
     assert p2 == "3"
+
+
+# ----------- Both parts ------------
+
+
+def test_single_cell_convergence() -> None:
+    # Two points converge diagonally onto the same cell; the tightest box is a
+    # single cell after 2 seconds.
+    test = """position=<0, 0> velocity=< 1,  1>
+position=<4, 4> velocity=<-1, -1>"""
+    assert solve_parts(test) == ("\n#", "2")
