@@ -5,6 +5,7 @@ Parsing, parsing, parsing... and then some sorting.
 Not much else to say, just some dict trickery to extract the corresponding values / keys from the records.
 """
 
+from dataclasses import dataclass
 from enum import Enum
 
 
@@ -14,6 +15,7 @@ class Event(Enum):
     WAKES_UP = "wakes"
 
 
+@dataclass(frozen=True, order=True)
 class Timestamp:
     year: int
     month: int
@@ -21,37 +23,20 @@ class Timestamp:
     hour: int
     minute: int
 
-    def __init__(self, s: str) -> None:
-        d, t = s.split()
-        h, m = t.split(":")
-        y, mo, day = d.split("-")
-        self.year = int(y)
-        self.month = int(mo)
-        self.day = int(day)
-        self.hour = int(h)
-        self.minute = int(m)
-
-    def __lt__(self, other: Timestamp) -> bool:
-        if self.year != other.year:
-            return self.year < other.year
-        if self.month != other.month:
-            return self.month < other.month
-        if self.day != other.day:
-            return self.day < other.day
-        if self.hour != other.hour:
-            return self.hour < other.hour
-        return self.minute < other.minute
-
 
 class InputData:
     def __init__(self, s: str) -> None:
         self.__records: list[tuple[Timestamp, int, Event]] = []
         for line in s.splitlines():
             left, right = line.lstrip("[").split("] ")
+            d, t = left.split()
+            y, mo, day = d.split("-")
+            h, m = t.split(":")
+            time = Timestamp(int(y), int(mo), int(day), int(h), int(m))
             right = right.split()
             event = Event(right[0])
             guard = int(right[1].strip("#")) if event == Event.BEGIN_SHIFT else -1
-            self.__records.append((Timestamp(left), guard, event))
+            self.__records.append((time, guard, event))
         self.__records.sort(key=lambda x: x[0])
 
     def get_guard_id(self) -> tuple[int, int]:
