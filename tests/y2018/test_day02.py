@@ -30,3 +30,8 @@ def test_part1_1() -> None:
 def test_part2_1() -> None:
     _, p2 = solve_parts(TEST_STRING_2, 2)
     assert p2 == "fgij"
+
+
+def test_part2_2() -> None:
+    _, p2 = solve_parts("abcde\nabxde", 2)
+    assert p2 == "abde"

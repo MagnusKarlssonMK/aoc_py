@@ -3,8 +3,8 @@
 
 Part 1
 
-Simply count the characters in each string, and keep track of how many times a string has a character with
-exactly 2 / 3 repetitions. Guess I could have used count from itertools, but meh.
+Simply count the characters in each string with a Counter, and keep track of how many times a string has a character
+with exactly 2 / 3 repetitions.
 
 Part 2
 
@@ -12,6 +12,7 @@ Go through the combinations of strings and generate a string of the matching cha
 exactly 1 smaller, we found the match.
 """
 
+from collections import Counter
 from itertools import combinations
 
 
@@ -22,9 +23,7 @@ class InputData:
     def get_p1(self) -> int:
         twos = threes = 0
         for line in self.__lines:
-            counts = {}
-            for c in line:
-                counts[c] = 1 if c not in counts else counts[c] + 1
+            counts = Counter(line)
             if 2 in counts.values():
                 twos += 1
             if 3 in counts.values():
@@ -34,7 +33,7 @@ class InputData:
     def get_p2(self) -> str:
         result = ""
         for one, two in combinations(self.__lines, 2):
-            common = "".join([c for i, c in enumerate(one) if one[i] == two[i]])
+            common = "".join(c1 for c1, c2 in zip(one, two) if c1 == c2)
             if len(common) == len(one) - 1:
                 result = common
                 break
