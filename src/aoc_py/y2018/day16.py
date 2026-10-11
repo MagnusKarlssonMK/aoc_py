@@ -13,9 +13,12 @@ Play a bit of sudoku to generate the mapping between opcode and number, and then
 test program to find the value of register 0.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
 
-OP_CODES = {
+_OpFunc = Callable[[list[int], int, int], int]
+
+OP_CODES: dict[str, _OpFunc] = {
     "addr": lambda op, a, b: op[a] + op[b],
     "addi": lambda op, a, b: op[a] + b,
     "mulr": lambda op, a, b: op[a] * op[b],
