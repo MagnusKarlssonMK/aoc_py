@@ -11,15 +11,12 @@ class InputData:
         self.__offset = ord("a") - ord("A")
 
     def __get_reacted_unit_count(self, polymer: str) -> int:
-        i = 0
-        poly = list(polymer)
-        while i < len(poly) - 1:
-            if abs(ord(poly[i]) - ord(poly[i + 1])) == self.__offset:
-                del poly[i : i + 2]
-                if i > 0:
-                    i -= 1
+        poly: list[str] = []
+        for c in polymer:
+            if poly and abs(ord(c) - ord(poly[-1])) == self.__offset:
+                poly.pop()
             else:
-                i += 1
+                poly.append(c)
         return len(poly)
 
     def __delete_unit(self, unit: int) -> str:
@@ -30,12 +27,11 @@ class InputData:
         return self.__get_reacted_unit_count(self.__polymer)
 
     def get_p2(self) -> int:
-        shortest = None
+        shortest = len(self.__polymer)
         for c in range(ord("A"), ord("Z") + 1):
             removed_len = self.__get_reacted_unit_count(self.__delete_unit(c))
-            if not shortest or removed_len < shortest:
-                shortest = removed_len
-        return shortest if shortest else -1
+            shortest = min(shortest, removed_len)
+        return shortest
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
