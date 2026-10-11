@@ -7,9 +7,16 @@ Just build the buffer while keeping track of the current position.
 
 Part 2
 
-No need to actually build the buffer now, since the value 0 will always be in index 0, i.e. we are only looking
-for the number in index 1 after 50M iterations. So all we need to do is to keep track of the current position and
-update the current value of index 1 whenever it ends up there.
+The value 0 never moves from index 0, so we only need to know which value ends up at index 1. A naive
+loop over all 50M insertions is slow, so whole stretches are skipped at a time:
+
+Between two wrap-arounds the position simply climbs. Each insertion moves the current position by `steps`
+positions plus one extra step for the newly inserted value (steps + 1 in total), while the buffer only
+grows by one. The gap between the current position and the end of the buffer therefore shrinks by exactly
+`steps` every insertion, and no value can land at index 1 while the position is just climbing. So the climb
+up to the next wrap-around can be jumped over in one go: the jump is `(gap - 1) // steps` rounds (a
+ceil-div). At a wrap-around the position drops back below `steps`, so the number of wraps - and thus the
+number of loop iterations - is tiny.
 """
 
 
@@ -25,13 +32,26 @@ class InputData:
             buffer.insert(current_pos, nbr)
         return buffer[current_pos + 1]
 
-    def get_p2(self) -> int:
-        pos_1 = -1
+    def get_p2(self, target: int = 50_000_000) -> int:
+        steps = self.__steps
         current_pos = 0
-        for nbr in range(1, 50_000_001):
-            current_pos = 1 + (current_pos + self.__steps) % nbr
+        pos_1 = -1
+        nbr = 1
+        while nbr <= target:
+            gap = nbr - current_pos
+            if gap > steps:
+                # Climb: gap shrinks by `steps` per round, so the next wrap-around happens
+                # `(gap - 1) // steps` rounds from here. No index-1 value can land in between.
+                jump = (gap - 1) // steps
+                if nbr + jump > target:
+                    break
+                nbr += jump
+                current_pos += jump * (steps + 1)
+            # Wrap-around: the only round that can drop a value at index 1.
+            current_pos = 1 + (current_pos + steps) % nbr
             if current_pos == 1:
                 pos_1 = nbr
+            nbr += 1
         return pos_1
 
 
