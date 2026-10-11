@@ -2,8 +2,8 @@
 2017 day 18 - Duet
 
 Another assembly simulator of sorts. Nothing special about part 1, but a bit more tricky with part 2 since we now have
-two programs running in parallel and communcicating with messages. Mostly just a matter of having two instances of
-everything, keeping track of the progam states and toggling the 'running' program.
+two programs running in parallel and communicating with messages. Mostly just a matter of having two instances of
+everything, keeping track of the program states and toggling the 'running' program.
 """
 
 from dataclasses import dataclass
@@ -85,7 +85,7 @@ class InputData:
                 case Operation.MOD:
                     regs.mod_value(i.attr1, regs.get_value(i.attr2))
                 case Operation.RCV:
-                    if regs.get_value(i.attr1) != 0 and sound:
+                    if regs.get_value(i.attr1) != 0 and sound is not None:
                         return sound
                 case Operation.JGZ:
                     if regs.get_value(i.attr1) > 0:
@@ -125,9 +125,7 @@ class InputData:
                     sp[running] += 1
                 case Operation.RCV:
                     if inbox[running]:
-                        regs[running].set_value(
-                            i.attr1, regs[running].get_value(str(inbox[running].pop(0)))
-                        )
+                        regs[running].set_value(i.attr1, inbox[running].pop(0))
                         states[running] = State.IDLE
                         sp[running] += 1
                     else:
