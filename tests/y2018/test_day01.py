@@ -49,3 +49,10 @@ def test_part2_4() -> None:
 def test_part2_5() -> None:
     _, p2 = solve_parts("+7\n+7\n-2\n-7\n-4", 2)
     assert p2 == "14"
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts() -> None:
+    assert solve_parts("+1\n-2\n+3\n+1") == ("3", "2")

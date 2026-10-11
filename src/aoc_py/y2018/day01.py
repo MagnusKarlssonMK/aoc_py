@@ -14,7 +14,7 @@ repetition.
 
 class InputData:
     def __init__(self, s: str) -> None:
-        self.__nbrs = [int(nbr.strip("+")) for nbr in s.splitlines()]
+        self.__nbrs = [int(nbr) for nbr in s.splitlines()]
 
     def get_p1(self) -> int:
         return sum(self.__nbrs)
