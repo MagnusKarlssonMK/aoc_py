@@ -31,3 +31,15 @@ def test_part1_1() -> None:
 def test_part2_1() -> None:
     _, p2 = solve_parts(TEST_STRING, 2)
     assert p2 == "999999999374"
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts() -> None:
+    assert solve_parts(TEST_STRING) == ("325", "999999999374")
+
+
+def test_empty_rules() -> None:
+    # No spread rules: every plant dies out immediately and the delta stays 0.
+    assert solve_parts("initial state: #\n\n") == ("0", "0")

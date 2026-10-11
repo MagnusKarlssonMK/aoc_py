@@ -6,7 +6,7 @@ Store the pot state as a set of indices containing a plant, to make it a bit eas
 temporarily convert it to string while creating a new generation.
 Part 1: simply generate 20 times and take the sum of the set of pots.
 Part 2: the sum increase for each generation will eventually converge to a constant value, so keep looping new
-generations and checking the increase, and once it seems to have settled (using 10 times repeated delta here), we can
+generations and checking the increase, and once it seems to have settled (using 20 times repeated delta here), we can
 calculate the final value.
 """
 
@@ -22,11 +22,13 @@ class InputData:
         }
 
     def __generate(self, pots: set[int]) -> set[int]:
+        if not pots:
+            return set()
         result: set[int] = set()
         for i in range(min(pots) - 2, max(pots) + 3):
             if (
                 self.__spread.get(
-                    "".join(["#" if j in pots else "." for j in range(i - 2, i + 3)]),
+                    "".join("#" if j in pots else "." for j in range(i - 2, i + 3)),
                     ".",
                 )
                 == "#"
