@@ -11,11 +11,8 @@ class InputData:
         self.__steprules: dict[str, set[str]] = {}
         for line in s.splitlines():
             w = line.split()
-            if w[1] not in self.__steprules:
-                self.__steprules[w[1]] = set()
-            if w[7] not in self.__steprules:
-                self.__steprules[w[7]] = set()
-            self.__steprules[w[7]].add(w[1])
+            self.__steprules.setdefault(w[1], set())
+            self.__steprules.setdefault(w[7], set()).add(w[1])
 
     def get_p1(self) -> str:
         done: list[str] = []
@@ -36,7 +33,7 @@ class InputData:
 
     def get_p2(self, additional_workers: int = 4, flatcost: int = 60) -> int:
         done: list[str] = []
-        not_done = sorted([step for step in self.__steprules])
+        not_done = sorted(self.__steprules)
         working: dict[str, int] = {}
         seconds = 0
         while not_done or working:
