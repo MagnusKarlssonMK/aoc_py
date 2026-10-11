@@ -41,22 +41,22 @@ class InputData:
     def __init__(self, s: str) -> None:
         self.__moves = [self.__STR_TO_POINT[m] for m in s.split(",")]
 
-    def get_distance(self) -> tuple[int, int]:
+    def get_distances(self) -> tuple[int, int]:
+        """Return the distance from the start at the end, and the maximum distance reached during the walk."""
         start_location = Point(0, 0)
         current_location = Point(0, 0)
         current_distance = 0
-        maxdistance = 0
+        max_distance = 0
         for move in self.__moves:
             current_location += move
             current_distance = get_hex_distance(current_location, start_location)
-            maxdistance = max(maxdistance, current_distance)
-        return current_distance, maxdistance
+            max_distance = max(max_distance, current_distance)
+        return current_distance, max_distance
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1 = p2 = "-1"
-    p = InputData(inputdata)
-    r1, r2 = p.get_distance()
+    r1, r2 = InputData(inputdata).get_distances()
     if part in (None, 1):
         p1 = str(r1)
     if part in (None, 2):

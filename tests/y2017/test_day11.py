@@ -44,3 +44,18 @@ def test_part2_3() -> None:
 def test_part2_4() -> None:
     _, p2 = solve_parts("se,sw,se,sw,sw", 2)
     assert p2 == "3"
+
+
+# ----------- Both parts ------------
+
+
+def test_part1_solve_parts() -> None:
+    assert solve_parts("ne,ne,ne", 1) == ("3", "-1")
+
+
+def test_part2_solve_parts() -> None:
+    assert solve_parts("ne,ne,ne", 2) == ("-1", "3")
+
+
+def test_both_parts() -> None:
+    assert solve_parts("se,sw,se,sw,sw") == ("3", "3")
