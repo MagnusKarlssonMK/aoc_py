@@ -13,22 +13,24 @@ class InputData:
     def __init__(self, s: str) -> None:
         self.__inputnbr = s
         self.__scoreboard: list[int] = list(InputData.__START_RECIPES)
-        self.__elfs = list(InputData.__START_POSITIONS)
+        self.__elf0, self.__elf1 = InputData.__START_POSITIONS
 
     def __reset(self) -> None:
         self.__scoreboard = list(InputData.__START_RECIPES)
-        self.__elfs = list(InputData.__START_POSITIONS)
+        self.__elf0, self.__elf1 = InputData.__START_POSITIONS
 
     def __make_recipes(self) -> int:
         newcount = 1
-        current_sum = sum([self.__scoreboard[e] for e in self.__elfs])
+        score0 = self.__scoreboard[self.__elf0]
+        score1 = self.__scoreboard[self.__elf1]
+        current_sum = score0 + score1
         if current_sum > 9:
             newcount = 2  # Return the number of new recipes, so we can avoid making unnecessary comparisons in part 2
             self.__scoreboard.append(1)
         self.__scoreboard.append(current_sum % 10)
-        self.__elfs = [
-            (e + self.__scoreboard[e] + 1) % len(self.__scoreboard) for e in self.__elfs
-        ]
+        newlen = len(self.__scoreboard)
+        self.__elf0 = (self.__elf0 + score0 + 1) % newlen
+        self.__elf1 = (self.__elf1 + score1 + 1) % newlen
         return newcount
 
     def get_p1(self) -> int:
