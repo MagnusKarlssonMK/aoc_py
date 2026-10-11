@@ -28,6 +28,9 @@ class InputData:
         return sum(s.get_severity() for s in self.__scanners if s.depth % s.cycle == 0)
 
     def get_p2(self) -> int:
+        """A delay is safe for a scanner if (delay + depth) % cycle != 0, i.e. the scanner is not back at
+        its start when the packet passes. Fold the scanners in one at a time, keeping every delay that is
+        valid modulo the LCM of the scanner periods processed so far, expanded to the next LCM each time."""
         current_lcm = 1
         delays = [1]
         for s in self.__scanners:
