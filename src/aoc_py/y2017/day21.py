@@ -11,17 +11,18 @@ sort of like a memo cache along the way for larger block sizes?
 
 from typing import Final
 
+PART1_ITERATIONS: Final = 5
+PART2_ITERATIONS: Final = 18
+
 
 def flipblock(inblock: tuple[str, ...]) -> tuple[str, ...]:
-    return tuple(["".join(reversed(b)) for b in inblock])
+    return tuple("".join(reversed(b)) for b in inblock)
 
 
 def rotateblock(inblock: tuple[str, ...]) -> tuple[str, ...]:
     return tuple(
-        [
-            "".join([inblock[row][col] for row in range(len(inblock))])
-            for col in reversed(range(len(inblock)))
-        ]
+        "".join(inblock[row][col] for row in range(len(inblock)))
+        for col in reversed(range(len(inblock)))
     )
 
 
@@ -49,11 +50,9 @@ class InputData:
     def get_pixel_count(self, iterations: int) -> int:
         image = list(InputData.__START_IMAGE)
         for _ in range(iterations):
-            new_image: list[str] = []
             stepsize = 2 if len(image) % 2 == 0 else 3
+            new_image = [""] * (len(image) + len(image) // stepsize)
             for row in range(0, len(image), stepsize):
-                for _ in range(stepsize + 1):
-                    new_image.append("")
                 for col in range(0, len(image), stepsize):
                     block = [
                         image[row + i][col : col + stepsize] for i in range(stepsize)
@@ -70,8 +69,8 @@ def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1 = p2 = "-1"
     p = InputData(inputdata)
     if part in (None, 1):
-        p1 = str(p.get_pixel_count(5))
+        p1 = str(p.get_pixel_count(PART1_ITERATIONS))
     if part in (None, 2):
-        p2 = str(p.get_pixel_count(18))
+        p2 = str(p.get_pixel_count(PART2_ITERATIONS))
 
     return p1, p2
