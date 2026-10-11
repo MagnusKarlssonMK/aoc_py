@@ -7,6 +7,11 @@ square in range of an enemy (ties broken by reading order), then a second
 pass from that square to pick the first step of the path (again ties broken
 by reading order).
 
+The cavern cells are stored as packed integers (y * padded_width + x + 1),
+where padded_width is the grid width plus 2, so stepping left or right never
+wraps into an adjacent row. The BFS dicts and sets then work on plain int
+keys instead of hashing Point objects, which is a lot faster.
+
 Part 2 boosts the elf power until the elves win without losing a single elf.
 Since a higher power can only help the elves, the search is a binary search;
 combats for powers that lose an elf are aborted at the first elf death.
@@ -36,12 +41,16 @@ class Unit:
 
 class InputData:
     def __init__(self, rawstr: str) -> None:
-        self.__cavern: set[Point] = set()
+        lines = rawstr.splitlines()
+        padded_width = max(len(line) for line in lines) + 2
+        self.__padded_width = padded_width
+        self.__offsets = (-padded_width, -1, 1, padded_width)
+        self.__cavern: set[int] = set()
         self.__units: list[Unit] = []
-        for y, line in enumerate(rawstr.splitlines()):
+        for y, line in enumerate(lines):
             for x, char in enumerate(line):
                 if char != "#":
-                    self.__cavern.add(Point(x, y))
+                    self.__cavern.add(y * padded_width + x + 1)
                     if char in ("E", "G"):
                         self.__units.append(Unit(Point(x, y), char))
         self.__start_units = deepcopy(self.__units)
@@ -57,21 +66,28 @@ class InputData:
         targets = [t for t in self.__units if t.team != unit.team and t.hp > 0]
         if not targets:
             return False
+        padded = self.__padded_width
+        offs = self.__offsets
+        pos = unit.position.y * padded + unit.position.x + 1
         occupied = {
-            u.position for u in self.__units if u.position != unit.position and u.hp > 0
+            u.position.y * padded + u.position.x + 1
+            for u in self.__units
+            if u.position != unit.position and u.hp > 0
         }
         open_cells = self.__cavern - occupied
-        target_points: set[Point] = set()
+        target_points: set[int] = set()
         for target in targets:
-            for adj in get_adjacent(target.position):
+            tpos = target.position.y * padded + target.position.x + 1
+            for off in offs:
+                adj = tpos + off
                 if adj in open_cells:
                     target_points.add(adj)
-        if not target_points or unit.position in target_points:
+        if not target_points or pos in target_points:
             return True
         # First pass: nearest square in range of an enemy, ties broken by reading order
-        dist = {unit.position: 0}
-        queue = deque([unit.position])
-        best: tuple[int, Point] | None = None
+        dist = {pos: 0}
+        queue = deque([pos])
+        best: tuple[int, int] | None = None
         while queue:
             cur = queue.popleft()
             d = dist[cur]
@@ -79,7 +95,8 @@ class InputData:
                 break
             if cur in target_points and (best is None or (d, cur) < (best[0], best[1])):
                 best = (d, cur)
-            for nextpoint in get_adjacent(cur):
+            for off in offs:
+                nextpoint = cur + off
                 if nextpoint in open_cells and nextpoint not in dist:
                     dist[nextpoint] = d + 1
                     queue.append(nextpoint)
@@ -90,23 +107,21 @@ class InputData:
         queue = deque([best[1]])
         while queue:
             cur = queue.popleft()
-            for nextpoint in get_adjacent(cur):
+            for off in offs:
+                nextpoint = cur + off
                 if nextpoint in open_cells and nextpoint not in targetdist:
                     targetdist[nextpoint] = targetdist[cur] + 1
                     queue.append(nextpoint)
         candidates = [
-            adj
-            for adj in get_adjacent(unit.position)
-            if targetdist.get(adj) == best[0] - 1
+            pos + off for off in offs if targetdist.get(pos + off) == best[0] - 1
         ]
-        unit.position = min(candidates)
+        firststep = min(candidates)
+        unit.position = Point(firststep % padded - 1, firststep // padded)
         return True
 
     def __attack(self, unit: Unit) -> bool:
         """Returns True if this attack killed an elf."""
         targets = [t for t in self.__units if t.team != unit.team and t.hp > 0]
-        if not targets:
-            return False
         target_points: set[Point] = set()
         for target in targets:
             for adj in get_adjacent(target.position):

@@ -40,3 +40,11 @@ def test_part2_1() -> None:
 def test_part2_2() -> None:
     _, p2 = solve_parts(TEST_STRING_2, 2)
     assert p2 == "31284"
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts() -> None:
+    # An elf and a goblin adjacent with no way to move: they just trade hits.
+    assert solve_parts("###\n#E#\n#G#\n###") == ("134", "2650")
