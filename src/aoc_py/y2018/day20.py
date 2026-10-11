@@ -12,6 +12,7 @@ from aoc_py.util.point import Directions, Point
 
 
 class InputData:
+    P2_DOORS: int = 1000
     __DIRMAP: Final = {
         "N": Directions.UP,
         "E": Directions.RIGHT,
@@ -33,7 +34,7 @@ class InputData:
             elif c == ")":
                 current_pos = positions.pop()
             elif c == "|":
-                current_pos = Point(positions[-1].x, positions[-1].y)
+                current_pos = positions[-1]
             else:
                 current_pos = current_pos + self.__DIRMAP[c]
                 previous_distance = distances.get(previous_pos, 0)
@@ -43,9 +44,9 @@ class InputData:
                     )
                 else:
                     distances[current_pos] = previous_distance + 1
-            previous_pos = Point(current_pos.x, current_pos.y)
+            previous_pos = current_pos
         p1 = max(distances.values())
-        p2 = sum([1 for val in distances.values() if val >= 1000])
+        p2 = sum(1 for val in distances.values() if val >= InputData.P2_DOORS)
         return p1, p2
 
 
