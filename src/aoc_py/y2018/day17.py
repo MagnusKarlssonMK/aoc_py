@@ -30,45 +30,32 @@ class InputData:
         self.__y_min = min(p.y for p in self.__tiles)
         self.__y_max = max(p.y for p in self.__tiles)
 
+    def __fill_row(self, start: Point, direction: Point) -> Point:
+        """Fill a horizontal row of flowing water until a wall or a non-solid
+        floor stops the spread, returning the cell where the spread stopped."""
+        cur = start
+        below = cur + Directions.DOWN
+        while (cur not in self.__tiles or self.__tiles[cur] == Tile.FLOWING) and (
+            below in self.__tiles and self.__tiles[below] in (Tile.RESTING, Tile.CLAY)
+        ):
+            self.__tiles[cur] = Tile.FLOWING
+            cur += direction
+            below = cur + Directions.DOWN
+        return cur
+
     def get_water_tile_count(self) -> tuple[int, int]:
-        queue = [Point(500, 0)]
-        while queue:
-            p = queue.pop()
+        stack = [Point(500, 0)]
+        while stack:
+            p = stack.pop()
             if p.y > self.__y_max:
                 continue
             below = p + Directions.DOWN
             if below not in self.__tiles or self.__tiles[below] == Tile.FLOWING:
                 self.__tiles[p] = Tile.FLOWING
-                queue.append(below)
+                stack.append(below)
             else:
-                # Check left
-                p_left_x = p.x
-                p_left = Point(p.x, p.y)
-                p_left_below = p_left + Directions.DOWN
-                while (
-                    p_left not in self.__tiles or self.__tiles[p_left] == Tile.FLOWING
-                ) and (
-                    p_left_below in self.__tiles
-                    and (self.__tiles[p_left_below] in (Tile.RESTING, Tile.CLAY))
-                ):
-                    self.__tiles[p_left] = Tile.FLOWING
-                    p_left_x -= 1
-                    p_left = Point(p_left_x, p_left.y)
-                    p_left_below = p_left + Directions.DOWN
-                # Check right
-                p_right_x = p.x
-                p_right = Point(p.x, p.y)
-                p_right_below = p_right + Directions.DOWN
-                while (
-                    p_right not in self.__tiles or self.__tiles[p_right] == Tile.FLOWING
-                ) and (
-                    p_right_below in self.__tiles
-                    and (self.__tiles[p_right_below] in (Tile.RESTING, Tile.CLAY))
-                ):
-                    self.__tiles[p_right] = Tile.FLOWING
-                    p_right_x += 1
-                    p_right = Point(p_right_x, p_right.y)
-                    p_right_below = p_right + Directions.DOWN
+                p_left = self.__fill_row(p, Directions.LEFT)
+                p_right = self.__fill_row(p, Directions.RIGHT)
 
                 if (
                     p_left in self.__tiles
@@ -78,27 +65,22 @@ class InputData:
                 ):  # If delimited on both sides
                     for x in range(p_left.x + 1, p_right.x):
                         self.__tiles[Point(x, p.y)] = Tile.RESTING
-                    queue.append(Point(p.x, p.y - 1))
+                    stack.append(Point(p.x, p.y - 1))
                 else:
                     if p_left not in self.__tiles:  # Left side open...
-                        queue.append(p_left)
+                        stack.append(p_left)
                     if p_right not in self.__tiles:  # Right side open...
-                        queue.append(p_right)
+                        stack.append(p_right)
         p1 = sum(
-            [
-                1
-                for t in self.__tiles
-                if self.__tiles[t] in (Tile.RESTING, Tile.FLOWING)
-                and self.__y_min <= t.y <= self.__y_max
-            ]
+            1
+            for t in self.__tiles
+            if self.__tiles[t] in (Tile.RESTING, Tile.FLOWING)
+            and self.__y_min <= t.y <= self.__y_max
         )
         p2 = sum(
-            [
-                1
-                for t in self.__tiles
-                if self.__tiles[t] == Tile.RESTING
-                and self.__y_min <= t.y <= self.__y_max
-            ]
+            1
+            for t in self.__tiles
+            if self.__tiles[t] == Tile.RESTING and self.__y_min <= t.y <= self.__y_max
         )
         return p1, p2
 
