@@ -1,7 +1,8 @@
 """
-Store the tree map in a grid class, with a method to count the number of trees encountered for a certain input step
-pattern. When checking the columns, take the column coordinate of the location mod number of columns in the grid,
-in order to handle the expanding grid sideways.
+2020 day 3 - Toboggan Trajectory
+
+Store the map in a Grid and walk a given step pattern, wrapping the column coordinate with
+modulo the number of columns to handle the horizontally repeating map.
 """
 
 import math
@@ -11,10 +12,10 @@ from aoc_py.util.point import Directions, Point
 
 
 class InputData:
-    def __init__(self, s: str) -> None:
-        self.__grid = Grid(s)
+    def __init__(self, rawstr: str) -> None:
+        self.__grid = Grid(rawstr)
 
-    def __counttrees(self, step: Point) -> int:
+    def __count_trees(self, step: Point) -> int:
         pos = Directions.ORIGIN
         count = 0
         while (c := self.__grid.get_element(pos)) != "":
@@ -25,20 +26,18 @@ class InputData:
         return count
 
     def get_p1(self) -> int:
-        return self.__counttrees(Point(3, 1))
+        return self.__count_trees(Point(3, 1))
 
     def get_p2(self) -> int:
         return math.prod(
-            [
-                self.__counttrees(s)
-                for s in (
-                    Point(1, 1),
-                    Point(3, 1),
-                    Point(5, 1),
-                    Point(7, 1),
-                    Point(1, 2),
-                )
-            ]
+            self.__count_trees(step)
+            for step in (
+                Point(1, 1),
+                Point(3, 1),
+                Point(5, 1),
+                Point(7, 1),
+                Point(1, 2),
+            )
         )
 
 
