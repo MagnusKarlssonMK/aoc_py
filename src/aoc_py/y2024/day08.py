@@ -1,5 +1,10 @@
 """
 2024 day 8 - Resonant Collinearity
+
+Antennas are grouped by frequency. For every pair of same-frequency antennas, the two
+points directly in line with them are their antinodes. Part 1 only counts the points at
+the pair's own distance, while part 2 walks outwards in both directions and counts every
+harmonic, including the antenna cells themselves.
 """
 
 from dataclasses import dataclass
