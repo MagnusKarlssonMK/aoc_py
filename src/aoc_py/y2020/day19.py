@@ -1,56 +1,79 @@
 """
 2020 day 19 - Monster Messages
 
-A bit of regex generation and recursion.
+Check whether rule 0 can consume each whole message. Rules are matched recursively: matching a
+rule from a given position yields the set of positions it can end at, threading positions
+through the tokens of each alternative and unioning the alternatives. This handles the
+recursive rules of part 2 directly, without unrolling them or using regex.
 """
 
-import re
+from typing import Final
+
+_P2_OVERRIDES: Final = {
+    8: [["42"], ["42", "8"]],
+    11: [["42", "31"], ["42", "11", "31"]],
+}
+
+
+def _match_rule(
+    rules: dict[int, list[list[str]]],
+    rule: int,
+    text: str,
+    pos: int,
+    memo: dict[tuple[int, int], set[int]],
+) -> set[int]:
+    key = (rule, pos)
+    if key in memo:
+        return memo[key]
+    ends: set[int] = set()
+    for alternative in rules[rule]:
+        positions = {pos}
+        for token in alternative:
+            reached: set[int] = set()
+            for p in positions:
+                if token.isdigit():
+                    reached |= _match_rule(rules, int(token), text, p, memo)
+                elif p < len(text) and text[p] == token:
+                    reached.add(p + 1)
+            positions = reached
+            if not positions:
+                break
+        ends |= positions
+    memo[key] = ends
+    return ends
 
 
 class InputData:
     def __init__(self, rawstr: str) -> None:
-        rules, messages = rawstr.split("\n\n")
+        rulelines, messages = rawstr.split("\n\n")
         self.__messages = messages.splitlines()
         self.__rules: dict[int, list[list[str]]] = {}
-        for rule in rules.splitlines():
-            left, right = rule.split(": ")
+        for line in rulelines.splitlines():
+            left, right = line.split(": ")
             self.__rules[int(left)] = [
-                [c.strip('"') for c in s.split()] for s in right.split(" | ")
+                [token.strip('"') for token in alt.split()]
+                for alt in right.split(" | ")
             ]
 
-    def __gen_regex(self, rule: int = 0, depth: int = 20) -> str:
-        if depth == 0:
-            return ""
-        if self.__rules[rule][0][0].isdigit():
-            return (
-                "("
-                + "|".join(
-                    [
-                        "".join([self.__gen_regex(int(s), depth - 1) for s in sub])
-                        for sub in self.__rules[rule]
-                    ]
-                )
-                + ")"
-            )
-        return self.__rules[rule][0][0]
+    def __count_matches(self, rules: dict[int, list[list[str]]]) -> int:
+        return sum(
+            1
+            for msg in self.__messages
+            if len(msg) in _match_rule(rules, 0, msg, 0, {})
+        )
 
     def get_p1(self) -> int:
-        r = re.compile(self.__gen_regex())
-        result = [r.fullmatch(msg) for msg in self.__messages]
-        return len([valid for valid in result if valid])
+        return self.__count_matches(self.__rules)
 
     def get_p2(self) -> int:
-        self.__rules[8] = [["42"], ["42", "8"]]
-        self.__rules[11] = [["42", "31"], ["42", "11", "31"]]
-        return self.get_p1()
+        return self.__count_matches({**self.__rules, **_P2_OVERRIDES})
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1 = p2 = "-1"
     p = InputData(inputdata)
-    r1 = p.get_p1()
     if part in (None, 1):
-        p1 = str(r1)
+        p1 = str(p.get_p1())
     if part in (None, 2):
         p2 = str(p.get_p2())
 

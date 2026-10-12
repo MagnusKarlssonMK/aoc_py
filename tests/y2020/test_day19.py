@@ -59,7 +59,7 @@ aaaabbaabbaaaaaaabbbabbbaaabbaabaaa
 babaaabbbaaabaababbaabababaaab
 aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba"""
 
-from aoc_py.y2020.day19 import solve_parts
+from aoc_py.y2020.day19 import InputData, solve_parts
 
 # ----------- Part 1 ------------
 
@@ -75,3 +75,15 @@ def test_part1_1() -> None:
 def test_part2_1() -> None:
     _, p2 = solve_parts(TEST_STRING_2, 2)
     assert p2 == "12"
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts() -> None:
+    assert solve_parts(TEST_STRING_2) == ("3", "12")
+
+
+def test_parts_are_order_independent() -> None:
+    p = InputData(TEST_STRING_2)
+    assert (p.get_p2(), p.get_p1()) == (12, 3)
