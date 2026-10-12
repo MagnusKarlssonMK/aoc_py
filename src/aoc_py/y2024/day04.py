@@ -3,14 +3,13 @@
 
 Part 1
 
-Scan the grid and investigate all nodes containing an 'X', and look in all
-eight directions and see if XMAS is created.
+Scan the grid for every 'X' and look in all eight directions to see if XMAS is
+created.
 
 Part 2
 
-This time, scan for nodes containing an 'A' instead, form words from the
-combination with the diagonal nodes to form the X, and see if the generated
-word is eithes MAS or SAM.
+Scan for every 'A' instead and combine the two diagonals through it into an X.
+The center is a valid X-MAS when both diagonals spell either MAS or SAM.
 """
 
 from aoc_py.util.grid import Grid
@@ -18,43 +17,52 @@ from aoc_py.util.point import Directions
 
 
 class InputData:
-    def __init__(self, s: str) -> None:
-        self.__grid = Grid(s)
+    def __init__(self, rawstr: str) -> None:
+        self.__grid = Grid(rawstr)
 
     def get_p1(self) -> int:
+        grid = self.__grid
+        width, height, elements = grid.x_max, grid.y_max, grid.elements
         total = 0
-        for i, c in enumerate(self.__grid.elements):
-            p = self.__grid.get_point(i)
-            if c == "X":
-                for d in Directions.NEIGHBORS_ALL:
+        for p in grid.find_all("X"):
+            for d in Directions.NEIGHBORS_ALL:
+                x, y = p.x + d.x, p.y + d.y
+                if (
+                    0 <= x < width
+                    and 0 <= y < height
+                    and elements[y * width + x] == "M"
+                ):
+                    x, y = x + d.x, y + d.y
                     if (
-                        "X"
-                        + self.__grid.get_element(p + d)
-                        + self.__grid.get_element(p + d * 2)
-                        + self.__grid.get_element(p + d * 3)
-                        == "XMAS"
+                        0 <= x < width
+                        and 0 <= y < height
+                        and elements[y * width + x] == "A"
                     ):
-                        total += 1
+                        x, y = x + d.x, y + d.y
+                        if (
+                            0 <= x < width
+                            and 0 <= y < height
+                            and elements[y * width + x] == "S"
+                        ):
+                            total += 1
         return total
 
     def get_p2(self) -> int:
+        grid = self.__grid
+        width, height, elements = grid.x_max, grid.y_max, grid.elements
         total = 0
-        for i, c in enumerate(self.__grid.elements):
-            p = self.__grid.get_point(i)
-            if c == "A":
-                word1 = (
-                    self.__grid.get_element(p - Directions.DIAG_R_D)
-                    + "A"
-                    + self.__grid.get_element(p + Directions.DIAG_R_D)
-                )
-                if word1 in ("MAS", "SAM"):
-                    word2 = (
-                        self.__grid.get_element(p - Directions.DIAG_L_D)
-                        + "A"
-                        + self.__grid.get_element(p + Directions.DIAG_L_D)
-                    )
-                    if word2 in ("MAS", "SAM"):
-                        total += 1
+        for p in grid.find_all("A"):
+            x, y = p.x, p.y
+            if x < 1 or y < 1 or x >= width - 1 or y >= height - 1:
+                continue
+            diag1 = (
+                elements[(y - 1) * width + x - 1] + elements[(y + 1) * width + x + 1]
+            )
+            diag2 = (
+                elements[(y - 1) * width + x + 1] + elements[(y + 1) * width + x - 1]
+            )
+            if diag1 in ("MS", "SM") and diag2 in ("MS", "SM"):
+                total += 1
         return total
 
 
