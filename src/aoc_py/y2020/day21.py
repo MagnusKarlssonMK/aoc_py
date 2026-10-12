@@ -1,59 +1,60 @@
 """
 2020 day 21 - Allergen Assessment
+
+For each allergen, intersect the ingredient lists of every food that mentions it to get the set of
+candidate ingredients. Repeatedly: drop already-known ingredients from the candidates, assign the
+allergen of any candidate set that has shrunk to one, and remove the allergen. Ingredients left
+without an allergen are the safe ones.
 """
 
 
 class InputData:
     def __init__(self, rawstr: str) -> None:
         self.__ingredient_list: list[list[str]] = []
-        self.__allergens: dict[str, set[str]] = {}
+        self.__allergen_candidates: dict[str, set[str]] = {}
         self.__ingredients: set[str] = set()
-        self.__known: dict[str, str] = {}
         for line in rawstr.splitlines():
             left, right = line.strip(")").split("(contains ")
-            self.__ingredient_list.append(left.split())
-            i = set(self.__ingredient_list[-1])
-            self.__ingredients.update(i)
-            for a in right.split(", "):
-                if a not in self.__allergens:
-                    self.__allergens[a] = i
-                else:
-                    self.__allergens[a] = i & self.__allergens[a]
+            ingredients = left.split()
+            self.__ingredient_list.append(ingredients)
+            for allergen in right.split(", "):
+                candidates = set(ingredients)
+                if allergen in self.__allergen_candidates:
+                    candidates &= self.__allergen_candidates[allergen]
+                self.__allergen_candidates[allergen] = candidates
+            self.__ingredients.update(ingredients)
 
-    def get_p1(self) -> int:
+    def __resolve_allergens(self) -> dict[str, str]:
+        candidates = {a: set(c) for a, c in self.__allergen_candidates.items()}
+        known: dict[str, str] = {}
         changed = True
         while changed:
             changed = False
-            newallergens: dict[str, set[str]] = {}
-            for allergen in self.__allergens:
-                if len(self.__allergens[allergen]) == 1:
-                    self.__known[next(iter(self.__allergens[allergen]))] = allergen
+            resolved: list[str] = []
+            for allergen, ingredients in candidates.items():
+                ingredients.difference_update(known)
+                if len(ingredients) == 1:
+                    known[next(iter(ingredients))] = allergen
+                    resolved.append(allergen)
                     changed = True
-                else:
-                    newallergens[allergen] = set()
-                    for i in self.__allergens[allergen]:
-                        if i in self.__known:
-                            changed = True
-                        else:
-                            newallergens[allergen].add(i)
-            if changed:
-                self.__allergens = dict(newallergens)
-        non_allergens = self.__ingredients ^ set(self.__known.keys())
-        return sum([len(set(i) & non_allergens) for i in self.__ingredient_list])
+            for allergen in resolved:
+                del candidates[allergen]
+        return known
+
+    def get_p1(self) -> int:
+        safe = self.__ingredients - set(self.__resolve_allergens())
+        return sum(len(set(food) & safe) for food in self.__ingredient_list)
 
     def get_p2(self) -> str:
-        result = ""
-        for k, _ in sorted(self.__known.items(), key=lambda x: x[1]):
-            result += "," + k
-        return result.strip(",")
+        known = self.__resolve_allergens()
+        return ",".join(sorted(known, key=known.__getitem__))
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1 = p2 = "-1"
     p = InputData(inputdata)
-    r1 = p.get_p1()
     if part in (None, 1):
-        p1 = str(r1)
+        p1 = str(p.get_p1())
     if part in (None, 2):
         p2 = str(p.get_p2())
 
