@@ -1,54 +1,39 @@
 """
 2018 day 25 - Four-Dimensional Adventure
 
-Arrange the fixed points in a neighbor adjacency list, then:
-- traverse with BFS starting from any key in that list, to find all reachable points, which will be one constellation
-- remove the points from that constellation from the list
-- increase the constellation counter
-- repeat until the list is empty
+Any two points within manhattan distance 3 of each other belong to the same
+constellation, so the constellations are just the connected components of that graph.
+Union-find counts them directly: start with one constellation per point, and decrement
+the count every time two distinct constellations get joined.
 """
-
-from dataclasses import dataclass
-
-
-@dataclass(frozen=True)
-class FixedPoint:
-    uid: int
-    coord: tuple[int, int, int, int]
-
-    def get_distance(self, other: FixedPoint) -> int:
-        return sum([abs(a - b) for a, b in zip(self.coord, other.coord)])
 
 
 class InputData:
     def __init__(self, rawstr: str) -> None:
-        self.__fixedpoints = [
-            FixedPoint(i, (a, b, c, d))
-            for i, (a, b, c, d) in enumerate(
-                [list(map(int, line.split(","))) for line in rawstr.splitlines()]
-            )
+        self.__points = [
+            tuple(map(int, line.split(","))) for line in rawstr.splitlines()
         ]
 
     def get_p1(self) -> int:
-        adj: dict[int, set[int]] = {f.uid: set() for f in self.__fixedpoints}
-        for i in range(len(self.__fixedpoints) - 1):
-            for j in range(i + 1, len(self.__fixedpoints)):
-                if self.__fixedpoints[i].get_distance(self.__fixedpoints[j]) <= 3:
-                    adj[self.__fixedpoints[i].uid].add(self.__fixedpoints[j].uid)
-                    adj[self.__fixedpoints[j].uid].add(self.__fixedpoints[i].uid)
-        constellations = 0
-        while adj:
-            seen: set[int] = set()
-            queue = [next(iter(adj.keys()))]
-            while queue:
-                currentid = queue.pop(0)
-                if currentid in seen:
-                    continue
-                seen.add(currentid)
-                queue.extend(adj[currentid])
-            constellations += 1
-            for s in seen:
-                adj.pop(s)
+        points = self.__points
+        constellations = len(points)
+        parent = list(range(constellations))
+
+        def find(x: int) -> int:
+            while parent[x] != x:
+                parent[x] = parent[parent[x]]
+                x = parent[x]
+            return x
+
+        for i in range(len(points) - 1):
+            a0, a1, a2, a3 = points[i]
+            for j in range(i + 1, len(points)):
+                b0, b1, b2, b3 = points[j]
+                if abs(a0 - b0) + abs(a1 - b1) + abs(a2 - b2) + abs(a3 - b3) <= 3:
+                    rooti, rootj = find(i), find(j)
+                    if rooti != rootj:
+                        parent[rooti] = rootj
+                        constellations -= 1
         return constellations
 
 
