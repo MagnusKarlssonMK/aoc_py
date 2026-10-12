@@ -2,7 +2,9 @@
 2024 day 6 - Guard Gallivant
 
 Starts with creating a jump table based on the grid, storing how far in each direction
-the guard can go before either encountering an obstacle or falling out-of-bounds.
+the guard can go before either encountering an obstacle or falling out-of-bounds. The
+table is filled in linear time by walking each direction backwards, so every cell
+inherits the reachable target of its neighbour ahead of it.
 
 Then the base path the guard takes is simulated by moving step-by-step and recording
 each point+direction pair along the way, until the guard walks off the grid boundary.
@@ -19,39 +21,46 @@ from aoc_py.util.point import Directions, Point
 
 
 class InputData:
-    def __init__(self, s: str) -> None:
-        self.__grid = Grid(s)
+    def __init__(self, rawstr: str) -> None:
+        self.__grid = Grid(rawstr)
 
     def solve(self) -> tuple[int, int]:
-        start_pos = self.__grid.find("^")
+        grid = self.__grid
+        width, height, elements = grid.x_max, grid.y_max, grid.elements
+        start_pos = grid.find("^")
 
-        # Create jump table - list matching grid list, every element is a dict [direction: [target point, out_of_bounds_flag]]
-        jump_table: list[dict[Point, tuple[Point, bool]]] = [
-            {} for _ in self.__grid.elements
-        ]
+        # Create jump table - list matching grid list, every element is a dict
+        # [direction: [target point, out_of_bounds_flag]]. Processing each direction
+        # from the far edge inwards makes the target of a cell either the cell itself
+        # (a wall or boundary lies directly ahead) or the target of the next cell.
+        jump_table: list[dict[Point, tuple[Point, bool]]] = [{} for _ in elements]
         for d in Directions.NEIGHBORS_STRAIGHT:
-            for i, c in enumerate(self.__grid.elements):
-                if c == "#":
-                    continue
-                p = self.__grid.get_point(i)
-                while True:
-                    np = p + d
-                    if (nc := self.__grid.get_element(np)) == "":
-                        jump_table[i][d] = p, True
-                        break
-                    elif nc == "#":
-                        jump_table[i][d] = p, False
-                        break
-                    p = np
+            y_range = range(height) if d.y <= 0 else range(height - 1, -1, -1)
+            x_range = range(width) if d.x <= 0 else range(width - 1, -1, -1)
+            for y in y_range:
+                for x in x_range:
+                    i = y * width + x
+                    if elements[i] == "#":
+                        continue
+                    nx, ny = x + d.x, y + d.y
+                    if not (0 <= nx < width and 0 <= ny < height):
+                        jump_table[i][d] = Point(x, y), True
+                    else:
+                        ni = ny * width + nx
+                        jump_table[i][d] = (
+                            (Point(x, y), False)
+                            if elements[ni] == "#"
+                            else jump_table[ni][d]
+                        )
 
         # Simulate part 1 and record the path
         current_point = start_pos
         current_dir = Directions.UP
         base_path: list[tuple[Point, Point]] = []
-        while self.__grid.get_element(current_point) != "":
+        while grid.get_element(current_point) != "":
             base_path.append((current_point, current_dir))
             next_point = current_point + current_dir
-            if self.__grid.get_element(next_point) == "#":
+            if grid.get_element(next_point) == "#":
                 current_dir = current_dir.rotate_right()
             else:
                 current_point += current_dir
@@ -79,7 +88,7 @@ class InputData:
                     p2 += 1
                     break
                 visited.add(state)
-                np, oob = jump_table[self.__grid.get_index(cp)][cd]
+                np, oob = jump_table[grid.get_index(cp)][cd]
 
                 # Check if the new obstacle blocks this straight run. The cell
                 # range is half-open: strictly ahead of the guard, up to and

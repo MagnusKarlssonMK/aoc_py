@@ -43,3 +43,10 @@ def test_part2_2() -> None:
     # ends lets the guard run past an obstacle directly in front of it.
     _, p2 = solve_parts(TEST_STRING_2, 2)
     assert p2 == "1"
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts() -> None:
+    assert solve_parts(TEST_STRING_1) == ("41", "6")
