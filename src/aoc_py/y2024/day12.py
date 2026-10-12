@@ -1,7 +1,14 @@
 """
 2024 day 12 - Garden Groups
+
+Each region is flood-filled to get its area. For the perimeter, every straight neighbour
+that is a different plant or lies off the grid contributes one. For part 2, the number of
+sides equals the number of corners, so each perpendicular pair of straight neighbours is
+inspected: a corner exists when both neighbours lie outside the region, or when both are
+inside the region but the diagonal cell between them is not.
 """
 
+from collections import deque
 from itertools import combinations
 
 from aoc_py.util.grid import Grid
@@ -18,15 +25,13 @@ class InputData:
         for i, _ in enumerate(self.__map.elements):
             if (p := self.__map.get_point(i)) not in counted:
                 area = perimeter = sides = 0
-                group: set[Point] = set()
-                queue: list[Point] = [p]
+                queue: deque[Point] = deque([p])
                 neighbor_states: list[tuple[Point, int]] = []
                 while queue:
-                    current = queue.pop(0)
+                    current = queue.popleft()
                     if current in counted:
                         continue
                     counted.add(current)
-                    group.add(current)
                     area += 1
                     value_current = self.__map.get_element(current)
 
