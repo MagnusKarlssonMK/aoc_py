@@ -1,5 +1,9 @@
 """
 2020 day 12 - Rain Risk
+
+Navigate the ship, tracking either its facing direction (part 1) or a waypoint relative to it
+(part 2). Rotations spin whichever of the two is tracked, and forward movement advances the
+ship by it; the manhattan distance from the origin is then the answer.
 """
 
 from dataclasses import dataclass
@@ -26,7 +30,7 @@ class Instruction:
 
 
 class InputData:
-    __DIRECTIONMAP: Final = {
+    __DIRECTION_MAP: Final = {
         Action.EAST: Directions.RIGHT,
         Action.SOUTH: Directions.DOWN,
         Action.WEST: Directions.LEFT,
@@ -38,11 +42,9 @@ class InputData:
             Instruction(Action(line[0]), int(line[1:])) for line in rawstr.splitlines()
         ]
 
-    def get_distance(self, use_waypoint: bool = False) -> int:
-        position = Point(0, 0)
-        direction = (
-            InputData.__DIRECTIONMAP[Action.EAST] if not use_waypoint else Point(10, -1)
-        )
+    def __navigate(self, use_waypoint: bool) -> int:
+        position = Directions.ORIGIN
+        direction = Point(10, -1) if use_waypoint else Directions.RIGHT
         for instr in self.__instructions:
             if instr.action in (Action.LEFT, Action.RIGHT):
                 for _ in range(instr.value // 90):
@@ -51,22 +53,29 @@ class InputData:
                         if instr.action == Action.LEFT
                         else direction.rotate_right()
                     )
-            elif instr.action in (Action.NORTH, Action.EAST, Action.SOUTH, Action.WEST):
-                if not use_waypoint:
-                    position += InputData.__DIRECTIONMAP[instr.action] * instr.value
-                else:
-                    direction += InputData.__DIRECTIONMAP[instr.action] * instr.value
             elif instr.action == Action.FORWARD:
                 position += direction * instr.value
+            else:
+                move = InputData.__DIRECTION_MAP[instr.action] * instr.value
+                if use_waypoint:
+                    direction += move
+                else:
+                    position += move
         return position.manhattan(Directions.ORIGIN)
+
+    def get_p1(self) -> int:
+        return self.__navigate(False)
+
+    def get_p2(self) -> int:
+        return self.__navigate(True)
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1 = p2 = "-1"
     p = InputData(inputdata)
     if part in (None, 1):
-        p1 = str(p.get_distance())
+        p1 = str(p.get_p1())
     if part in (None, 2):
-        p2 = str(p.get_distance(True))
+        p2 = str(p.get_p2())
 
     return p1, p2
