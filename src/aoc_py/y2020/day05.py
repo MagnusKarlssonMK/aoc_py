@@ -1,28 +1,24 @@
 """
 2020 day 5 - Binary Boarding
+
+A boarding pass code maps directly onto its seat id in binary: F and L are 0 while B and R
+are 1, so translating the letters and parsing the result as a base-2 number gives the id.
 """
 
 from itertools import pairwise
+from typing import Final
+
+_SEAT_MAP: Final = str.maketrans("FBLR", "0101")
 
 
-def decode(s: str, up: str, low: str, rng: range) -> int:
-    lower, upper = rng.start, rng.stop
-    for c in s:
-        if c == up:
-            upper -= (1 + upper - lower) // 2
-        elif c == low:
-            lower += (1 + upper - lower) // 2
-    return lower
-
-
-def decode_seat_id(rows: str, cols: str) -> int:
-    return 8 * decode(rows, "F", "B", range(127)) + decode(cols, "L", "R", range(7))
+def decode_seat_id(code: str) -> int:
+    return int(code.translate(_SEAT_MAP), 2)
 
 
 class InputData:
-    def __init__(self, s: str) -> None:
+    def __init__(self, rawstr: str) -> None:
         self.__boardingpasses = sorted(
-            [decode_seat_id(line[0:7], line[7:10]) for line in s.splitlines()]
+            decode_seat_id(line) for line in rawstr.splitlines()
         )
 
     def get_p1(self) -> int:
