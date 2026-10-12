@@ -1,30 +1,40 @@
 """
 2020 day 25 - Combo Breaker
 
-Step 1: Determine the loop size from the public card key
-Step 2: Use the loop size to transform the public door key into the encryption key
+The public keys are powers of the seed modulo the modulus. Find the card key's discrete log (its loop
+size) with baby-step giant-step, then raise the door key to that power to get the encryption key.
 """
+
+from math import isqrt
+
+_MOD = 20201227
+_SEED = 7
+
+
+def discrete_log(target: int, base: int, mod: int) -> int:
+    """Return x such that base ** x == target (mod mod), via baby-step giant-step."""
+    n = isqrt(mod) + 1
+    baby_steps: dict[int, int] = {}
+    value = 1
+    for power in range(n):
+        _ = baby_steps.setdefault(value, power)
+        value = value * base % mod
+    factor = pow(base, -n, mod)
+    gamma = target
+    for giant_step in range(n):
+        if gamma in baby_steps:
+            return giant_step * n + baby_steps[gamma]
+        gamma = gamma * factor % mod
+    raise ValueError(f"No discrete log of {target} base {base} mod {mod}")
 
 
 class InputData:
-    __MOD = 20201227
-    __SEED = 7
-
     def __init__(self, rawstr: str) -> None:
         self.__card_pub_key, self.__door_pub_key = list(map(int, rawstr.splitlines()))
 
     def get_p1(self) -> int:
-        # Get the loop size
-        loop_size = 0
-        value = 1
-        while self.__card_pub_key != value:
-            loop_size += 1
-            value = (InputData.__SEED * value) % InputData.__MOD
-        # Get the key from transforming the door key
-        value = 1
-        for _ in range(loop_size):
-            value = (self.__door_pub_key * value) % InputData.__MOD
-        return value
+        loop_size = discrete_log(self.__card_pub_key, _SEED, _MOD)
+        return pow(self.__door_pub_key, loop_size, _MOD)
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
