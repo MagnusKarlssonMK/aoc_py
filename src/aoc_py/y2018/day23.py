@@ -8,28 +8,16 @@ largest one, then use manhattan distance to count how many other bots are in its
 
 Part 2
 
-Basically treating the nanobots as cubes and splits them into smaller and smaller with
-A* until it's down to a single coordinate.
+Treating the nanobots as boxes and splitting the bounding box into octants, best-first
+by (bots out of range, distance to origin, size), until it's down to a single
+coordinate. The hot path keeps the bots as plain (x, y, z, r) tuples, since the
+hashing-free iteration matters far more than any attribute access would.
 """
 
-import math
 from collections.abc import Generator
 from dataclasses import dataclass
 from heapq import heappop, heappush
 from itertools import count, product
-
-
-@dataclass(frozen=True)
-class Point3D:
-    x: int
-    y: int
-    z: int
-
-    def manhattan(self, other: Point3D) -> int:
-        return abs(self.x - other.x) + abs(self.y - other.y) + abs(self.z - other.z)
-
-    def get_point(self) -> tuple[int, int, int]:
-        return self.x, self.y, self.z
 
 
 @dataclass(frozen=True)
@@ -38,14 +26,11 @@ class Rect:
     y: tuple[int, int]
     z: tuple[int, int]
 
-    def get_point(self) -> tuple[tuple[int, int], tuple[int, int], tuple[int, int]]:
-        return self.x, self.y, self.z
-
     def get_zerodistance(self) -> int:
         return (
-            min([abs(x) for x in self.x])
-            + min([abs(y) for y in self.y])
-            + min([abs(z) for z in self.z])
+            max(self.x[0], -self.x[1], 0)
+            + max(self.y[0], -self.y[1], 0)
+            + max(self.z[0], -self.z[1], 0)
         )
 
 
@@ -64,71 +49,71 @@ class Node:
                             length + (s * newsize),
                             min(length + (s + 1) * newsize - 1, height),
                         )
-                        for (length, height), s in zip(self.rect.get_point(), steps)
+                        for (length, height), s in zip(
+                            (self.rect.x, self.rect.y, self.rect.z), steps
+                        )
                     ]
                 )
                 yield Node(r, newsize)
 
 
-@dataclass(frozen=True)
-class Nanobot:
-    point: Point3D
-    radius: int
-
-    @classmethod
-    def parse_str(cls, s: str) -> Nanobot:
-        pos, r = s.lstrip("pos=<").split(">, r=")
-        pos = Point3D(*list(map(int, pos.split(","))))
-        return Nanobot(pos, int(r))
-
-    def intersects_node(self, r: Rect) -> bool:
-        distance = 0
-        for c, (length, height) in zip(self.point.get_point(), r.get_point()):
-            if c < length:
-                distance += length - c
-            elif c > height:
-                distance += c - height
-            if distance > self.radius:
-                return False
-        return True
-
-    def __lt__(self, other: Nanobot) -> bool:
-        return self.radius < other.radius
-
-
 class InputData:
     def __init__(self, s: str) -> None:
         self.__bots = sorted(
-            [Nanobot.parse_str(line) for line in s.splitlines()], reverse=True
+            (self.__parse_bot(line) for line in s.splitlines()),
+            key=lambda b: b[3],
+            reverse=True,
         )
 
+    @staticmethod
+    def __parse_bot(s: str) -> tuple[int, int, int, int]:
+        pos, r = s.lstrip("pos=<").split(">, r=")
+        x, y, z = map(int, pos.split(","))
+        return x, y, z, int(r)
+
     def get_p1(self) -> int:
+        bx, by, bz, br = self.__bots[0]
         return sum(
-            [
-                1
-                for bot in self.__bots
-                if self.__bots[0].point.manhattan(bot.point) <= self.__bots[0].radius
-            ]
+            1
+            for x, y, z, _ in self.__bots
+            if abs(x - bx) + abs(y - by) + abs(z - bz) <= br
         )
 
     def __get_node_prio(self, n: Node) -> tuple[int, int, int]:
-        c = sum([1 for b in self.__bots if not b.intersects_node(n.rect)])
-        return c, n.rect.get_zerodistance(), n.size
+        lx, hx = n.rect.x
+        ly, hy = n.rect.y
+        lz, hz = n.rect.z
+        count = 0
+        for bx, by, bz, r in self.__bots:
+            d = (
+                max(lx - bx, bx - hx, 0)
+                + max(ly - by, by - hy, 0)
+                + max(lz - bz, bz - hz, 0)
+            )
+            if d > r:
+                count += 1
+        return count, n.rect.get_zerodistance(), n.size
 
     def get_p2(self) -> int:
-        minpoints = tuple(map(min, zip(*[b.point.get_point() for b in self.__bots])))
-        maxpoints = tuple(map(max, zip(*[b.point.get_point() for b in self.__bots])))
+        xs = [b[0] for b in self.__bots]
+        ys = [b[1] for b in self.__bots]
+        zs = [b[2] for b in self.__bots]
+        xlo, xhi = min(xs), max(xs)
+        ylo, yhi = min(ys), max(ys)
+        zlo, zhi = min(zs), max(zs)
         rect = Rect(
-            *[(min(low, 0), max(high, 0)) for low, high in zip(minpoints, maxpoints)]
+            (min(xlo, 0), max(xhi, 0)),
+            (min(ylo, 0), max(yhi, 0)),
+            (min(zlo, 0), max(zhi, 0)),
         )
-        size = 2 ** (int(math.log2(max(maxpoints))) + 1)
+        size = 1 << max(xhi, yhi, zhi).bit_length()
         start = Node(rect, size)
         u = count()
         queue: list[tuple[int, int, int, int, Node]] = []
         heappush(queue, (*self.__get_node_prio(start), next(u), start))
         result = -1
         while queue:
-            _, _, _, _, currentnode = heappop(queue)
+            *_, currentnode = heappop(queue)
             if currentnode.size == 1:
                 result = currentnode.rect.get_zerodistance()
                 break
