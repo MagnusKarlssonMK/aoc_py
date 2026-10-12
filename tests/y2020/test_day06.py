@@ -39,3 +39,10 @@ def test_part1_2() -> None:
 def test_part2_1() -> None:
     _, p2 = solve_parts(TEST_STRING_2, 2)
     assert p2 == "6"
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts() -> None:
+    assert solve_parts(TEST_STRING_2) == ("11", "6")
