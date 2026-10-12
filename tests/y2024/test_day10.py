@@ -26,6 +26,13 @@ def test_part1_1() -> None:
 
 
 def test_part2_1() -> None:
-    p1, p2 = solve_parts(TEST_STRING_2)
-    assert p1 == "36"
+    _, p2 = solve_parts(TEST_STRING_2, 2)
     assert p2 == "81"
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts() -> None:
+    assert solve_parts(TEST_STRING_1) == ("1", "16")
+    assert solve_parts(TEST_STRING_2) == ("36", "81")

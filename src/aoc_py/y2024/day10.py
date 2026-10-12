@@ -1,6 +1,13 @@
 """
 2024 day 10 - Hoof It
+
+Each trailhead ('0') is walked uphill one step at a time to every reachable peak ('9').
+The score counts the distinct peaks reachable from a trailhead, while the rating counts
+the number of distinct trails, so the walk visits every path rather than stopping at the
+first one.
 """
+
+from collections import deque
 
 from aoc_py.util.grid import Grid
 from aoc_py.util.point import Directions, Point
@@ -9,16 +16,17 @@ from aoc_py.util.point import Directions, Point
 class InputData:
     def __init__(self, rawstr: str) -> None:
         self.__grid = Grid(rawstr)
-        self.__trailheads = [p for p in self.__grid.find_all("0")]
+        self.__trailheads = self.__grid.find_all("0")
 
     def get_score_and_rating(self) -> tuple[int, int]:
         score = rating = 0
         for head in self.__trailheads:
             peaks: set[Point] = set()
-            queue = [head]
+            queue = deque([head])
             while queue:
-                current = queue.pop(0)
-                if self.__grid.get_element(current) == "9":
+                current = queue.popleft()
+                current_elevation = int(self.__grid.get_element(current))
+                if current_elevation == 9:
                     peaks.add(current)
                     rating += 1
                 else:
@@ -27,7 +35,7 @@ class InputData:
                     ]:
                         if (c := self.__grid.get_element(neighbor)) != "" and int(
                             c
-                        ) == int(self.__grid.get_element(current)) + 1:
+                        ) == current_elevation + 1:
                             queue.append(neighbor)
             score += len(peaks)
         return score, rating
