@@ -25,34 +25,37 @@ changes to the dial will be in the positive direction, i.e. there would be no ne
 "left" (negative) values separately.
 """
 
+LOCK_SIZE = 100
+START_DIAL = 50
+
 
 class InputData:
-    def __init__(self, s: str) -> None:
+    def __init__(self, rawstr: str) -> None:
         self.__rotations = [
             int(line[1:]) if line[0] == "R" else -int(line[1:])
-            for line in s.splitlines()
+            for line in rawstr.splitlines()
         ]
 
     def get_p1(self) -> int:
         zero_count = 0
-        dial = 50
+        dial = START_DIAL
         for v in self.__rotations:
-            dial = (dial + v) % 100
+            dial = (dial + v) % LOCK_SIZE
             if dial == 0:
                 zero_count += 1
         return zero_count
 
     def get_p2(self) -> int:
         zero_count = 0
-        dial = 50
+        dial = START_DIAL
         for v in self.__rotations:
             if v >= 0:
-                zero_count += (dial + v) // 100
+                zero_count += (dial + v) // LOCK_SIZE
             elif dial == 0:
-                zero_count += abs(v) // 100
+                zero_count += abs(v) // LOCK_SIZE
             else:
-                zero_count += (100 - dial + abs(v)) // 100
-            dial = (dial + v) % 100
+                zero_count += (LOCK_SIZE - dial + abs(v)) // LOCK_SIZE
+            dial = (dial + v) % LOCK_SIZE
         return zero_count
 
 
