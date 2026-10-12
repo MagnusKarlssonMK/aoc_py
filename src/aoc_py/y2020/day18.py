@@ -1,30 +1,37 @@
 """
 2020 day 18 - Operation Order
 
-Using the shunting yard algorithm. For part 2, the only difference is to check whether the top item on the operator
-stack has higher precedence before popping it and putting it on the output stack.
+Evaluate each expression with the shunting yard algorithm. Part 1 gives both operators equal
+precedence (plain left to right); part 2 gives "+" higher precedence than "*". The only
+difference is the precedence table handed to the evaluator.
 """
 
 import operator
+from collections.abc import Callable
 from typing import Final
 
+_OPERATORS: Final[dict[str, Callable[[int, int], int]]] = {
+    "+": operator.add,
+    "*": operator.mul,
+}
+_PRECEDENCE_P1: Final = {"+": 0, "*": 0}
+_PRECEDENCE_P2: Final = {"+": 1, "*": 0}
 
-def shunting_yard(line: str, is_advanced: bool) -> int:
-    OPMAP: Final = {"+": operator.add, "*": operator.mul}
-    # Generate the output buffer with shunting yard
+
+def shunting_yard(line: str, precedence: dict[str, int]) -> int:
+    # Turn the infix expression into reverse polish notation.
     output: list[str] = []
     opstack: list[str] = []
     for c in line:
         if c.isdigit():
             output.append(c)
-        elif c in OPMAP:
-            while opstack:
-                if opstack[-1] != "(" and (
-                    not is_advanced or not (opstack[-1] == "*" and c == "+")
-                ):
-                    output.append(opstack.pop())
-                else:
-                    break
+        elif c in _OPERATORS:
+            while (
+                opstack
+                and opstack[-1] != "("
+                and precedence[opstack[-1]] >= precedence[c]
+            ):
+                output.append(opstack.pop())
             opstack.append(c)
         elif c == "(":
             opstack.append(c)
@@ -33,16 +40,15 @@ def shunting_yard(line: str, is_advanced: bool) -> int:
                 output.append(o)
     while opstack:
         output.append(opstack.pop())
-    # Evaluate the output buffer
-    evaluated = []
-    while output:
-        o = output.pop(0)
-        if o in OPMAP:
-            v1 = int(evaluated.pop())
-            v2 = int(evaluated.pop())
-            evaluated.append(OPMAP[o](v1, v2))
+    # Evaluate the reverse polish notation.
+    evaluated: list[int] = []
+    for o in output:
+        if o in _OPERATORS:
+            v2 = evaluated.pop()
+            v1 = evaluated.pop()
+            evaluated.append(_OPERATORS[o](v1, v2))
         else:
-            evaluated.append(o)
+            evaluated.append(int(o))
     return evaluated[0]
 
 
@@ -50,16 +56,19 @@ class InputData:
     def __init__(self, rawstr: str) -> None:
         self.__lines = rawstr.splitlines()
 
-    def get_value_sum(self, isadvanced: bool = False) -> int:
-        return sum([shunting_yard(line, isadvanced) for line in self.__lines])
+    def get_p1(self) -> int:
+        return sum(shunting_yard(line, _PRECEDENCE_P1) for line in self.__lines)
+
+    def get_p2(self) -> int:
+        return sum(shunting_yard(line, _PRECEDENCE_P2) for line in self.__lines)
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1 = p2 = "-1"
     p = InputData(inputdata)
     if part in (None, 1):
-        p1 = str(p.get_value_sum())
+        p1 = str(p.get_p1())
     if part in (None, 2):
-        p2 = str(p.get_value_sum(True))
+        p2 = str(p.get_p2())
 
     return p1, p2
