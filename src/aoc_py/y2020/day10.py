@@ -3,13 +3,13 @@
 
 Part 1
 
-Sort the parsed input, add 0 at the start and max+3 at the end, then simply make a counter object to put the
-value differences into.
+Sort the parsed input, add 0 at the start and max+3 at the end, then simply make a counter
+object to put the value differences into.
 
 Part 2
 
-Create an adjacency list / DAG out of the possible other adapters that one adapter can connect to, then apply a
-memoized DFS to count the number of paths.
+Walk the sorted ratings once, counting for each adapter how many different chains lead up to
+it by summing the ways of the up to three preceding adapters within jolt range.
 """
 
 from collections import Counter
@@ -28,29 +28,14 @@ class InputData:
         return diff[1] * diff[3]
 
     def get_p2(self) -> int:
-        adj: dict[int, list[int]] = {}
-        for i in range(len(self.__ratings) - 1):
-            adj[self.__ratings[i]] = []
-            for j in range(i + 1, i + 4):
-                if (
-                    j >= len(self.__ratings)
-                    or self.__ratings[j] - self.__ratings[i] > 3
-                ):
-                    break
-                else:
-                    adj[self.__ratings[i]].append(self.__ratings[j])
-        start = self.__ratings[0]
-        return pathcount(adj, start, {})
-
-
-def pathcount(dag: dict[int, list[int]], vertex: int, memo: dict[int, int]) -> int:
-    if vertex in memo:
-        return memo[vertex]
-    elif vertex in dag:
-        memo[vertex] = sum([pathcount(dag, x, memo) for x in dag[vertex]])
-        return memo[vertex]
-    else:
-        return 1
+        ways = {0: 1}
+        for rating in self.__ratings[1:]:
+            ways[rating] = (
+                ways.get(rating - 1, 0)
+                + ways.get(rating - 2, 0)
+                + ways.get(rating - 3, 0)
+            )
+        return ways[self.__ratings[-1]]
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
