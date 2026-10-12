@@ -23,10 +23,8 @@ class InputData:
 
     def get_p2(self) -> int:
         return sum(
-            [
-                calculate(block.split("don't()")[0])
-                for block in self.__program.split("do()")
-            ]
+            calculate(block.split("don't()")[0])
+            for block in self.__program.split("do()")
         )
 
 
