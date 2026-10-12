@@ -1,3 +1,5 @@
+import pytest
+
 from aoc_py.y2020.day15 import solve_parts
 
 # ----------- Part 1 ------------
@@ -38,11 +40,23 @@ def test_part1_7() -> None:
     assert p1 == "1836"
 
 
+def test_part1_solve_parts(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("aoc_py.y2020.day15.PART1_ROUNDS", 10)
+    assert solve_parts("0,3,6", 1) == ("0", "-1")
+
+
 # ----------- Part 2 ------------
 
-# Skip testing of part 2 since it is so slow, and anyway just running the same
-# function as in part 1 but with a lot more iterations.
 
-# def test_part2_1() -> None:
-#    _, p2 = solve_parts("1", 2)
-#    assert p2 == "1"
+def test_part2_solve_parts(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("aoc_py.y2020.day15.PART2_ROUNDS", 10)
+    assert solve_parts("0,3,6", 2) == ("-1", "0")
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("aoc_py.y2020.day15.PART1_ROUNDS", 2020)
+    monkeypatch.setattr("aoc_py.y2020.day15.PART2_ROUNDS", 10)
+    assert solve_parts("0,3,6") == ("436", "0")
