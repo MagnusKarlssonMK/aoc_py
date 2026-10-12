@@ -43,6 +43,11 @@ iyr:2010 hgt:158cm hcl:#b6652a ecl:blu byr:1944 eyr:2021 pid:093154719"""
 TEST_STRING_3 = """pid:087499704 hgt:74 ecl:grn iyr:2012 eyr:2030 byr:1980
 hcl:#623a2f"""
 
+# The hex colour must be exactly '#rrggbb' (six hex digits).
+TEST_STRING_4 = """byr:1980 iyr:2012 eyr:2030 hgt:180cm hcl:#abc ecl:grn pid:000000001
+
+byr:1980 iyr:2012 eyr:2030 hgt:180cm hcl:#aabbcc ecl:grn pid:000000001"""
+
 from aoc_py.y2020.day04 import solve_parts
 
 # ----------- Part 1 ------------
@@ -64,3 +69,15 @@ def test_part2_1() -> None:
 def test_part2_2() -> None:
     _, p2 = solve_parts(TEST_STRING_3, 2)
     assert p2 == "0"
+
+
+def test_part2_3() -> None:
+    _, p2 = solve_parts(TEST_STRING_4, 2)
+    assert p2 == "1"
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts() -> None:
+    assert solve_parts(TEST_STRING_1) == ("2", "2")
