@@ -19,8 +19,8 @@ from typing import cast
 
 
 class InputData:
-    def __init__(self, s: str) -> None:
-        self.__banks = [line for line in s.splitlines()]
+    def __init__(self, rawstr: str) -> None:
+        self.__banks: list[str] = rawstr.splitlines()
 
     def __get_jolt(self, nbrof_digits: int) -> int:
         total = 0
@@ -38,7 +38,7 @@ class InputData:
                         if next_digit == 9:
                             break
                 # Using cast as temporary fix for basedpyright issue with pow
-                p = cast(int, 10 ** int(digit_idx))
+                p = cast(int, 10**digit_idx)
                 new_number += next_digit * p
             total += new_number
         return total
