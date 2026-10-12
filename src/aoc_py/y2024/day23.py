@@ -28,13 +28,15 @@ class InputData:
         return len(seen)
 
     def get_p2(self) -> str:
+        # Iterating in sorted order keeps the greedy result independent of the hash order,
+        # which would otherwise pick a different (possibly smaller) clique between runs.
         seen: set[str] = set()
         largest: list[str] = []
-        for k1, neighbors in self.__connections.items():
+        for k1 in sorted(self.__connections):
             if k1 in seen:
                 continue
             group = [k1]
-            for k2 in neighbors:
+            for k2 in sorted(self.__connections[k1]):
                 if all(k3 in self.__connections[k2] for k3 in group):
                     seen.add(k2)
                     group.append(k2)
