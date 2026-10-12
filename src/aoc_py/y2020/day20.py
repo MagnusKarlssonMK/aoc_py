@@ -1,14 +1,15 @@
 """
 2020 day 20 - Jurassic Jigsaw
 
-Well this became a mess.
-I probably overthought and wound up with an unnecessarily complicated way of representing the tile edges, so when
-re-asssembling the image it gets really wonky.
+Each tile is stored with its four edges; every edge that appears (forward or reversed) on another tile makes that
+tile a neighbor in the corresponding direction. Part 1 multiplies the ids of the tiles with exactly two neighbors
+(the corners). Part 2 orients the tiles from a corner outward to assemble the full image, then scans every
+rotation/mirror of the sea-monster shape and subtracts the cells it covers.
 
-This solution also assumes that all edges are unique, i.e. that all tiles have exactly one possible neighbor in the
-directions that a neighbor exists, and none on the border edges.
+Assumes all edges are unique, i.e. each tile has at most one neighbor per direction and none on the border edges.
 """
 
+from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum
 from itertools import combinations
@@ -47,7 +48,6 @@ class Tile:
             Directions.DOWN: Edge(grid[-1][::-1], set()),
             Directions.LEFT: Edge("".join([g[0] for g in reversed(grid)]), set()),
         }
-        self.__reversed = False
 
     def add_neighbor(self, other: Tile) -> None:
         for e1 in self.__edges.values():
@@ -58,15 +58,13 @@ class Tile:
                     e1.neighbors.add((other.__id, True))
 
     def get_neighbor(self, direction: Directions) -> tuple[int, bool]:
-        for n in self.__edges[direction].neighbors:
-            return n
-        return -1, False
+        return next(iter(self.__edges[direction].neighbors), (-1, False))
 
     def is_edge_match(self, other: Tile, d: Directions) -> bool:
         return self.__edges[d].match_edges(other.__edges[d.get_opposite()])
 
     def get_neighbor_count(self) -> int:
-        return sum([len(e.neighbors) for e in self.__edges.values()])
+        return sum(len(e.neighbors) for e in self.__edges.values())
 
     def get_neighbor_directions(self) -> set[Directions]:
         return {e for e in self.__edges if len(self.__edges[e].neighbors) > 0}
@@ -101,9 +99,8 @@ class Tile:
             for n in edge.neighbors:
                 buffer.add((n[0], not n[1]))
             edge.neighbors = buffer
-        self.__reversed = not self.__reversed
 
-    def get_grid(self):
+    def get_grid(self) -> tuple[str, ...]:
         return tuple(self.__grid)
 
 
@@ -117,17 +114,19 @@ class InputData:
         for t1, t2 in combinations(self.__tiles, 2):
             self.__tiles[t1].add_neighbor(self.__tiles[t2])
             self.__tiles[t2].add_neighbor(self.__tiles[t1])
-        self.__corners: list[int] = []
-        self.__image: list[str] = []
+
+    def __get_corners(self) -> list[int]:
+        return [
+            tileid
+            for tileid, tile in self.__tiles.items()
+            if tile.get_neighbor_count() == 2
+        ]
 
     def get_p1(self) -> int:
-        for tileid, tile in self.__tiles.items():
-            if tile.get_neighbor_count() == 2:
-                self.__corners.append(tileid)
-        return prod(self.__corners)
+        return prod(self.__get_corners())
 
-    def __generate_image(self) -> int:
-        start = self.__tiles[min(self.__corners)]
+    def __generate_image(self, tiles: dict[int, Tile], corners: list[int]) -> list[str]:
+        start = tiles[min(corners)]
         while (
             len({Directions.RIGHT, Directions.DOWN} & start.get_neighbor_directions())
             < 2
@@ -137,15 +136,15 @@ class InputData:
         placed_tiles = [[start]]
         row = 0
         col = 1
-        corners = 1
+        corner_count = 1
         maxcol = -1
-        while corners < 4:
+        while corner_count < 4:
             ndir = Directions.RIGHT if col > 0 else Directions.DOWN
             previous = (
                 placed_tiles[row][col - 1] if col > 0 else placed_tiles[row - 1][col]
             )
             n, flip = previous.get_neighbor(ndir)
-            nexttile = self.__tiles[n]
+            nexttile = tiles[n]
             if not flip:  # matching edges need to be opposite
                 nexttile.flip()
             while not previous.is_edge_match(nexttile, ndir):
@@ -155,7 +154,7 @@ class InputData:
             else:
                 placed_tiles.append([nexttile])
             if nexttile.get_neighbor_count() < 3:
-                corners += 1
+                corner_count += 1
                 if col > 0:
                     maxcol = col
             if 0 < maxcol <= col:
@@ -164,17 +163,18 @@ class InputData:
             else:
                 col += 1
 
-        for row in placed_tiles:
-            tmp = ["" for _ in range(len(row[0].get_grid()))]
-            for tile in row:
+        image: list[str] = []
+        for placed_row in placed_tiles:
+            tmp = ["" for _ in range(len(placed_row[0].get_grid()))]
+            for tile in placed_row:
                 for i, gridrow in enumerate(tile.get_grid()):
                     tmp[i] += gridrow
-            self.__image += tmp
-        return -1
+            image += tmp
+        return image
 
     def get_p2(self) -> int:
-        self.__generate_image()
-        total_points = sum([line.count("#") for line in self.__image])
+        image = self.__generate_image(deepcopy(self.__tiles), self.__get_corners())
+        total_points = sum(line.count("#") for line in image)
         monster_shapes = [
             ["                  # ", "#    ##    ##    ###", " #  #  #  #  #  #   "]
         ]
@@ -199,10 +199,10 @@ class InputData:
             ]
             m_width = len(monster[0])
             m_height = len(monster)
-            for row in range(len(self.__image) - m_height):
-                for col in range(len(self.__image[0]) - m_width):
+            for row in range(len(image) - m_height):
+                for col in range(len(image[0]) - m_width):
                     points = [(row + m_r, col + m_c) for m_r, m_c in m]
-                    if all(self.__image[r][c] == "#" for r, c in points):
+                    if all(image[r][c] == "#" for r, c in points):
                         monster_points |= set(points)
         return total_points - len(monster_points)
 
@@ -210,9 +210,8 @@ class InputData:
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1 = p2 = "-1"
     p = InputData(inputdata)
-    r1 = p.get_p1()
     if part in (None, 1):
-        p1 = str(r1)
+        p1 = str(p.get_p1())
     if part in (None, 2):
         p2 = str(p.get_p2())
 
