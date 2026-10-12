@@ -1,5 +1,10 @@
 """
 2024 day 9 - Disk Fragmenter
+
+The disk map alternates file lengths and free-space lengths. Part 1 compacts the disk by
+sliding files one block at a time into the leftmost free space, while part 2 moves each
+whole file, from right to left, into the first gap large enough to hold it. Both
+checksums are the sum of position times file id for every occupied block.
 """
 
 
