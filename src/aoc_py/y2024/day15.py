@@ -1,8 +1,13 @@
 """
 2024 day 15 - Warehouse Woes
+
+Simulates a robot pushing boxes around a warehouse. Part 1 pushes single-square boxes
+recursively: a move succeeds only if every box in the line has a free cell behind it.
+Part 2 widens the map so each box spans two tiles; vertical pushes are validated with a
+recursive check that collects every affected tile (both halves of each box), after which
+those tiles are shifted one step, front-most first, so they never overwrite each other.
 """
 
-from collections import deque
 from copy import deepcopy
 
 from aoc_py.util.grid import Grid
@@ -69,24 +74,15 @@ def grid_move_simple(g: Grid, pos: Point, dir: Point) -> bool:
             return True
 
 
-def grid_move_double(g: Grid, pos: set[Point], dir: Point) -> None:
-    """Attempts to move double (two-square)."""
-    queue = deque(pos)
-    while queue:
-        from_point = queue.popleft()
-        to_point = from_point + dir
-        nextchr = g.get_element(to_point)
-        if nextchr == ".":
-            # _ = queue.popleft()
-            c1 = g.get_element(from_point)
-            g.set_point(from_point, nextchr)
-            g.set_point(to_point, c1)
-        else:
-            queue.append(from_point)
-            # queue.rotate(-1)
+def grid_move_double(g: Grid, cells: set[Point], dir: Point) -> None:
+    """Moves every cell in `cells` one step along `dir`, front-most cells first."""
+    for p in sorted(cells, key=lambda c: c.x * dir.x + c.y * dir.y, reverse=True):
+        g.set_point(p + dir, g.get_element(p))
+        g.set_point(p, ".")
 
 
 def grid_check_double(g: Grid, pos: Point, dir: Point, checked: set[Point]) -> bool:
+    """Recursively checks if `pos` can move along `dir`, adding every affected tile to `checked`."""
     checked.add(pos)
     nextpos = pos + dir
     match g.get_element(nextpos):
@@ -107,6 +103,7 @@ def grid_check_double(g: Grid, pos: Point, dir: Point, checked: set[Point]) -> b
 
 
 def grid_get_gps(g: Grid, needle: str) -> int:
+    """Sums the GPS coordinates (100 * row + column) of every cell holding `needle`."""
     return sum(
         100 * (i // g.x_max) + i % g.x_max
         for i, c in enumerate(g.elements)
@@ -115,8 +112,8 @@ def grid_get_gps(g: Grid, needle: str) -> int:
 
 
 class InputData:
-    def __init__(self, s: str) -> None:
-        boxstr, movestr = s.split("\n\n")
+    def __init__(self, rawstr: str) -> None:
+        boxstr, movestr = rawstr.split("\n\n")
         self.__grid = Grid(boxstr)
         self.__robot = self.__grid.find("@")
         self.__moves = [d for c in movestr if (d := point_from_dir(c)) is not None]
