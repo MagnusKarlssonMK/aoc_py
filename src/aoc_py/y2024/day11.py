@@ -7,10 +7,12 @@ enormous but many will have the same value, the stones are stored in a hash-map
 rather than a vector, with the stone's number as key and number of stones with
 that number as value. Despite the desceptive description, the order of the stones
 is actually not important!
+
+A stone is split based on its exact decimal length. Strings are used instead of
+log10, whose rounding can be off by one for large values and flip the split.
 """
 
 from collections import defaultdict
-from math import log10
 
 
 def blink(stones: dict[int, int]) -> dict[int, int]:
@@ -19,10 +21,11 @@ def blink(stones: dict[int, int]) -> dict[int, int]:
         if stone == 0:
             newstones[1] += amount
         else:
-            if int(digits := 1 + log10(stone)) % 2 == 0:
-                power = int(10 ** (digits // 2))
-                newstones[stone // power] += amount
-                newstones[stone % power] += amount
+            digits = str(stone)
+            if len(digits) % 2 == 0:
+                half = len(digits) // 2
+                newstones[int(digits[:half])] += amount
+                newstones[int(digits[half:])] += amount
             else:
                 newstones[stone * 2024] += amount
     return newstones
