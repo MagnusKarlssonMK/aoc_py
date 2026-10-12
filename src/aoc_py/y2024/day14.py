@@ -7,7 +7,9 @@ No need to run the simulation for 100 steps, just directly calculate the positio
 
 Part 2
 
-Run the simulation until all robots are in unique positions with no overlap.
+Run the simulation until all robots are in unique positions with no overlap. Since the
+grid is finite, every cell remembers the last time step it held a robot, so a collision is
+detected in constant time without rebuilding a set each step.
 """
 
 from math import prod
@@ -18,8 +20,8 @@ class Robot:
         left, right = rawstr.split()
         left_x, left_y = left.split(",")
         right_x, right_y = right.split(",")
-        self.pos: tuple[int, int] = int(left_x.strip("p=")), int(left_y)
-        self.vel: tuple[int, int] = int(right_x.strip("v=")), int(right_y)
+        self.pos: tuple[int, int] = int(left_x.removeprefix("p=")), int(left_y)
+        self.vel: tuple[int, int] = int(right_x.removeprefix("v=")), int(right_y)
 
 
 class InputData:
@@ -40,22 +42,19 @@ class InputData:
         return prod(quadrants)
 
     def get_p2(self) -> int:
-        points: set[tuple[int, int]] = set()
+        seen = [0] * (self.__x_max * self.__y_max)
         time = 0
-        overlap = True
-        while overlap:
+        while True:
             time += 1
-            overlap = False
             for r in self.__robots:
-                newpoint_x = (r.pos[0] + time * r.vel[0]) % self.__x_max
-                newpoint_y = (r.pos[1] + time * r.vel[1]) % self.__y_max
-                if (newpoint_x, newpoint_y) in points:
-                    overlap = True
+                x = (r.pos[0] + time * r.vel[0]) % self.__x_max
+                y = (r.pos[1] + time * r.vel[1]) % self.__y_max
+                pos = x * self.__y_max + y
+                if seen[pos] == time:
                     break
-                else:
-                    points.add((newpoint_x, newpoint_y))
-            points.clear()
-        return time
+                seen[pos] = time
+            else:
+                return time
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:

@@ -11,6 +11,10 @@ p=7,3 v=-1,2
 p=2,4 v=2,-3
 p=9,5 v=-3,-3"""
 
+# Two robots collide at t=1 then separate at t=2, exercising the early-exit branch.
+TEST_STRING_COLLISION = """p=0,0 v=1,0
+p=1,0 v=0,0"""
+
 from aoc_py.y2024.day14 import InputData, solve_parts
 
 # ----------- Part 1 ------------
@@ -35,3 +39,15 @@ def test_part2_2() -> None:
     p1, p2 = solve_parts(TEST_STRING)
     assert p1 == "21"
     assert p2 == "1"
+
+
+def test_collision_then_separate() -> None:
+    p = InputData(TEST_STRING_COLLISION, 3, 3)
+    assert p.get_p2() == 2
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts() -> None:
+    assert solve_parts(TEST_STRING) == ("21", "1")
