@@ -39,3 +39,13 @@ def test_part1_1() -> None:
 def test_part2_1() -> None:
     _, p2 = solve_parts(TEST_STRING_2, 2)
     assert p2 == "2"
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts() -> None:
+    # The example uses two separate graphs (as in the Rust tests): part 1 starts at
+    # "you", part 2 at "svr". The unrelated start node is absent and yields 0.
+    assert solve_parts(TEST_STRING_1) == ("5", "0")
+    assert solve_parts(TEST_STRING_2) == ("0", "2")

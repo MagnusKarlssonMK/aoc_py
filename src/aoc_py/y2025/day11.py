@@ -1,24 +1,26 @@
 """
 2025 day 11 - Reactor
 
+Input lines list connections between named nodes ("from: to1 to2 ...").
+
 Part 1
 
-Simple recursive DFS to count number of paths from "you" to "out".
+Simple recursive DFS with memoization to count the number of paths from "you" to "out".
 
 Part 2
 
-Similar solution as in part 1, but now also passing along whether or not "fft" and "dac"
-have been found in the recursion.
+Similar to part 1, but the memoization key also carries whether or not "fft" and "dac"
+have been visited, and only paths that reach "out" after visiting both count.
 """
 
 
 class InputData:
     __tree: dict[str, list[str]]
 
-    def __init__(self, s: str) -> None:
+    def __init__(self, rawstr: str) -> None:
         self.__tree = {
             left: right.split()
-            for left, right in [line.split(": ", 1) for line in s.splitlines()]
+            for left, right in [line.split(": ", 1) for line in rawstr.splitlines()]
         }
 
     def __find_nbr_paths_straight(self, key: str, seen: dict[str, int]) -> int:
