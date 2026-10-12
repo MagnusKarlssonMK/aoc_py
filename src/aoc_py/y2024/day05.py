@@ -1,5 +1,10 @@
 """
 2024 day 5 - Print Queue
+
+Each ordering rule is a (before, after) pair. Sorting an update by how many of its
+other pages must come before each page yields the single order consistent with the
+rules. Updates already in that order contribute their middle page to part 1; the
+rest contribute the middle of the corrected order to part 2.
 """
 
 
@@ -18,7 +23,7 @@ class InputData:
         p1 = p2 = 0
         for update in self.__updates:
             sorted_update = sorted(
-                update, key=lambda n1: sum([(n2, n1) in self.__rules for n2 in update])
+                update, key=lambda n1: sum((n2, n1) in self.__rules for n2 in update)
             )
             if update == sorted_update:
                 p1 += update[len(update) // 2]
