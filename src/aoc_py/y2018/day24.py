@@ -1,9 +1,19 @@
 """
 2018 day 24 - Immune System Simulator 20XX
+
+Part 1
+
+Simulate the battle between the two armies until only one of them has units left, and
+report how many units the winner has.
+
+Part 2
+
+The immune system needs a boost to win. Try increasing the boost one at a time until
+the immune system wins, and report the units it has left for the smallest such boost.
 """
 
 import re
-from copy import deepcopy
+from copy import copy
 from dataclasses import dataclass
 from enum import Enum
 
@@ -32,9 +42,8 @@ class Trait:
     damagetype: DmgType
 
 
-@dataclass
+@dataclass(eq=False)
 class Group:
-    uid: int
     team: Team
     units: int
     hp: int
@@ -43,17 +52,12 @@ class Group:
     initiative: int
     traits: list[Trait]
 
-    @property
-    def effective_power(self) -> int:
-        return self.units * self.attackpower
-
     def get_dmgtaken(self, power: int, atype: DmgType) -> int:
         for t in self.traits:
             if t.damagetype == atype:
                 if t.t == TraitType.IMMUNE:
                     return 0
-                elif t.t == TraitType.WEAK:
-                    return 2 * power
+                return 2 * power
         return power
 
     def receive_dmg(self, power: int, atype: DmgType) -> int:
@@ -65,8 +69,7 @@ class Group:
 class InputData:
     def __init__(self, rawstr: str) -> None:
         team = None
-        uid = 1
-        self.__groups: dict[int, Group] = {}
+        self.__groups: list[Group] = []
         for line in rawstr.splitlines():
             if len(line) > 0:
                 if not line[0].isdigit():
@@ -75,7 +78,7 @@ class InputData:
                     units, hp, ap, init = list(map(int, re.findall(r"\d+", line)))
                     at = DmgType(re.findall(r"\d (\w+) damage at initiative", line)[0])
                     traits: list[Trait] = []
-                    traitstr = re.findall(r"\(([^)]+)", line)
+                    traitstr: list[str] = re.findall(r"\(([^)]+)", line)
                     if traitstr:
                         for part in traitstr[0].split("; "):
                             words = part.split()
@@ -83,81 +86,67 @@ class InputData:
                                 traits.append(
                                     Trait(TraitType(words[0]), DmgType(t.strip(", ")))
                                 )
-                    if team:
-                        self.__groups[uid] = Group(
-                            uid, team, units, hp, ap, at, init, traits
+                    if team is not None:
+                        self.__groups.append(
+                            Group(team, units, hp, ap, at, init, traits)
                         )
-                    uid += 1
 
     def __get_winner_and_units(self, boost: int) -> tuple[Team, int]:
-        groups = deepcopy(self.__groups)
+        groups = [copy(g) for g in self.__groups]
         for g in groups:
-            if groups[g].team == Team.IMMUNESYSTEM:
-                groups[g].attackpower += boost
+            if g.team is Team.IMMUNESYSTEM:
+                g.attackpower += boost
 
-        while len({g.team for g in list(groups.values()) if g.units > 0}) > 1:
-            # Target selection
-            targets: dict[int, int] = {}
-            attackerlist = sorted(
-                [g for g in groups.values() if g.units > 0],
-                key=lambda x: (x.effective_power, x.initiative),
-                reverse=True,
-            )
-            for attacker in attackerlist:
-                targetlist = sorted(
-                    [
-                        t
-                        for t in attackerlist
-                        if t.team != attacker.team and t.uid not in targets.values()
-                    ],
-                    key=lambda x: (
-                        x.get_dmgtaken(attacker.effective_power, attacker.attacktype),
-                        x.effective_power,
-                        x.initiative,
-                    ),
-                    reverse=True,
-                )
-                for target in targetlist:
-                    # So this is NOT obvious, but we should apparently skip over immune targets, and somehow that
-                    # impacts the result.
-                    if (
-                        groups[target.uid].get_dmgtaken(
-                            attacker.effective_power, attacker.attacktype
-                        )
-                        > 0
-                    ):
-                        targets[attacker.uid] = target.uid
-                        break
-            if not targets:
-                return Team.INFECTION, -1
+        while True:
+            alive = [g for g in groups if g.units > 0]
+            if len({g.team for g in alive}) < 2:
+                break
 
-            # Combat
-            totaldmg = 0
+            # Target selection, highest effective power (then initiative) first. A group
+            # that can't hurt anything is left without a target, and already picked
+            # targets are skipped.
+            power = {g: g.units * g.attackpower for g in alive}
+            targets: dict[Group, Group] = {}
+            chosen: set[Group] = set()
             for attacker in sorted(
-                groups.values(), key=lambda x: x.initiative, reverse=True
+                alive, key=lambda g: (power[g], g.initiative), reverse=True
             ):
-                if groups[attacker.uid].units > 0 and attacker.uid in targets:
-                    totaldmg += groups[targets[attacker.uid]].receive_dmg(
-                        attacker.effective_power, attacker.attacktype
+                best: Group | None = None
+                bestkey: tuple[int, int, int] | None = None
+                for t in alive:
+                    if t.team is attacker.team or t in chosen:
+                        continue
+                    dmg = t.get_dmgtaken(power[attacker], attacker.attacktype)
+                    if dmg == 0:
+                        continue
+                    key = (dmg, power[t], t.initiative)
+                    if bestkey is None or key > bestkey:
+                        bestkey, best = key, t
+                if best is not None:
+                    targets[attacker] = best
+                    chosen.add(best)
+
+            # Combat, in initiative order, using the power each attacker has left after
+            # any losses earlier in the round.
+            totaldmg = 0
+            for attacker in sorted(alive, key=lambda g: g.initiative, reverse=True):
+                if attacker.units > 0 and attacker in targets:
+                    totaldmg += targets[attacker].receive_dmg(
+                        attacker.units * attacker.attackpower, attacker.attacktype
                     )
             if totaldmg == 0:
-                # In case of deadlock of nothing mut immune dmg
+                # Deadlock, nothing can hurt anything: the immune system did not win.
                 return Team.INFECTION, -1
-        winner = Team.INFECTION  # Initialize to any, will be set in loop
-        for g in groups:
-            if groups[g].units > 0:
-                winner = groups[g].team
-                break
-        return winner, sum([g.units for g in groups.values() if g.units > 0])
+        return alive[0].team, sum(g.units for g in alive)
 
     def get_winning_units(self) -> tuple[int, int]:
         boost = 0
-        p2 = -1
-        winner, p1 = self.__get_winner_and_units(boost)
-        while winner == Team.INFECTION:
+        winner, units = self.__get_winner_and_units(boost)
+        p1 = units
+        while winner is Team.INFECTION:
             boost += 1
-            winner, p2 = self.__get_winner_and_units(boost)
-        return p1, p2
+            winner, units = self.__get_winner_and_units(boost)
+        return p1, units
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
