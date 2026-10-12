@@ -11,7 +11,7 @@ For each range,
 4) If that candidate id is bigger than the first value in the range, an invalid value has been found; add it to the total.
 5) Increment the candidate id (12 -> 13) and go back to 2).
 
-## Part 2
+Part 2
 
 Pretty much same as part 1, except,
 * Instead of just splitting in 2 parts, loop over splits in different part sizes, from 2 up to the number of digits in
@@ -20,7 +20,6 @@ Pretty much same as part 1, except,
   numbers are stored in a set and then summarized at the end to get rid of duplicates.
 """
 
-import math
 from typing import cast
 
 
@@ -35,7 +34,7 @@ def get_invalid(v1: str, v2: str) -> int:
     next_part: int = int(v1[0:d]) if m == 0 else 10**d
 
     while True:
-        nbrof_part_digits: int = int(1 + int(math.log10(abs(next_part))))
+        nbrof_part_digits: int = len(str(next_part))
         # Using cast as temporary fix for basedpyright issue with pow
         p = cast(int, 10**nbrof_part_digits)
         candidate_id: int = next_part + (next_part * p)
@@ -60,7 +59,7 @@ def get_multiple_invalid(v1: str, v2: str) -> int:
         next_part = int(v1[0:d]) if m == 0 else 10**d
 
         while True:
-            nbrof_part_digits = 1 + int(math.log10(abs(next_part)))
+            nbrof_part_digits = len(str(next_part))
             candidate_id = sum(
                 [next_part * 10 ** (p * nbrof_part_digits) for p in range(nbrof_parts)]
             )
@@ -75,16 +74,16 @@ def get_multiple_invalid(v1: str, v2: str) -> int:
 
 
 class InputData:
-    def __init__(self, s: str) -> None:
-        self.__rotations = [
-            (v[0], v[1]) for v in [r.split("-", 1) for r in s.split(",")]
+    def __init__(self, rawstr: str) -> None:
+        self.__ranges = [
+            (v[0], v[1]) for v in [r.split("-", 1) for r in rawstr.split(",")]
         ]
 
     def get_p1(self) -> int:
-        return sum([get_invalid(v1, v2) for (v1, v2) in self.__rotations])
+        return sum([get_invalid(v1, v2) for (v1, v2) in self.__ranges])
 
     def get_p2(self) -> int:
-        return sum([get_multiple_invalid(v1, v2) for (v1, v2) in self.__rotations])
+        return sum([get_multiple_invalid(v1, v2) for (v1, v2) in self.__ranges])
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
