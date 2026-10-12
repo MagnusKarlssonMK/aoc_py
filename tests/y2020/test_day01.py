@@ -5,6 +5,11 @@ TEST_STRING = """1721
 675
 1456"""
 
+# Neither a pair nor a triple of these sums to the target.
+NO_SOLUTION_STRING = """1
+2
+3"""
+
 from aoc_py.y2020.day01 import solve_parts
 
 # ----------- Part 1 ------------
@@ -17,7 +22,7 @@ def test_part1_1() -> None:
 
 def test_part1_2() -> None:
     # Testing input with no solution for code coverage
-    p1, _ = solve_parts("", 1)
+    p1, _ = solve_parts(NO_SOLUTION_STRING, 1)
     assert p1 == "-1"
 
 
@@ -31,5 +36,12 @@ def test_part2_1() -> None:
 
 def test_part2_2() -> None:
     # Testing input with no solution for code coverage
-    _, p2 = solve_parts("", 2)
+    _, p2 = solve_parts(NO_SOLUTION_STRING, 2)
     assert p2 == "-1"
+
+
+# ----------- Both parts ------------
+
+
+def test_both_parts() -> None:
+    assert solve_parts(TEST_STRING) == ("514579", "241861950")
