@@ -22,6 +22,8 @@ from aoc_py.util.point import Point
 # Use the Point class to represent Hex coordinates in axial form (pointy top hex tiles)
 # x = q, y = r
 
+_PART2_DAYS: Final = 100
+
 
 class HexDirections:
     NE: Final = Point(1, -1)
@@ -56,55 +58,52 @@ class InputData:
                 else:
                     self.__move_instr[-1].append(self.__STR_TO_POINT[line[i : i + 2]])
                     i += 2
-        self.__black_tiles: set[Point] = set()
 
-    def get_p1(self) -> int:
+    def __black_tiles(self) -> set[Point]:
+        black_tiles: set[Point] = set()
         for instr in self.__move_instr:
             tile = Point(0, 0)
             for move in instr:
                 tile += move
-            if tile in self.__black_tiles:
-                self.__black_tiles.remove(tile)
+            if tile in black_tiles:
+                black_tiles.remove(tile)
             else:
-                self.__black_tiles.add(tile)
-        return len(self.__black_tiles)
+                black_tiles.add(tile)
+        return black_tiles
 
-    def get_p2(self, days: int = 100) -> int:
+    def get_p1(self) -> int:
+        return len(self.__black_tiles())
+
+    def get_p2(self, days: int) -> int:
+        black_tiles = self.__black_tiles()
         for _ in range(days):
-            black_tiles: set[Point] = set()
+            next_black: set[Point] = set()
             white_neighbors: set[Point] = set()
-            for tile in self.__black_tiles:
-                b = 0
-                for n in [tile + d for d in HexDirections.NEIGHBORS]:
-                    if n in self.__black_tiles:
-                        b += 1
+            for tile in black_tiles:
+                black_count = 0
+                for n in (tile + d for d in HexDirections.NEIGHBORS):
+                    if n in black_tiles:
+                        black_count += 1
                     else:
                         white_neighbors.add(n)
-                if 1 <= b <= 2:
-                    black_tiles.add(tile)
+                if 1 <= black_count <= 2:
+                    next_black.add(tile)
             for tile in white_neighbors:
                 if (
-                    sum(
-                        [
-                            1
-                            for n in [tile + d for d in HexDirections.NEIGHBORS]
-                            if n in self.__black_tiles
-                        ]
-                    )
+                    sum(1 for d in HexDirections.NEIGHBORS if tile + d in black_tiles)
                     == 2
                 ):
-                    black_tiles.add(tile)
-            self.__black_tiles = black_tiles
-        return len(self.__black_tiles)
+                    next_black.add(tile)
+            black_tiles = next_black
+        return len(black_tiles)
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1 = p2 = "-1"
     p = InputData(inputdata)
-    r1 = p.get_p1()
     if part in (None, 1):
-        p1 = str(r1)
+        p1 = str(p.get_p1())
     if part in (None, 2):
-        p2 = str(p.get_p2())
+        p2 = str(p.get_p2(_PART2_DAYS))
 
     return p1, p2
