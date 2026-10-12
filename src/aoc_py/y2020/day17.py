@@ -1,77 +1,70 @@
 """
 2020 day 17 - Conway Cubes
 
-Multidimensional game of life. While checking neighbors of active cubes, collect a set of neiboring inactive cubes,
-and then go through them to see which ones to activate.
+Multidimensional game of life. Cubes are packed into a single integer, one base-256 digit per
+coordinate offset by 128 so digits stay non-negative, which turns neighbour lookups into plain
+integer addition on sets. Coordinates move by at most 6 over the six steps, so every digit
+stays comfortably in range. While checking the neighbours of active cubes, collect the
+neighbouring inactive cubes, then check which of those to activate.
 """
 
-from collections.abc import Generator
-from dataclasses import dataclass
+from itertools import product
+
+_BASE = 256
+_OFFSET = 128
 
 
-@dataclass(frozen=True)
-class Point3d:
-    x: int
-    y: int
-    z: int
-
-    def get_neighbours(self) -> Generator[Point3d]:
-        for x in range(-1, 2):
-            for y in range(-1, 2):
-                for z in range(-1, 2):
-                    if not (x == 0 and y == 0 and z == 0):
-                        yield Point3d(self.x + x, self.y + y, self.z + z)
+def _encode(coords: tuple[int, ...]) -> int:
+    value = 0
+    for c in coords:
+        value = value * _BASE + c + _OFFSET
+    return value
 
 
-@dataclass(frozen=True)
-class Point4d:
-    x: int
-    y: int
-    z: int
-    w: int
+def _encode_delta(delta: tuple[int, ...]) -> int:
+    value = 0
+    for d in delta:
+        value = value * _BASE + d
+    return value
 
-    def get_neighbours(self) -> Generator[Point4d]:
-        for x in range(-1, 2):
-            for y in range(-1, 2):
-                for z in range(-1, 2):
-                    for w in range(-1, 2):
-                        if not (x == 0 and y == 0 and z == 0 and w == 0):
-                            yield Point4d(
-                                self.x + x, self.y + y, self.z + z, self.w + w
-                            )
+
+_DIRECTIONS = {
+    dim: [
+        _encode_delta(delta) for delta in product((-1, 0, 1), repeat=dim) if any(delta)
+    ]
+    for dim in (3, 4)
+}
 
 
 class InputData:
     def __init__(self, rawstr: str) -> None:
-        self.__cubes: set[Point3d] = set()
-        self.__cubes4d: set[Point4d] = set()
+        self.__cubes3: set[int] = set()
+        self.__cubes4: set[int] = set()
         for y, line in enumerate(rawstr.splitlines()):
             for x, c in enumerate(line):
                 if c == "#":
-                    self.__cubes.add(Point3d(x, y, 0))
-                    self.__cubes4d.add(Point4d(x, y, 0, 0))
+                    self.__cubes3.add(_encode((x, y, 0)))
+                    self.__cubes4.add(_encode((x, y, 0, 0)))
 
-    def get_nbr_active_cubes(self, is4d: bool = False) -> int:
-        if not is4d:
-            cubes = self.__cubes
-        else:
-            cubes = self.__cubes4d
+    def __run(self, start: set[int], directions: list[int]) -> int:
+        cubes = start
         for _ in range(6):
-            empty = set()
-            buffer = set()
+            empty: set[int] = set()
+            buffer: set[int] = set()
             for cube in cubes:
                 count = 0
-                for n in cube.get_neighbours():
-                    if n in cubes:
+                for delta in directions:
+                    nbr = cube + delta
+                    if nbr in cubes:
                         count += 1
                     else:
-                        empty.add(n)
+                        empty.add(nbr)
                 if 2 <= count <= 3:
                     buffer.add(cube)
             for cube in empty:
                 count = 0
-                for n in cube.get_neighbours():
-                    if n in cubes:
+                for delta in directions:
+                    if cube + delta in cubes:
                         count += 1
                         if count > 3:
                             break
@@ -80,13 +73,19 @@ class InputData:
             cubes = buffer
         return len(cubes)
 
+    def get_p1(self) -> int:
+        return self.__run(self.__cubes3, _DIRECTIONS[3])
+
+    def get_p2(self) -> int:
+        return self.__run(self.__cubes4, _DIRECTIONS[4])
+
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:
     p1 = p2 = "-1"
     p = InputData(inputdata)
     if part in (None, 1):
-        p1 = str(p.get_nbr_active_cubes())
+        p1 = str(p.get_p1())
     if part in (None, 2):
-        p2 = str(p.get_nbr_active_cubes(True))
+        p2 = str(p.get_p2())
 
     return p1, p2
