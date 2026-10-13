@@ -26,18 +26,6 @@ from aoc_py.runner import get_solver, load_input
 
 INPUT_ROOT = Path(__file__).resolve().parents[2] / "AdventOfCode-Input"
 
-# Solvers that render their answer as ASCII art while the stored `.answer` file
-# still holds the plain-text form (these are the days not yet implemented in the
-# Rust repo). They are expected to fail until the answers are converted; a
-# strict xfail means a day that starts passing flags itself, which is the signal
-# to drop it from this set.
-PENDING_ASCII_ART_ANSWERS = {
-    (2018, 10),
-    (2019, 8),
-    (2019, 11),
-    (2021, 13),
-}
-
 
 def _parse_answer(text: str) -> tuple[str, str]:
     part1, _, part2 = text.strip("\n").partition("\n---\n")
@@ -63,13 +51,6 @@ def _collect_cases() -> list[ParameterSet]:
                 continue
             expected = _parse_answer(answer_path.read_text())
             marks: list[pytest.MarkDecorator] = []
-            if (year, day) in PENDING_ASCII_ART_ANSWERS:
-                marks.append(
-                    pytest.mark.xfail(
-                        reason="`.answer` still uses the plain-text form",
-                        strict=True,
-                    )
-                )
             cases.append(
                 pytest.param(
                     year, day, expected, id=f"{year}-day{day:02d}", marks=marks
