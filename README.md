@@ -43,6 +43,21 @@ To specify and run tests only for a certain year, for example 2024:
 uv run pytest tests/y2024
 ```
 
+# Regression tests
+
+In addition to the unit tests, there is a data driven regression suite that runs the
+real solver for every puzzle that has both an input file and a stored answer file
+under `AdventOfCode-Input/<year>`, and compares the output against that answer. It is
+slow because it runs every implemented solver, so it is deselected from the default
+test run. Run it with:
+
+```sh
+uv run pytest -m regression
+```
+
+Each answer file is named `day<xx>.answer` and contains part 1 and part 2 separated by
+a line containing exactly `---`; single-part puzzles use `-` for part 2.
+
 # Formatting, linting and type checking
 
 Formatting is done with Ruff:

@@ -38,4 +38,7 @@ omit = [
 ]
 
 [tool.pytest.ini_options]
-addopts = "--cov=src/aoc_py --cov-report=term-missing"
+addopts = "--cov=src/aoc_py --cov-report=term-missing -m 'not regression'"
+markers = [
+    "regression: end-to-end checks against the stored .answer files (slow; run with -m regression)",
+]
