@@ -16,7 +16,7 @@ needs to be modified accordingly.
 
 # Running the solver
 
-This package is managed using UV, which needs to be installed locally. Once installed, the solver can be run with the CLI tool.
+This package is managed using `UV`, which needs to be installed locally. Once installed, the solver can be run with the CLI tool.
 To run the solver for a certain day, for example 2024 day 12:
 
 ```sh
@@ -63,3 +63,23 @@ uv run basedpyright
 
 Note that both basedpyright and Ruff are added to the uv dev group, so new versions
 needs to be bumped manually.
+
+# Updating package versions
+
+To update the versions of all external packages (within constraints in pyproject.toml):
+
+```sh
+uv sync --upgrade
+```
+
+To use the newest versions even if it crosses the floors:
+
+```sh
+uv sync --latest
+```
+
+To upgrade just the dev-group:
+
+```sh
+uv sync --upgrade-group dev
+```
