@@ -42,3 +42,24 @@ To specify and run tests only for a certain year, for example 2024:
 ```sh
 uv run pytest tests/y2024
 ```
+
+# Formatting, linting and type checking
+
+Formatting is done with Ruff:
+
+```sh
+uv run ruff format
+```
+
+All code is written to pass default settings of `basedpyright` and `Ruff`.
+
+```sh
+uv run ruff check
+```
+
+```sh
+uv run basedpyright
+```
+
+Note that both basedpyright and Ruff are added to the uv dev group, so new versions
+needs to be bumped manually.
