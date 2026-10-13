@@ -38,7 +38,7 @@ class InputData:
         for i, n in enumerate(img):
             if i % self.__width == 0:
                 result += "\n"
-            result += "#" if n == 1 else " "
+            result += "#" if n == 1 else "."
         return result
 
 

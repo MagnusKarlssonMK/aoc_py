@@ -53,7 +53,7 @@ class InputData:
         crt = [["" for _ in range(40)] for _ in range(6)]
 
         def update_crt(cycle: int, x: int) -> None:
-            crt[cycle // 40][cycle % 40] = "#" if abs(x - (cycle % 40)) <= 1 else " "
+            crt[cycle // 40][cycle % 40] = "#" if abs(x - (cycle % 40)) <= 1 else "."
 
         reg_x = 1
         cyclenbr = 0

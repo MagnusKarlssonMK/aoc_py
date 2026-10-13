@@ -170,7 +170,7 @@ def test_part1_2() -> None:
 def test_part2_1() -> None:
     # Only this program's five cycles get drawn, so row 0 carries a sprite and the
     # other five rows are empty. The cells the program never reaches stay empty
-    # rather than becoming spaces, which the larger example cannot show because its
+    # rather than becoming dots, which the larger example cannot show because its
     # 240 cycles fill the screen exactly.
     _, p2 = solve_parts(TEST_STRING_1, 2)
     assert p2 == "\n#####\n\n\n\n\n\n"
@@ -178,8 +178,8 @@ def test_part2_1() -> None:
 
 def test_part2_2() -> None:
     _, p2 = solve_parts(TEST_STRING_2, 2)
-    # Need to use \n on a single line to prevent editor from automatically shaving off trailing spaces
+    # Dots mark the off pixels, so the trailing ones are significant.
     assert (
         p2
-        == """\n##  ##  ##  ##  ##  ##  ##  ##  ##  ##  \n###   ###   ###   ###   ###   ###   ### \n####    ####    ####    ####    ####    \n#####     #####     #####     #####     \n######      ######      ######      ####\n#######       #######       #######     \n"""
+        == """\n##..##..##..##..##..##..##..##..##..##..\n###...###...###...###...###...###...###.\n####....####....####....####....####....\n#####.....#####.....#####.....#####.....\n######......######......######......####\n#######.......#######.......#######.....\n"""
     )

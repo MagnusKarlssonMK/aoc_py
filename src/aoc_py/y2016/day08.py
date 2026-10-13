@@ -67,7 +67,7 @@ class InputData:
         for row in range(self.__screen_height):
             for col in range(self.__screen_width):
                 if self.__grid[row][col] == 0:
-                    displaytext += " "
+                    displaytext += "."
                 else:
                     displaytext += "#"
             displaytext += "\n"
