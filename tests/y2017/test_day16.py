@@ -29,7 +29,7 @@ def test_part2_1() -> None:
 
 def test_part2_reaches_target_without_cycle() -> None:
     p = InputData(TEST_STRING_LONG_NO_CYCLE)
-    p.get_p1()
+    _ = p.get_p1()
     assert (
         p.get_p2(rounds=100) == "dbcfehgkijmlonap"
     )  # arrangement after exactly 100 rounds
@@ -37,7 +37,7 @@ def test_part2_reaches_target_without_cycle() -> None:
 
 def test_unknown_move_op_loudly_rejected() -> None:
     with pytest.raises(ValueError):
-        InputData("q1")
+        _ = InputData("q1")
 
 
 # ----------- Both parts ------------

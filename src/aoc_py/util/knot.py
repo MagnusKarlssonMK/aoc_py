@@ -41,7 +41,7 @@ def get_knot_hash(s: str, buffer_len: int = 256) -> str:
     lengths: list[int] = [ord(c) for c in s]
     lengths += [17, 31, 73, 47, 23]
     sparse = generate_hash(lengths, buffer_len, 64)
-    dense = []
+    dense: list[str] = []
 
     for start in range(0, len(sparse) - len(sparse) % 16, 16):
         n = 0

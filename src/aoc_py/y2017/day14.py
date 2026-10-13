@@ -18,7 +18,7 @@ class InputData:
         for y, line in enumerate(grid):
             for x, c in enumerate(line):
                 if c == "1":
-                    self.__adj.setdefault((x, y), set())
+                    _ = self.__adj.setdefault((x, y), set())
                     for nx, ny in ((x, y + 1), (x + 1, y)):
                         if nx < width and ny < height and grid[ny][nx] == "1":
                             self.__adj[(x, y)].add((nx, ny))

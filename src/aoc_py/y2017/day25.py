@@ -7,22 +7,23 @@ Then just keep track of the cursor position and a bytearray tape of 0/1 values (
 """
 
 import re
+from typing import cast
 
 
 class InputData:
     def __init__(self, s: str) -> None:
         blocks = s.split("\n\n")
-        self.__state = re.findall(r"state (\w).", blocks[0])[0]
-        self.__diag_steps = int(re.findall(r"\d+", blocks[0])[0])
+        self.__state: str = cast(list[str], re.findall(r"state (\w).", blocks[0]))[0]
+        self.__diag_steps: int = int(cast(list[str], re.findall(r"\d+", blocks[0]))[0])
         self.__process: dict[
             str, list[tuple[int, int, str]]
         ] = {}  # state: ((new_v, direction, new_s) when value is 0, same for value 1)
         for block in blocks[1:]:
-            states = re.findall(r"state (\w).", block)
-            nbrs = list(map(int, re.findall(r"\d+", block)))
+            states = cast(list[str], re.findall(r"state (\w).", block))
+            nbrs = list(map(int, cast(list[str], re.findall(r"\d+", block))))
             directions = [
                 1 if c == "right" else -1
-                for c in re.findall(r"slot to the (\w+).", block)
+                for c in cast(list[str], re.findall(r"slot to the (\w+).", block))
             ]
             self.__process[states[0]] = [
                 (nbrs[1], directions[0], states[1]),

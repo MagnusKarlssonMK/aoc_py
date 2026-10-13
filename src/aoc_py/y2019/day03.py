@@ -31,7 +31,7 @@ class Wire:
 
     def walk(self) -> list[Point]:
         pos = Directions.ORIGIN
-        points = []
+        points: list[Point] = []
         for p, v in self.__instructions:
             for _ in range(v):
                 pos += p
@@ -50,8 +50,8 @@ class InputData:
         w1_set = set(w1_points)
         w2_set = set(w2_points)
         intersections = w1_set.intersection(w2_set)
-        p1 = []
-        p2 = []
+        p1: list[int] = []
+        p2: list[int] = []
         for i in intersections:
             p1.append(i.manhattan(Directions.ORIGIN))
             p2.append(2 + w1_points.index(i) + w2_points.index(i))

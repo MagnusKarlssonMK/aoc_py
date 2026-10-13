@@ -17,7 +17,7 @@ class InputData:
                 case "<":
                     for c in it:
                         if c == "!":
-                            next(it)
+                            _ = next(it)
                         elif c == ">":
                             break
                         else:

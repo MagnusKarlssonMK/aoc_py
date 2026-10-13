@@ -84,7 +84,7 @@ class InputData:
     def get_p2(self) -> int:
         regs = Register(self.__registers, 1)
         # Run the program just to get the initial values for B and C, then stop.
-        self.__run(regs, True)
+        _ = self.__run(regs, True)
 
         # b_jump grabbed directly from the input, this assumes that the jump is located on this specific row
         b_jump = abs(int(self.__instr[-2].attr2))

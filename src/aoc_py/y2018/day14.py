@@ -36,7 +36,7 @@ class InputData:
     def get_p1(self) -> int:
         limit = int(self.__inputnbr)
         while len(self.__scoreboard) < limit + 10:
-            self.__make_recipes()
+            _ = self.__make_recipes()
         result = int("".join([str(i) for i in self.__scoreboard[limit : limit + 10]]))
         self.__reset()
         return result

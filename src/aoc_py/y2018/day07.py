@@ -11,7 +11,7 @@ class InputData:
         self.__steprules: dict[str, set[str]] = {}
         for line in s.splitlines():
             w = line.split()
-            self.__steprules.setdefault(w[1], set())
+            _ = self.__steprules.setdefault(w[1], set())
             self.__steprules.setdefault(w[7], set()).add(w[1])
 
     def get_p1(self) -> str:
@@ -45,7 +45,7 @@ class InputData:
                     working[w] -= 1
             for d in isdone:
                 done.append(d)
-                working.pop(d)
+                _ = working.pop(d)
             seconds += 1
             available: list[str] = []
             for step in not_done:

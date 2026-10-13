@@ -17,7 +17,7 @@ class InputData:
         """Return the size of program 0's group, and the total number of groups."""
         size = len(self.__numbers)
         seen = [False] * size
-        group_sizes = []
+        group_sizes: list[int] = []
         for i in range(size):
             if not seen[i]:
                 seen[i] = True

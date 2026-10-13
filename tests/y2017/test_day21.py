@@ -1,6 +1,8 @@
 EXAMPLE = """../.# => ##./#../...
 .#./..#/### => #..#/..../..../#..#"""
 
+import pytest
+
 from aoc_py.y2017 import day21
 from aoc_py.y2017.day21 import solve_parts
 
@@ -15,7 +17,7 @@ def test_example() -> None:
 # ----------- Part 1 ------------
 
 
-def test_part1_1(monkeypatch) -> None:
+def test_part1_1(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(day21, "PART1_ITERATIONS", 2)
     monkeypatch.setattr(day21, "PART2_ITERATIONS", 1)
     p1, _ = solve_parts(EXAMPLE, 1)
@@ -25,7 +27,7 @@ def test_part1_1(monkeypatch) -> None:
 # ----------- Part 2 ------------
 
 
-def test_part2_1(monkeypatch) -> None:
+def test_part2_1(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(day21, "PART1_ITERATIONS", 2)
     monkeypatch.setattr(day21, "PART2_ITERATIONS", 1)
     _, p2 = solve_parts(EXAMPLE, 2)
@@ -35,7 +37,7 @@ def test_part2_1(monkeypatch) -> None:
 # ----------- Both parts ------------
 
 
-def test_both_parts(monkeypatch) -> None:
+def test_both_parts(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(day21, "PART1_ITERATIONS", 2)
     monkeypatch.setattr(day21, "PART2_ITERATIONS", 1)
     assert solve_parts(EXAMPLE) == ("12", "4")

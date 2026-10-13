@@ -69,4 +69,4 @@ def test_bad_layout() -> None:
     # A program that doesn't match the disassembled layout is rejected loudly
     # instead of producing a silently wrong answer.
     with pytest.raises(ValueError, match="unrecognized day 21 program layout"):
-        solve_parts("#ip 0\nseti 0 0 0")
+        _ = solve_parts("#ip 0\nseti 0 0 0")

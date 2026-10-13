@@ -14,7 +14,7 @@ class InputData:
         poly: list[str] = []
         for c in polymer:
             if poly and abs(ord(c) - ord(poly[-1])) == self.__offset:
-                poly.pop()
+                _ = poly.pop()
             else:
                 poly.append(c)
         return len(poly)

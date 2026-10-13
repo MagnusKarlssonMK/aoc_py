@@ -14,6 +14,7 @@ tests/y2016/test_day14.py).
 
 import hashlib
 import re
+from typing import cast
 
 
 def get_md5(inputstr: str, stretch: int = 0) -> str:
@@ -37,13 +38,13 @@ class InputData:
             h = get_md5(self.__salt + str(index), stretch)
             # Find any 5-repetitions (check the 5's first to avoid having a hash validate itself,
             # since it will also be a 3)
-            for c in re.findall(r"(.)\1{4}", h):
+            for c in cast(list[str], re.findall(r"(.)\1{4}", h)):
                 if c in triples:
                     for t in triples.pop(c):
                         if (index - t) < 1001:
                             keys.add(t)
             # Find any 3-repetitions, only consider the first match
-            if c := re.findall(r"(.)\1{2}", h):
+            if c := cast(list[str], re.findall(r"(.)\1{2}", h)):
                 if c[0] not in triples:
                     triples[c[0]] = {index}
                 else:

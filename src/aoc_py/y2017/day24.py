@@ -50,9 +50,9 @@ class InputData:
         return self.__adj[comp_id][1] if side == 1 else self.__adj[comp_id][2]
 
     def get_max_strength(self) -> tuple[int, int]:
-        seen = set()
+        seen: set[tuple[tuple[int, ...], int, Side]] = set()
         maxstr = 0
-        longest = []
+        longest: tuple[int, ...] = ()
         queue: list[tuple[tuple[int, ...], int, Side]] = [
             ((), z, s) for z, s in self.__zerostarts
         ]  # Tail, head, available connector side

@@ -67,7 +67,9 @@ class InputData:
             regs.set_reg("c", 1)
 
         while 0 <= sp < len(self.__program):
-            match self.__program[sp].instr:
+            instr = self.__program[sp].instr
+            assert instr is not Operation.TGL  # tgl never occurs in this program
+            match instr:
                 case Operation.CPY:
                     regs.set_reg(
                         self.__program[sp].arg2, regs.get_val(self.__program[sp].arg1)

@@ -23,9 +23,11 @@ class Instr:
 
 
 class InputData:
-    __OP_MAP: Final = {
+    __OP_MAP: Final[dict[str, Callable[[int, int], int]]] = {
         "inc": op.add,
         "dec": op.sub,
+    }
+    __COND_MAP: Final[dict[str, Callable[[int, int], bool]]] = {
         ">": op.gt,
         ">=": op.ge,
         "<": op.lt,
@@ -45,7 +47,7 @@ class InputData:
                     InputData.__OP_MAP[o],
                     int(v),
                     cr,
-                    InputData.__OP_MAP[co],
+                    InputData.__COND_MAP[co],
                     int(cv),
                 )
             )

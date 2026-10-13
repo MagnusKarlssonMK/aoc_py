@@ -35,7 +35,7 @@ class InputData:
         delays = [1]
         for s in self.__scanners:
             new_lcm = lcm(current_lcm, s.cycle)
-            new_delays = []
+            new_delays: list[int] = []
             for extra in range(0, new_lcm, current_lcm):
                 for delay in delays:
                     if (delay + extra + s.depth) % s.cycle != 0:
