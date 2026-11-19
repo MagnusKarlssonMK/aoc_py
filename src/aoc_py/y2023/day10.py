@@ -1,25 +1,62 @@
 """
 2023 day 10 - Pipe Maze
 
-Store the data in a grid, then for Part 1 simply walk through the system until returning to the start, then calculating
-the answer by dividing the number of steps taken by 2. For part 2, calculate the answer by first determining the area
-with the shoelace formula and then use that with Pick's theorem.
+Store the data in a grid, then for Part 1 simply walk through the system until returning to the
+start, then calculating the answer by dividing the number of steps taken by 2. For part 2,
+calculate the answer by first determining the area with the shoelace formula and then use that with
+Pick's theorem.
 """
-
-from typing import Final
 
 from aoc_py.util.grid import Grid
 from aoc_py.util.point import Directions, Point
 
-# The two directions each pipe segment connects, which are also the two directions it can be entered from.
-CONNECTIONS: Final[dict[str, tuple[Point, Point]]] = {
-    "|": (Directions.UP, Directions.DOWN),
-    "-": (Directions.LEFT, Directions.RIGHT),
-    "L": (Directions.UP, Directions.RIGHT),
-    "J": (Directions.UP, Directions.LEFT),
-    "7": (Directions.DOWN, Directions.LEFT),
-    "F": (Directions.DOWN, Directions.RIGHT),
-}
+
+def next_direction(c: str, in_dir: Point) -> Point | None:
+    match in_dir:
+        case Directions.UP:
+            match c:
+                case "|":
+                    return Directions.UP
+                case "7":
+                    return Directions.LEFT
+                case "F":
+                    return Directions.RIGHT
+                case _:
+                    return None
+        case Directions.DOWN:
+            match c:
+                case "|":
+                    return Directions.DOWN
+                case "J":
+                    return Directions.LEFT
+                case "L":
+                    return Directions.RIGHT
+                case _:
+                    return None
+        case Directions.LEFT:
+            match c:
+                case "-":
+                    return Directions.LEFT
+                case "L":
+                    return Directions.UP
+                case "F":
+                    return Directions.DOWN
+                case _:
+                    return None
+        case Directions.RIGHT:
+            match c:
+                case "-":
+                    return Directions.RIGHT
+                case "J":
+                    return Directions.UP
+                case "7":
+                    return Directions.DOWN
+                case _:
+                    return None
+
+
+def get_area(p1: Point, p2: Point) -> int:
+    return p1.x * p2.y - p2.x * p1.y
 
 
 class InputData:
@@ -34,31 +71,30 @@ class InputData:
         # choose since it will be a circular path
         for d in Directions.NEIGHBORS_STRAIGHT:
             neighbor = self.__grid.get_element(start_pos + d)
-            if d.reverse() in CONNECTIONS.get(neighbor, ()):
+            if next_direction(neighbor, d) is not None:
                 current_dir = d
                 break
-        pipe_path = [start_pos]
-        current_pos = start_pos + current_dir
-        while current_pos != start_pos:
-            pipe_path.append(current_pos)
-            for d in CONNECTIONS[self.__grid.get_element(current_pos)]:
-                # Every point has two connections - make sure we don't go back the way we came in
-                if d != current_dir.reverse():
-                    current_dir = d
-                    break
-            current_pos += current_dir
-        pipe_len = len(pipe_path)
 
-        # Calculate shoelace area
-        areasum = sum(
-            [
-                p.determinant(pipe_path[(idx + 1) % len(pipe_path)])
-                for idx, p in enumerate(pipe_path)
-            ]
-        )
+        current_pos = start_pos + current_dir
+        pipe_len = 1
+        shoelace_area = get_area(current_pos, start_pos)
+        while current_pos != start_pos:
+            if (c := self.__grid.get_element(current_pos)) != "" and (
+                new_dir := next_direction(c, current_dir)
+            ) is not None:
+                current_dir = new_dir
+                new_pos = current_pos + current_dir
+                pipe_len += 1
+                shoelace_area += get_area(new_pos, current_pos)
+                current_pos = new_pos
+            else:
+                return -1, -1
+
+        shoelace_area = abs(shoelace_area) // 2
+        pipe_len //= 2
         # Use Pick's theorem to calculate the contained area
-        area = (abs(areasum) // 2) + 1 - (pipe_len // 2)
-        return pipe_len // 2, area
+        area = shoelace_area + 1 - pipe_len
+        return pipe_len, area
 
 
 def solve_parts(inputdata: str, part: int | None = None) -> tuple[str, str]:

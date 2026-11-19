@@ -46,7 +46,7 @@ L7JLJL-JLJLJL--JLJ.L"""
 TEST_STRING_6 = """FS.
 |L7
 |.|
-J-J"""
+L-J"""
 
 from aoc_py.y2023.day10 import solve_parts
 
@@ -114,3 +114,22 @@ def test_part2_5() -> None:
 def test_part2_6() -> None:
     _, p2 = solve_parts(TEST_STRING_6, 2)
     assert p2 == "1"
+
+
+def test_bad_input() -> None:
+    p1, p2 = solve_parts("S-\n--")
+    assert p1, p2 == ("-1", "-1")
+    p1, p2 = solve_parts("S7\n--")
+    assert p1, p2 == ("-1", "-1")
+    p1, p2 = solve_parts("S7\n-F")
+    assert p1, p2 == ("-1", "-1")
+    p1, p2 = solve_parts("S-\n-7")
+    assert p1, p2 == ("-1", "-1")
+    p1, p2 = solve_parts("S-L\n--7")
+    assert p1, p2 == ("-1", "-1")
+    p1, p2 = solve_parts("S-|\n--7")
+    assert p1, p2 == ("-1", "-1")
+    p1, p2 = solve_parts("S-7\n-JJ")
+    assert p1, p2 == ("-1", "-1")
+    p1, p2 = solve_parts("S7\n-|\nLJ")
+    assert p1, p2 == ("-1", "-1")
