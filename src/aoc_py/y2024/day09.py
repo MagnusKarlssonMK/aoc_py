@@ -38,7 +38,7 @@ class InputData:
             else:
                 left_idx += 1
                 buffer = (
-                    right_counter if left_idx == right_idx else self.__diskmap[left_idx]
+                    right_counter if left_idx >= right_idx else self.__diskmap[left_idx]
                 )
         return checksum
 
