@@ -29,12 +29,13 @@ class InputData:
 
     def get_p2(self) -> int:
         allowed_total = 0
-        highest_blocked = -1
+        next_free = 0
         for low, high in self.__blocklist:
-            if highest_blocked < low:
-                allowed_total += low - highest_blocked - 1
-            highest_blocked = max(high, highest_blocked)
-        allowed_total += MAX_IP - highest_blocked
+            if low > next_free:
+                allowed_total += low - next_free
+                next_free = low
+            next_free = max(next_free, high + 1)
+        allowed_total += MAX_IP + 1 - next_free
         return allowed_total
 
 
