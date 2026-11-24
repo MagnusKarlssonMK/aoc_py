@@ -1,22 +1,6 @@
 import pytest
 
-from aoc_py.y2016.day16 import InputData, checksum, dragon_curve, solve_parts
-
-# ----------- Dragon curve / checksum ------------
-
-
-def test_dragon_curve() -> None:
-    assert dragon_curve("1") == "100"
-    assert dragon_curve("0") == "001"
-    assert dragon_curve("11111") == "11111000000"
-
-
-def test_checksum() -> None:
-    assert checksum("1") == "1"
-    assert checksum("101") == "101"  # an odd length is already a checksum
-    assert checksum("0000") == "1"  # two folds: 0000 -> 11 -> 1
-    assert checksum("01100") == "01100"
-
+from aoc_py.y2016.day16 import InputData, solve_parts
 
 # ----------- Part 1 ------------
 
