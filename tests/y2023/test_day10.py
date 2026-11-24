@@ -118,18 +118,26 @@ def test_part2_6() -> None:
 
 def test_bad_input() -> None:
     p1, p2 = solve_parts("S-\n--")
-    assert p1, p2 == ("-1", "-1")
+    assert p1 == "-1"
+    assert p2 == "-1"
     p1, p2 = solve_parts("S7\n--")
-    assert p1, p2 == ("-1", "-1")
+    assert p1 == "-1"
+    assert p2 == "-1"
     p1, p2 = solve_parts("S7\n-F")
-    assert p1, p2 == ("-1", "-1")
+    assert p1 == "-1"
+    assert p2 == "-1"
     p1, p2 = solve_parts("S-\n-7")
-    assert p1, p2 == ("-1", "-1")
+    assert p1 == "-1"
+    assert p2 == "-1"
     p1, p2 = solve_parts("S-L\n--7")
-    assert p1, p2 == ("-1", "-1")
+    assert p1 == "-1"
+    assert p2 == "-1"
     p1, p2 = solve_parts("S-|\n--7")
-    assert p1, p2 == ("-1", "-1")
+    assert p1 == "-1"
+    assert p2 == "-1"
     p1, p2 = solve_parts("S-7\n-JJ")
-    assert p1, p2 == ("-1", "-1")
+    assert p1 == "-1"
+    assert p2 == "-1"
     p1, p2 = solve_parts("S7\n-|\nLJ")
-    assert p1, p2 == ("-1", "-1")
+    assert p1 == "-1"
+    assert p2 == "-1"

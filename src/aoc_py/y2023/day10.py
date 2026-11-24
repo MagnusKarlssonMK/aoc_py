@@ -53,6 +53,8 @@ def next_direction(c: str, in_dir: Point) -> Point | None:
                     return Directions.DOWN
                 case _:
                     return None
+        case _:
+            return None
 
 
 def get_area(p1: Point, p2: Point) -> int:
