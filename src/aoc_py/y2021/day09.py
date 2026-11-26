@@ -28,22 +28,22 @@ class InputData:
             else:
                 yield p
 
-    def __find_basin_points(self, lowpoint: Point) -> set[Point]:
-        seen: set[Point] = set()
-        queue = [lowpoint]
+    def __flood_basin(self, start: Point, claimed: set[Point]) -> int:
+        queue = [start]
+        claimed.add(start)
+        size = 0
         while queue:
-            p = queue.pop(0)
-            if p in seen:
-                continue
-            seen.add(p)
+            p = queue.pop()
+            size += 1
             for n in [p + d for d in Directions.NEIGHBORS_STRAIGHT]:
                 if (
-                    n not in seen
-                    and (n_c := self.__grid.get_element(n)) != ""
-                    and int(n_c) < 9
+                    n not in claimed
+                    and (nv := self.__grid.get_element(n)) != ""
+                    and int(nv) < 9
                 ):
+                    claimed.add(n)
                     queue.append(n)
-        return seen
+        return size
 
     def get_p1(self) -> int:
         return sum([int(self.__grid.get_element(p)) + 1 for p in self.__lowpoints])
@@ -54,9 +54,7 @@ class InputData:
         for p in self.__lowpoints:
             if p in claimed:
                 continue
-            basin = self.__find_basin_points(p)
-            claimed |= basin
-            basin_sizelist.append(len(basin))
+            basin_sizelist.append(self.__flood_basin(p, claimed))
         basin_sizelist.sort(reverse=True)
         return basin_sizelist[0] * basin_sizelist[1] * basin_sizelist[2]
 
